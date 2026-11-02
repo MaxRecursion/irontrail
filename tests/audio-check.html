@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>IRONTRAIL audio validation</title><style>body{background:#19221b;color:#d6efb1;font:16px monospace;padding:30px}pre{white-space:pre-wrap}</style><h1>Audio signal validation</h1><pre id="result">Rendering...</pre><script src="../src/audio.js"></script><script>
+(async()=>{
+  const result=document.getElementById('result');
+  try {
+    async function render(muted) {
+      const audio=new TruckAudio();
+      audio.context=new OfflineAudioContext(1,48000*2,48000);
+      audio._buildGraph();audio.setMuted(muted);audio.setPaused(false);
+      audio.update({speed:18,wheelSpeed:25,throttle:1,grounded:true,airtime:0},1/60);
+      const buffer=await audio.context.startRendering();
+      const samples=buffer.getChannelData(0);let peak=0,squares=0,invalid=0;
+      for(const sample of samples){peak=Math.max(peak,Math.abs(sample));squares+=sample*sample;if(!Number.isFinite(sample))invalid++;}
+      return {peak,rms:Math.sqrt(squares/samples.length),invalid,rpm:audio.rpm,gear:audio.gear};
+    }
+    const engine=await render(false),muted=await render(true);
+    if(engine.invalid||engine.rms<.001||engine.peak>=1)throw Error('Invalid, silent or clipping engine: '+JSON.stringify(engine));
+    if(muted.peak>.00001)throw Error('Mute leaks signal: '+JSON.stringify(muted));
+    // Test public lifecycle and event suppression before browser gesture unlock.
+    const locked=new TruckAudio();locked.update({speed:0,wheelSpeed:0,throttle:0,grounded:true},.016);locked.takeoff(.5);locked.landing(.5);locked.setPaused(true);locked.setMuted(true);
+    result.textContent='PASS · Engine signal is finite, audible and below clipping.\nPASS · Mute produces silence.\nPASS · Pre-unlock update and event calls are safe.\n\n'+JSON.stringify({engine,muted},null,2);
+    document.title='PASS — IRONTRAIL audio validation';
+  }catch(error){result.textContent='FAIL · '+error.stack;document.title='FAIL — IRONTRAIL audio validation';}
+})();
+</script></html>
