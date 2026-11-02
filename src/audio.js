@@ -17,6 +17,11 @@ class TruckAudio {
     this._ready = false;
     this._lastTakeoff = -10;
     this._lastLanding = -10;
+    this._lastPickup = -10;
+    this._lastZombieHit = -10;
+    this._lastCollision = -10;
+    this._lastResult = -10;
+    this._voices = new Set();
     this._noise = null;
     this._ratios = [24, 18, 14, 11, 9];
   }
@@ -159,7 +164,23 @@ class TruckAudio {
 
   _gate() {
     if (!this._ready) return;
-    this._set(this.master.gain, this.muted || this.paused ? 0 : 0.54, 0.035);
+    const ctx = this.context;
+    const silent = this.muted || this.paused;
+    const param = this.master.gain;
+    // Reach actual zero, rather than leaving an exponential tail. Stop pending
+    // event voices too, so resuming cannot replay a result or delayed impact.
+    if (typeof param.cancelAndHoldAtTime === 'function') param.cancelAndHoldAtTime(ctx.currentTime);
+    else {
+      const current = param.value;
+      param.cancelScheduledValues(ctx.currentTime);
+      param.setValueAtTime(current, ctx.currentTime);
+    }
+    param.linearRampToValueAtTime(silent ? 0 : 0.54, ctx.currentTime + (silent ? 0.018 : 0.04));
+    if (silent) {
+      for (const voice of this._voices) {
+        try { voice.stop(ctx.currentTime + 0.018); } catch (_) { /* Already ended. */ }
+      }
+    }
   }
 
   setMuted(muted) {
@@ -225,7 +246,17 @@ class TruckAudio {
     return this._ready && !this.paused && !this.muted && this.context.state === 'running';
   }
 
+  _trackVoice(source, nodes) {
+    this._voices.add(source);
+    source.onended = () => {
+      this._voices.delete(source);
+      source.disconnect();
+      for (const node of nodes) node.disconnect();
+    };
+  }
+
   _noiseBurst(strength, frequency, duration, delay = 0, type = 'lowpass') {
+    if (!(strength > 0)) return;
     const ctx = this.context;
     const now = ctx.currentTime + delay;
     const source = ctx.createBufferSource();
@@ -243,10 +274,11 @@ class TruckAudio {
     gain.connect(this.master);
     source.start(now, Math.random());
     source.stop(now + duration + 0.03);
-    source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); };
+    this._trackVoice(source, [filter, gain]);
   }
 
   _thump(strength, fromHz, toHz, duration, delay = 0) {
+    if (!(strength > 0)) return;
     const ctx = this.context;
     const now = ctx.currentTime + delay;
     const oscillator = ctx.createOscillator();
@@ -261,7 +293,7 @@ class TruckAudio {
     gain.connect(this.master);
     oscillator.start(now);
     oscillator.stop(now + duration + 0.02);
-    oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+    this._trackVoice(oscillator, [gain]);
   }
 
   takeoff(strength = 0.5) {
@@ -286,6 +318,59 @@ class TruckAudio {
     this._noiseBurst(0.035 + s * 0.11, 600 + s * 1500, 0.16 + s * 0.18);
     this._thump(s * 0.034, 340, 165, 0.085, 0.028);
     this._noiseBurst(s * 0.035, 1150, 0.1, 0.055, 'bandpass');
+  }
+
+  pickup() {
+    if (!this._canPlay()) return;
+    const now = this.context.currentTime;
+    if (now - this._lastPickup < 0.12) return;
+    this._lastPickup = now;
+    // A can-cap clink followed by two quiet confirmation tones.
+    this._thump(0.028, 470, 230, 0.055);
+    this._noiseBurst(0.02, 1400, 0.065, 0, 'bandpass');
+    this._thump(0.019, 520, 520, 0.085, 0.025);
+    this._thump(0.018, 690, 690, 0.08, 0.09);
+  }
+
+  zombieHit(strength = 0.5) {
+    if (!this._canPlay()) return;
+    const s = TruckAudio.clamp(strength, 0, 1);
+    const now = this.context.currentTime;
+    if (!s || now - this._lastZombieHit < 0.07) return;
+    this._lastZombieHit = now;
+    // A soft, low cartoon bump and dry dust; no vocal/gory effect.
+    this._thump(0.035 + s * 0.075, 125, 52, 0.11 + s * 0.055);
+    this._noiseBurst(0.009 + s * 0.025, 470, 0.1);
+  }
+
+  collision(strength = 0.5) {
+    if (!this._canPlay()) return;
+    const s = TruckAudio.clamp(strength, 0, 1);
+    const now = this.context.currentTime;
+    if (!s || now - this._lastCollision < 0.09) return;
+    this._lastCollision = now;
+    // Rubber/body impact with a brief, restrained metallic chassis resonance.
+    this._thump(0.04 + s * 0.13, 96, 36, 0.14 + s * 0.06);
+    this._noiseBurst(0.018 + s * 0.075, 1350, 0.075 + s * 0.1, 0, 'bandpass');
+    this._thump(s * 0.027, 730, 420, 0.06, 0.012);
+  }
+
+  result(won = true) {
+    if (!this._canPlay()) return;
+    const now = this.context.currentTime;
+    if (now - this._lastResult < 0.4) return;
+    this._lastResult = now;
+    // Compact cues fit the game's 200 ms result-to-pause transition. They use
+    // the same master gate as driving sounds and never bypass pause or mute.
+    if (won) {
+      this._thump(0.028, 220, 220, 0.12);
+      this._thump(0.023, 277.18, 277.18, 0.11, 0.035);
+      this._thump(0.025, 329.63, 329.63, 0.1, 0.075);
+    } else {
+      this._thump(0.035, 146.83, 110, 0.12);
+      this._thump(0.024, 98, 73.42, 0.1, 0.065);
+      this._noiseBurst(0.012, 320, 0.11, 0.025);
+    }
   }
 }
 window.TruckAudio = TruckAudio;

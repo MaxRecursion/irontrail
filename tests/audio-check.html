@@ -1,24 +1,124 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><title>IRONTRAIL audio validation</title><style>body{background:#19221b;color:#d6efb1;font:16px monospace;padding:30px}pre{white-space:pre-wrap}</style><h1>Audio signal validation</h1><pre id="result">Rendering...</pre><script src="../src/audio.js"></script><script>
-(async()=>{
-  const result=document.getElementById('result');
-  try {
-    async function render(muted) {
-      const audio=new TruckAudio();
-      audio.context=new OfflineAudioContext(1,48000*2,48000);
-      audio._buildGraph();audio.setMuted(muted);audio.setPaused(false);
-      audio.update({speed:18,wheelSpeed:25,throttle:1,grounded:true,airtime:0},1/60);
-      const buffer=await audio.context.startRendering();
-      const samples=buffer.getChannelData(0);let peak=0,squares=0,invalid=0;
-      for(const sample of samples){peak=Math.max(peak,Math.abs(sample));squares+=sample*sample;if(!Number.isFinite(sample))invalid++;}
-      return {peak,rms:Math.sqrt(squares/samples.length),invalid,rpm:audio.rpm,gear:audio.gear};
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>IRONTRAIL audio validation</title>
+<style>body{background:#19221b;color:#d6efb1;font:16px monospace;padding:30px}pre{white-space:pre-wrap}</style>
+<h1>Audio signal validation</h1>
+<pre id="result">Rendering…</pre>
+<script src="../src/audio.js"></script>
+<script>
+(async () => {
+  const result = document.getElementById('result');
+  const reports = {}, passes = [];
+  const assert = (condition, message) => { if (!condition) throw Error(message); };
+  const eventCalls = [
+    ['pickup', audio => audio.pickup()],
+    ['zombieHit', audio => audio.zombieHit(1)],
+    ['collision', audio => audio.collision(1)],
+    ['resultWin', audio => audio.result(true)],
+    ['resultLose', audio => audio.result(false)]
+  ];
+  function stats(samples, fromSeconds = 0) {
+    let peak = 0, squares = 0, invalid = 0;
+    const start = Math.floor(fromSeconds * 48000);
+    for (let i = start; i < samples.length; i++) {
+      const sample = samples[i];
+      if (!Number.isFinite(sample)) invalid++;
+      peak = Math.max(peak, Math.abs(sample));
+      squares += sample * sample;
     }
-    const engine=await render(false),muted=await render(true);
-    if(engine.invalid||engine.rms<.001||engine.peak>=1)throw Error('Invalid, silent or clipping engine: '+JSON.stringify(engine));
-    if(muted.peak>.00001)throw Error('Mute leaks signal: '+JSON.stringify(muted));
-    // Test public lifecycle and event suppression before browser gesture unlock.
-    const locked=new TruckAudio();locked.update({speed:0,wheelSpeed:0,throttle:0,grounded:true},.016);locked.takeoff(.5);locked.landing(.5);locked.setPaused(true);locked.setMuted(true);
-    result.textContent='PASS · Engine signal is finite, audible and below clipping.\nPASS · Mute produces silence.\nPASS · Pre-unlock update and event calls are safe.\n\n'+JSON.stringify({engine,muted},null,2);
-    document.title='PASS — IRONTRAIL audio validation';
-  }catch(error){result.textContent='FAIL · '+error.stack;document.title='FAIL — IRONTRAIL audio validation';}
+    return { peak, rms: Math.sqrt(squares / Math.max(1, samples.length - start)), invalid };
+  }
+  function finiteAndComfortable(signal, name, audible = true) {
+    assert(!signal.invalid && Number.isFinite(signal.peak) && Number.isFinite(signal.rms), name + ': non-finite samples');
+    assert(signal.peak < 0.95, name + ': clipping or excessive output ' + JSON.stringify(signal));
+    if (audible) assert(signal.rms > 0.0002 && signal.peak > 0.003, name + ': inaudible ' + JSON.stringify(signal));
+  }
+  // Offline contexts are suspended until rendering. This narrow test adapter
+  // permits event scheduling before rendering while retaining real public
+  // pause/mute guards; production still requires a running browser context.
+  class OfflineTruckAudio extends TruckAudio {
+    _canPlay() { return this._ready && !this.paused && !this.muted; }
+  }
+  function createAudio({ muted = false, paused = false, effectsOnly = false } = {}) {
+    const audio = new OfflineTruckAudio();
+    audio.context = new OfflineAudioContext(1, 48000, 48000);
+    audio._buildGraph();
+    audio.setMuted(muted);
+    audio.setPaused(paused);
+    if (effectsOnly) {
+      // Isolate event energy from the persistent engine and ambience graph.
+      for (const gain of [audio.engineGain, audio.subGain, audio.intakeGain, audio.gravel.gain, audio.wind.gain, audio.exhaustNoise.gain]) gain.gain.value = 0;
+    }
+    return audio;
+  }
+  async function render(audio) {
+    const buffer = await audio.context.startRendering();
+    return buffer.getChannelData(0);
+  }
+  try {
+    const locked = new TruckAudio();
+    locked.update({ speed: 0, wheelSpeed: 0, throttle: 0, grounded: true }, 0.016);
+    locked.takeoff(1); locked.landing(1);
+    for (const [, call] of eventCalls) call(locked);
+    locked.setPaused(true); locked.setMuted(true);
+    assert(locked._voices.size === 0 && locked.context === null, 'Pre-unlock events created audio resources');
+    passes.push('PASS · Existing and campaign APIs are safe before unlock.');
+
+    const engine = createAudio();
+    engine.update({ speed: 18, wheelSpeed: 25, throttle: 1, grounded: true, airtime: 0 }, 1 / 60);
+    reports.engine = stats(await render(engine));
+    finiteAndComfortable(reports.engine, 'Engine');
+    passes.push('PASS · Engine signal is finite, audible, and below clipping.');
+
+    const allEffects = createAudio({ effectsOnly: true });
+    for (const [name, call] of eventCalls) {
+      const audio = createAudio({ effectsOnly: true });
+      call(audio);
+      const voiceCount = audio._voices.size;
+      assert(voiceCount > 0, name + ': no event voice created');
+      call(audio);
+      assert(audio._voices.size === voiceCount, name + ': repeated same-frame callback escaped cooldown');
+      reports[name] = stats(await render(audio));
+      finiteAndComfortable(reports[name], name);
+      call(allEffects);
+    }
+    reports.combined = stats(await render(allEffects));
+    finiteAndComfortable(reports.combined, 'Combined campaign effects');
+    passes.push('PASS · Fuel, zombie, collision, win, and loss cues are audible; stacked impacts stay finite and below clipping.');
+    passes.push('PASS · Same-frame repeated event callbacks are suppressed.');
+
+    for (const flag of ['muted', 'paused']) {
+      const audio = createAudio({ [flag]: true });
+      audio.update({ speed: 24, wheelSpeed: 32, throttle: 1, grounded: false, airtime: 1 }, 1 / 30);
+      audio.takeoff(1); audio.landing(1);
+      for (const [, call] of eventCalls) call(audio);
+      assert(audio._voices.size === 0, flag + ': event scheduling was not suppressed');
+      reports[flag] = stats(await render(audio));
+      assert(reports[flag].invalid === 0 && reports[flag].peak < 0.00001, flag + ': signal leaked ' + JSON.stringify(reports[flag]));
+    }
+    passes.push('PASS · Mute and pause suppress both engine output and all event scheduling.');
+
+    const interrupted = createAudio({ effectsOnly: true });
+    interrupted.result(true); interrupted.pickup(); interrupted.collision(1);
+    assert(interrupted._voices.size > 0, 'Interruption test did not schedule voices');
+    interrupted.setPaused(true);
+    interrupted.zombieHit(1);
+    // Resume immediately: previously scheduled tones must still end at the
+    // pause cutoff, rather than resurfacing when the master gate reopens.
+    interrupted.setPaused(false);
+    const interruptedSamples = await render(interrupted);
+    reports.afterPauseResume = stats(interruptedSamples, 0.08);
+    assert(reports.afterPauseResume.invalid === 0 && reports.afterPauseResume.peak < 0.00001,
+      'Paused event tail resurfaced on resume: ' + JSON.stringify(reports.afterPauseResume));
+    passes.push('PASS · Pause cancels pending result/impact voices; resuming cannot replay their tails.');
+
+    result.textContent = passes.join('\n') + '\n\n' + JSON.stringify(reports, null, 2);
+    document.title = 'PASS — IRONTRAIL audio validation';
+  } catch (error) {
+    result.textContent = passes.join('\n') + '\nFAIL · ' + error.stack + '\n\n' + JSON.stringify(reports, null, 2);
+    document.title = 'FAIL — IRONTRAIL audio validation';
+  }
 })();
-</script></html>
+</script>
+</html>

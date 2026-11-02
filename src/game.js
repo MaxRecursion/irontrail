@@ -1,197 +1,198 @@
-/* IRONTRAIL presentation and game loop. Edit sources, then run python3 build.py. */
+/* IRONTRAIL campaign, presentation and game loop. Rebuild with python3 build.py. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const canvas = $('gameCanvas'), ctx = canvas.getContext('2d');
-  const physics = new TruckPhysics(), audio = new TruckAudio();
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const lerp = (a, b, t) => a + (b - a) * t;
-  const fract = n => n - Math.floor(n);
-  const rand = n => fract(Math.sin(n * 127.1 + 311.7) * 43758.5453);
+  const canvas = $('gameCanvas'), ctx = canvas.getContext('2d'), audio = new TruckAudio();
+  const stages = TruckPhysics.STAGES;
+  const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+  const lerp = (a,b,t) => a+(b-a)*t;
+  const fract = n => n-Math.floor(n);
+  const rand = n => fract(Math.sin(n*127.1+311.7)*43758.5453);
   const fmtTime = seconds => {
-    const cs = Math.floor(seconds * 100 + 0.00001);
-    return `${String(Math.floor(cs / 6000)).padStart(2, '0')}:${String(Math.floor(cs / 100) % 60).padStart(2, '0')}.${String(cs % 100).padStart(2, '0')}`;
+    const cs=Math.floor(seconds*100+.00001);
+    return `${String(Math.floor(cs/6000)).padStart(2,'0')}:${String(Math.floor(cs/100)%60).padStart(2,'0')}.${String(cs%100).padStart(2,'0')}`;
   };
-  let mode = 'ready', time = 0, bestAir = 0, checkpoint = 0, recoveries = 0;
-  let bestTime = null, width = 0, height = 0, scale = 40, baseScale = 40;
-  let groundRatio = .77;
-  let camera = { x: 0, y: 0 }, last = performance.now(), accumulator = 0;
-  let state = physics.getState(), shake = 0, toastUntil = 0, particles = [];
-  let dustClock = 0, flippedTime = 0, hudClock = 0, offscreenRecoveryClock = 0;
-  const keys = new Set(), pointers = new Map();
-  const STEP = 1 / 120;
-  try { const stored = Number(localStorage.getItem('irontrail-best-v2')); if (stored > 0 && Number.isFinite(stored)) bestTime = stored; } catch (_) { /* Private/file mode can deny storage. */ }
-  function updateBest() { $('bestValue').textContent = bestTime ? `${fmtTime(bestTime)} · Redstone run` : 'Your story starts here'; }
-  updateBest();
-  $('lengthValue').textContent = physics.track.length;
-  const markers = physics.track.checkpoints.slice(1).map((cp, i) => {
-    const el = document.createElement('span'); el.className = 'progress-check';
-    el.style.left = `${(cp.x - physics.track.startX) / physics.track.length * 100}%`; el.title = `Checkpoint ${i + 1}`;
-    $('progressChecks').appendChild(el); return el;
-  });
-
-  function resize() {
-    const rect = canvas.getBoundingClientRect(); width = rect.width; height = rect.height;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    baseScale = clamp(width / 28, 20, 42);
-    scale = baseScale;
-    if (mode === 'ready') camera = { x: state.x + width / scale * .21, y: 0 };
-  }
-  new ResizeObserver(resize).observe($('scene'));
-  window.addEventListener('resize', resize);
-
-  function input() {
-    const active = name => [...pointers.values()].includes(name);
-    const gas = keys.has('ArrowUp') || keys.has('KeyW') || active('gas');
-    const reverse = keys.has('ArrowDown') || keys.has('KeyS') || active('reverse');
-    return { throttle: Number(gas) - Number(reverse), brake: keys.has('Space') || active('brake'),
-      lean: Number(keys.has('ArrowRight') || keys.has('KeyD') || active('right')) - Number(keys.has('ArrowLeft') || keys.has('KeyA') || active('left')) };
-  }
-  function clearInput() { keys.clear(); pointers.clear(); document.querySelectorAll('.pedal').forEach(b => b.classList.remove('pressed')); }
-  function showToast(message, duration = 2) { $('toast').textContent = message; $('toast').classList.add('show'); toastUntil = performance.now() + duration * 1000; }
-  function setOverlay(kicker, title, copy, button, hint) {
-    $('overlayKicker').textContent = kicker; $('overlayTitle').innerHTML = title;
-    $('overlayCopy').textContent = copy; $('playLabel').textContent = button;
-    $('overlayHint').textContent = hint; $('overlay').hidden = false;
-  }
-  function syncPauseButton() {
-    $('pauseButton').disabled = mode === 'ready' || mode === 'finished';
-    $('pauseButton').setAttribute('aria-label', mode === 'paused' ? 'Resume game' : 'Pause game');
-    $('pauseButton').innerHTML = mode === 'paused' ? '<svg viewBox="0 0 24 24"><path d="m8 5 11 7-11 7z"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg>';
-  }
-  function begin() {
-    // Invoke unlock before any await, inside the actual input gesture.
-    audio.unlock().then(ok => { if (!ok && !audio.muted) showToast('Audio unavailable · the trail is still open', 3); });
-    if (mode === 'finished') restart(false);
-    mode = 'playing'; audio.setPaused(false); $('overlay').hidden = true;
-    $('pauseBackdrop').classList.remove('visible'); accumulator = 0; last = performance.now();
-    syncPauseButton();
-  }
-  function pause() {
-    if (mode === 'playing') {
-      mode = 'paused'; audio.setPaused(true); clearInput();
-      setOverlay('TAKE A BREATHER', 'PARKED.<br>FOR NOW.', 'The trail will be right here when you are ready.', 'Back to the trail', 'P / ESC TO RESUME');
-      $('pauseBackdrop').classList.add('visible'); syncPauseButton();
-    } else if (mode === 'paused') begin();
-  }
-  function restart(ready = false) {
-    const wasReady = mode === 'ready'; physics.reset(); state = physics.getState();
-    time = 0; bestAir = 0; checkpoint = 0; recoveries = 0; particles = []; shake = 0;
-    accumulator = 0; flippedTime = 0; offscreenRecoveryClock = 0; clearInput();
-    camera = { x: state.x + width / scale * .21, y: 0 }; audio.rpm = 820;
-    $('recoverButton').classList.remove('visible'); $('toast').classList.remove('show');
-    if (ready || wasReady) { mode = 'ready'; audio.setPaused(true); }
-    else { audio.unlock(); mode = 'playing'; audio.setPaused(false); $('overlay').hidden = true; $('pauseBackdrop').classList.remove('visible'); }
-    syncPauseButton(); updateHUD();
-  }
-  function recover() {
-    if (mode !== 'playing') return;
-    physics.reset(physics.checkpointIndex); state = physics.getState(); recoveries++;
-    camera = { x: state.x + width / scale * .21, y: Math.max(0, state.y - 2.5) };
-    particles = []; flippedTime = 0; offscreenRecoveryClock = 0; accumulator = 0;
-    $('recoverButton').classList.remove('visible'); showToast('BACK ON TRACK · checkpoint recovered');
-  }
-  function finish() {
-    mode = 'finished'; clearInput(); audio.setPaused(true);
-    const newBest = bestTime === null || time < bestTime;
-    if (newBest) { bestTime = time; try { localStorage.setItem('irontrail-best-v2', String(time)); } catch (_) {} updateBest(); }
-    setOverlay(newBest ? 'A NEW PERSONAL BEST' : 'REDSTONE RUN · COMPLETE', 'TRAIL.<br>CONQUERED.', `${fmtTime(time)} on the clock. ${bestAir.toFixed(2)}s of best air. ${recoveries ? `${recoveries} checkpoint ${recoveries === 1 ? 'recovery' : 'recoveries'}.` : 'One clean ride.'}`, 'Take another run', 'THE DIRT IS ALWAYS CALLING.');
-    $('pauseBackdrop').classList.add('visible'); $('recoverButton').classList.remove('visible'); syncPauseButton(); updateHUD();
-  }
-  function toggleSound() {
-    audio.setMuted(!audio.muted);
-    if (!audio.muted && mode === 'playing') audio.unlock();
-    $('soundButton').setAttribute('aria-label', audio.muted ? 'Enable sound' : 'Mute sound');
-    $('soundButton').setAttribute('aria-pressed', String(audio.muted));
-    $('soundButton').innerHTML = `<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z${audio.muted ? 'M17 9l5 6M22 9l-5 6' : 'M17 8q4 4 0 8M20 5q7 7 0 14'}"/></svg><span class="sound-label">SOUND ${audio.muted ? 'OFF' : 'ON'}</span>`;
-  }
-  async function fullscreen() {
-    try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else if ($('gameShell')?.requestFullscreen) await $('gameShell').requestFullscreen();
-      else if (document.querySelector('.game-shell').requestFullscreen) await document.querySelector('.game-shell').requestFullscreen();
-      else showToast('Fullscreen is unavailable in this browser');
-    } catch (_) { showToast('Fullscreen is unavailable in this preview'); }
-  }
-  document.addEventListener('fullscreenchange', () => {
-    $('fullscreenButton').setAttribute('aria-label', document.fullscreenElement ? 'Exit fullscreen' : 'Enter fullscreen'); resize();
-  });
-  $('playButton').addEventListener('click', begin); $('pauseButton').addEventListener('click', pause);
-  $('restartButton').addEventListener('click', () => { if (mode === 'playing' || mode === 'paused' || mode === 'finished') audio.unlock(); restart(); });
-  $('soundButton').addEventListener('click', toggleSound); $('fullscreenButton').addEventListener('click', fullscreen);
-  $('recoverButton').addEventListener('click', recover);
-  const controlCodes = new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD','Space','KeyR','KeyC','KeyP','KeyM','KeyF','Escape','Enter']);
-  window.addEventListener('keydown', e => {
-    if (e.ctrlKey || e.metaKey || e.altKey || !controlCodes.has(e.code)) return;
-    // Keep focused button activation native; global Space only brakes in play.
-    if (e.target instanceof HTMLButtonElement && (e.code === 'Enter' || (e.code === 'Space' && mode !== 'playing'))) return;
-    e.preventDefault();
-    if (!e.repeat) {
-      if (e.code === 'KeyM') return toggleSound();
-      if (e.code === 'KeyF') return fullscreen();
-      if (e.code === 'KeyR') { restart(); return; }
-      if (e.code === 'KeyC') { recover(); return; }
-      if (e.code === 'KeyP' || e.code === 'Escape') { pause(); return; }
-      if (e.code === 'Enter' && mode !== 'playing') { begin(); return; }
-      if ((e.code === 'ArrowUp' || e.code === 'KeyW') && mode === 'ready') begin();
+  const STORAGE_KEY = 'irontrail-campaign-v1';
+  let campaign = {unlocked:1,completed:[],best:{},selected:0};
+  try {
+    const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
+    if(saved&&typeof saved==='object') {
+      campaign.unlocked=clamp(Math.floor(Number(saved.unlocked)||1),1,10);
+      campaign.completed=Array.isArray(saved.completed)?saved.completed.filter(n=>Number.isInteger(n)&&n>=0&&n<10):[];
+      if(saved.best&&typeof saved.best==='object') for(let i=0;i<10;i++) if(Number.isFinite(saved.best[i])&&saved.best[i]>0) campaign.best[i]=saved.best[i];
+      campaign.selected=clamp(Math.floor(Number(saved.selected)||0),0,campaign.unlocked-1);
     }
-    if (mode === 'playing') keys.add(e.code);
-  });
-  window.addEventListener('keyup', e => { keys.delete(e.code); });
-  document.querySelectorAll('.pedal').forEach(button => {
-    button.addEventListener('pointerdown', e => {
-      e.preventDefault(); if (mode !== 'playing') return;
-      button.setPointerCapture(e.pointerId); pointers.set(e.pointerId, button.dataset.input); button.classList.add('pressed');
+  } catch (_) { /* Private/file mode can deny browser storage. */ }
+  let selectedStage = campaign.selected;
+  let physics = new TruckPhysics(selectedStage);
+  let mode='ready',time=0,bestAir=0,checkpoint=0,recoveries=0;
+  let width=0,height=0,scale=40,baseScale=40,groundRatio=.77;
+  let camera={x:0,y:0},last=performance.now(),accumulator=0;
+  let state=physics.getState(),shake=0,toastUntil=0,particles=[];
+  let dustClock=0,flippedTime=0,hudClock=0,offscreenRecoveryClock=0,lowFuelWarned=false;
+  let markers=[],resultTimer=null;
+  const keys=new Set(),pointers=new Map(),STEP=1/120;
+  const saveCampaign=()=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify(campaign));}catch(_){}};
+  function updateBest(){const best=campaign.best[selectedStage];$('bestValue').textContent=best?`${fmtTime(best)} · Stage ${selectedStage+1}`:'Set the first clean time';}
+  function renderCampaign(){
+    $('stageGrid').replaceChildren();
+    stages.forEach((stage,i)=>{
+      const locked=i>=campaign.unlocked,complete=campaign.completed.includes(i);
+      const button=document.createElement('button');button.type='button';button.dataset.stage=String(i);
+      button.className=`stage-card${i===selectedStage?' current':''}${locked?' locked':''}${complete?' complete':''}${stage.boss?' boss':''}`;
+      button.disabled=locked;button.setAttribute('aria-label',`Stage ${i+1}: ${stage.name}${locked?', locked':complete?', completed':''}`);
+      button.setAttribute('aria-current',i===selectedStage?'step':'false');
+      const number=document.createElement('span');number.className='stage-card-number';number.textContent=locked?'⌁':complete?'✓':String(i+1).padStart(2,'0');
+      const name=document.createElement('span');name.className='stage-card-name';name.textContent=stage.name;
+      const meta=document.createElement('span');meta.className='stage-card-meta';meta.textContent=locked?'CLEAR THE PREVIOUS STAGE':stage.boss?'BOSS RACE · METAL ON METAL':`${stage.length} M · ${complete?'CLEARED':'SURVIVAL RUN'}`;
+      button.append(number,name,meta);button.addEventListener('click',()=>loadStage(i,true));$('stageGrid').appendChild(button);
     });
-    for (const event of ['pointerup','pointercancel','lostpointercapture']) button.addEventListener(event, e => { pointers.delete(e.pointerId); button.classList.remove('pressed'); });
-    button.addEventListener('contextmenu', e => e.preventDefault());
+    $('campaignProgress').textContent=`${campaign.completed.length} / 10 CLEARED · ${campaign.unlocked} UNLOCKED`;
+  }
+  function stageBrief(){
+    const stage=stages[selectedStage];
+    setOverlay(stage.boss?'FINAL BOSS · IRON MAW':`STAGE ${String(selectedStage+1).padStart(2,'0')} / 10 · ${stage.name.toUpperCase()}`,stage.boss?'METAL.<br>ON METAL.':'FUEL UP.<br>ROLL OUT.',stage.boss?'Beat Iron Maw to the finish. Trade paint, keep your wheels down, and grab fuel before the tank runs dry.':`${stage.length} metres of infected wilderness. Knock zombies aside and collect fuel cans to keep your V8 alive.`,'Start your engine','↑ / W TO DRIVE · CANS REFILL +32%');
+  }
+  function syncStageUI(){
+    const stage=stages[selectedStage];$('stageNumber').textContent=String(selectedStage+1).padStart(2,'0');$('stageName').textContent=stage.name.toUpperCase();
+    $('courseName').textContent=stage.boss?'Iron Maw · final showdown':stage.name;
+    $('courseSubtitle').textContent=`STAGE ${selectedStage+1} / 10 · ${stage.length} M · ${stage.boss?'HEAD-TO-HEAD':'ZOMBIE TERRITORY'}`;
+    $('lengthValue').textContent=physics.track.length;
+    $('bossHud').hidden=!stage.boss;
+    $('progressChecks').replaceChildren();markers=physics.track.checkpoints.slice(1).map((cp,i)=>{
+      const el=document.createElement('span');el.className='progress-check';el.style.left=`${(cp.x-physics.track.startX)/physics.track.length*100}%`;el.title=`Checkpoint ${i+1}`;$('progressChecks').appendChild(el);return el;
+    });
+    renderCampaign();updateBest();
+  }
+  function resize(){
+    const rect=canvas.getBoundingClientRect();width=rect.width;height=rect.height;const dpr=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+    baseScale=clamp(width/28,20,42);scale=baseScale;
+    if(mode==='ready')camera={x:state.x+width/scale*.21,y:0};
+  }
+  new ResizeObserver(resize).observe($('scene'));window.addEventListener('resize',resize);
+  function input(){
+    const active=name=>[...pointers.values()].includes(name);
+    return {throttle:Number(keys.has('ArrowUp')||keys.has('KeyW')||active('gas'))-Number(keys.has('ArrowDown')||keys.has('KeyS')||active('reverse')),
+      brake:keys.has('Space')||active('brake'),lean:Number(keys.has('ArrowRight')||keys.has('KeyD')||active('right'))-Number(keys.has('ArrowLeft')||keys.has('KeyA')||active('left'))};
+  }
+  function clearInput(){keys.clear();pointers.clear();document.querySelectorAll('.pedal').forEach(b=>b.classList.remove('pressed'));}
+  function showToast(message,duration=2){$('toast').textContent=message;$('toast').classList.add('show');toastUntil=performance.now()+duration*1000;}
+  function setOverlay(kicker,title,copy,button,hint){$('overlayKicker').textContent=kicker;$('overlayTitle').innerHTML=title;$('overlayCopy').textContent=copy;$('playLabel').textContent=button;$('overlayHint').textContent=hint;$('overlay').hidden=false;}
+  function syncPauseButton(){
+    $('pauseButton').disabled=!['playing','paused'].includes(mode);$('pauseButton').setAttribute('aria-label',mode==='paused'?'Resume game':'Pause game');
+    $('pauseButton').innerHTML=mode==='paused'?'<svg viewBox="0 0 24 24"><path d="m8 5 11 7-11 7z"/></svg>':'<svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg>';
+  }
+  function unlockAudio(){audio.unlock().then(ok=>{if(!ok&&!audio.muted&&mode==='playing')showToast('Audio unavailable · the trail is still open',3);});}
+  function begin(){
+    unlockAudio();if(resultTimer){clearTimeout(resultTimer);resultTimer=null;}
+    mode='playing';audio.setPaused(false);$('overlay').hidden=true;$('pauseBackdrop').classList.remove('visible');accumulator=0;last=performance.now();syncPauseButton();
+  }
+  function playAction(){
+    if(mode==='cleared'){loadStage(selectedStage+1,false);return;}
+    if(mode==='victory'){loadStage(0,false);return;}
+    if(mode==='failed'){restart(false);return;}
+    if(mode==='ready'||mode==='paused')begin();
+  }
+  function loadStage(index,ready=true){
+    if(index<0||index>=stages.length||index>=campaign.unlocked)return;
+    clearInput();if(resultTimer){clearTimeout(resultTimer);resultTimer=null;}
+    // New world discards old zombie bodies and keeps campaign resources separate.
+    selectedStage=index;physics=new TruckPhysics(index);campaign.selected=index;saveCampaign();
+    resetRunState();mode='ready';audio.setPaused(true);$('pauseBackdrop').classList.remove('visible');syncStageUI();stageBrief();syncPauseButton();updateHUD();
+    if(!ready)begin();else{$('playButton').focus({preventScroll:true});document.querySelector('.game-shell').scrollIntoView({behavior:'smooth',block:'start'});}
+  }
+  function resetRunState(){
+    state=physics.getState();time=0;bestAir=0;checkpoint=0;recoveries=0;particles=[];shake=0;accumulator=0;flippedTime=0;offscreenRecoveryClock=0;lowFuelWarned=false;
+    camera={x:state.x+width/scale*.21,y:0};audio.rpm=820;$('recoverButton').classList.remove('visible');$('toast').classList.remove('show');$('toast').textContent='';toastUntil=0;clearInput();
+  }
+  function restart(ready=mode==='ready'){physics.restart();resetRunState();if(ready){mode='ready';audio.setPaused(true);stageBrief();$('pauseBackdrop').classList.remove('visible');syncPauseButton();updateHUD();}else begin();}
+  function pause(){
+    if(mode==='playing'){mode='paused';audio.setPaused(true);clearInput();setOverlay(`STAGE ${selectedStage+1} · FUEL ${Math.ceil(state.fuel)}%`,'PARKED.<br>FOR NOW.','Fuel and the rival freeze while you take a breather.','Back to the trail','P / ESC TO RESUME');$('pauseBackdrop').classList.add('visible');syncPauseButton();}
+    else if(mode==='paused')begin();
+  }
+  async function chooseStage(){if(mode==='playing')pause();if(document.fullscreenElement){try{await document.exitFullscreen();}catch(_){}}$('campaignPanel').scrollIntoView({behavior:'smooth',block:'center'});}
+  function recover(){
+    if(mode!=='playing')return;
+    physics.reset(physics.checkpointIndex);state=physics.getState();recoveries++;camera={x:state.x+width/scale*.21,y:Math.max(0,state.y-2.5)};
+    particles=[];flippedTime=0;offscreenRecoveryClock=0;accumulator=0;$('recoverButton').classList.remove('visible');
+    if(physics.failed)fail(physics.failed);else showToast('CHECKPOINT RECOVERY · −12% FUEL',2);
+  }
+  function resultAudio(won){
+    audio.result(won);if(resultTimer)clearTimeout(resultTimer);
+    // Let the short result cue ring out, then gate the idling engine.
+    resultTimer=setTimeout(()=>{if(!['playing','ready'].includes(mode))audio.setPaused(true);resultTimer=null;},210);
+  }
+  function finish(){
+    if(mode!=='playing')return;
+    bestAir=Math.max(bestAir,state.airtime);
+    const final=selectedStage===9;mode=final?'victory':'cleared';clearInput();resultAudio(true);
+    const best=campaign.best[selectedStage],newBest=!best||time<best;
+    if(newBest)campaign.best[selectedStage]=time;
+    if(!campaign.completed.includes(selectedStage))campaign.completed.push(selectedStage);
+    campaign.unlocked=Math.max(campaign.unlocked,Math.min(10,selectedStage+2));saveCampaign();renderCampaign();updateBest();
+    setOverlay(final?'ALL TEN STAGES CLEARED':`STAGE ${selectedStage+1} CLEARED${newBest?' · NEW BEST':''}`,final?'KING OF THE<br>WASTELAND.':'TRAIL.<br>SURVIVED.',`${fmtTime(time)} · ${state.cleared} zombies cleared · ${Math.ceil(state.fuel)}% fuel left.${final?' Iron Maw is behind you.':` Stage ${selectedStage+2} is unlocked.`}`,final?'Ride the campaign again':`Continue to stage ${String(selectedStage+2).padStart(2,'0')}`,final?'TEN STAGES. ONE SURVIVOR.':`${stages[Math.min(9,selectedStage+1)].name.toUpperCase()} IS WAITING`);
+    $('pauseBackdrop').classList.add('visible');$('recoverButton').classList.remove('visible');syncPauseButton();updateHUD();
+  }
+  function fail(reason){
+    if(mode!=='playing')return;mode='failed';clearInput();resultAudio(false);
+    const fuel=reason==='fuel';setOverlay(fuel?'THE TANK RAN DRY':'IRON MAW TOOK THE FLAG',fuel?'EMPTY TANK.<br>TRY AGAIN.':'OUTRUN.<br>OUTMUSCLE.',fuel?'Keep moving and collect the amber fuel cans. A fresh retry restores your tank and the pickups.':'Iron Maw reached the finish first. Use your launch speed and physical bumps to take the lead.','Retry this stage',fuel?'FUEL DRAINS WHILE DRIVING · CANS REFILL +32%':'YOUR RIVAL HAS REAL SUSPENSION. SO DO YOU.');
+    $('pauseBackdrop').classList.add('visible');$('recoverButton').classList.remove('visible');syncPauseButton();updateHUD();
+  }
+  function toggleSound(){
+    audio.setMuted(!audio.muted);if(!audio.muted&&mode==='playing')audio.unlock();$('soundButton').setAttribute('aria-label',audio.muted?'Enable sound':'Mute sound');$('soundButton').setAttribute('aria-pressed',String(audio.muted));
+    $('soundButton').innerHTML=`<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z${audio.muted?'M17 9l5 6M22 9l-5 6':'M17 8q4 4 0 8M20 5q7 7 0 14'}"/></svg><span class="sound-label">SOUND ${audio.muted?'OFF':'ON'}</span>`;
+  }
+  async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else if(document.querySelector('.game-shell').requestFullscreen)await document.querySelector('.game-shell').requestFullscreen();else showToast('Fullscreen is unavailable in this browser');}catch(_){showToast('Fullscreen is unavailable in this preview');}}
+  document.addEventListener('fullscreenchange',()=>{$('fullscreenButton').setAttribute('aria-label',document.fullscreenElement?'Exit fullscreen':'Enter fullscreen');resize();});
+  $('playButton').addEventListener('click',playAction);$('pauseButton').addEventListener('click',pause);$('restartButton').addEventListener('click',()=>restart());$('soundButton').addEventListener('click',toggleSound);$('fullscreenButton').addEventListener('click',fullscreen);$('recoverButton').addEventListener('click',recover);$('stagesButton').addEventListener('click',chooseStage);$('mapButton').addEventListener('click',chooseStage);
+  const controlCodes=new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD','Space','KeyR','KeyC','KeyP','KeyM','KeyF','Escape','Enter']);
+  window.addEventListener('keydown',e=>{
+    if(e.ctrlKey||e.metaKey||e.altKey||!controlCodes.has(e.code))return;
+    if(e.target instanceof HTMLButtonElement&&(e.code==='Enter'||(e.code==='Space'&&mode!=='playing')))return;
+    e.preventDefault();if(!e.repeat){if(e.code==='KeyM')return toggleSound();if(e.code==='KeyF')return fullscreen();if(e.code==='KeyR')return restart();if(e.code==='KeyC')return recover();if(e.code==='KeyP'||e.code==='Escape')return pause();if(e.code==='Enter'&&mode!=='playing')return playAction();if((e.code==='ArrowUp'||e.code==='KeyW')&&mode==='ready')begin();}
+    if(mode==='playing')keys.add(e.code);
   });
-  window.addEventListener('blur', () => { clearInput(); if (mode === 'playing') pause(); });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) { clearInput(); if (mode === 'playing') pause(); } });
-
-  function addDust(x, y, count, power = 1) {
-    for (let i = 0; i < count; i++) particles.push({ x, y, vx: -2 - Math.random() * 3 * power, vy: .3 + Math.random() * 2 * power,
-      r: .04 + Math.random() * .13, life: .45 + Math.random() * .55, maxLife: 1, type: 'dust' });
-    if (particles.length > 220) particles.splice(0, particles.length - 220);
+  window.addEventListener('keyup',e=>keys.delete(e.code));
+  document.querySelectorAll('.pedal').forEach(button=>{
+    button.addEventListener('pointerdown',e=>{e.preventDefault();if(mode!=='playing')return;button.setPointerCapture(e.pointerId);pointers.set(e.pointerId,button.dataset.input);button.classList.add('pressed');});
+    for(const event of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(event,e=>{pointers.delete(e.pointerId);button.classList.remove('pressed');});button.addEventListener('contextmenu',e=>e.preventDefault());
+  });
+  window.addEventListener('blur',()=>{clearInput();if(mode==='playing')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();if(mode==='playing')pause();}});
+  function addDust(x,y,count,power=1,color='#d0ce96'){
+    for(let i=0;i<count;i++)particles.push({x,y,vx:-2-Math.random()*3*power,vy:.3+Math.random()*2*power,r:.04+Math.random()*.13,life:.45+Math.random()*.55,color});
+    if(particles.length>220)particles.splice(0,particles.length-220);
   }
-  function tick(dt) {
-    const controls = input(); physics.step(dt, controls); state = physics.getState(); time += dt;
-    for (const event of physics.drainEvents()) {
-      if (event.type === 'takeoff') { audio.takeoff(event.strength); }
-      if (event.type === 'land') {
-        bestAir = Math.max(bestAir, event.airtime || 0);
-        audio.landing(event.strength); shake = Math.max(shake, event.strength * 5);
-        for (const wheel of state.wheels) addDust(wheel.x, wheel.y - .63, 13, event.strength + .5);
-        if (event.airtime > .65) showToast(`NICE AIR · ${event.airtime.toFixed(2)} SECONDS`, 1.5);
-      }
+  function tick(dt){
+    const controls=input();physics.step(dt,controls);state=physics.getState();time+=dt;
+    for(const event of physics.drainEvents()){
+      if(event.type==='takeoff')audio.takeoff(event.strength);
+      if(event.type==='land'){bestAir=Math.max(bestAir,event.airtime||0);audio.landing(event.strength);shake=Math.max(shake,event.strength*5);for(const wheel of state.wheels)addDust(wheel.x,wheel.y-.63,10,event.strength+.5);}
+      if(event.type==='fuel'){audio.pickup();lowFuelWarned=false;showToast(`FUEL CAN · +${Math.round(event.amount??32)}%`,1.1);addDust(event.x,event.y,9,.7,'#e6c57c');}
+      if(event.type==='zombie'){audio.zombieHit(event.strength);addDust(event.x,event.y,7,.65,'#99b879');}
+      if(event.type==='collision'){audio.collision(event.strength);shake=Math.max(shake,event.strength*7);addDust(event.x||state.x,event.y||state.y,10,event.strength,'#d0b77d');}
     }
-    if (physics.checkpointIndex > checkpoint) { checkpoint = physics.checkpointIndex; showToast(`CHECKPOINT ${checkpoint} · KEEP IT ROLLING`, 2); }
-    dustClock += dt;
-    if (dustClock > .035 && state.grounded && Math.abs(state.speed) > 1) {
-      dustClock = 0; for (const wheel of state.wheels) addDust(wheel.x, wheel.y - .65, 1, Math.min(1.5, Math.abs(state.speed) / 12));
-    }
-    const angle = Math.abs(Math.atan2(Math.sin(state.angle), Math.cos(state.angle)));
-    if (angle > 1.7 && Math.abs(state.speed) < 2) flippedTime += dt; else flippedTime = 0;
-    $('recoverButton').classList.toggle('visible', flippedTime > 1.2 || state.y < -3);
-    if (state.y < -9 || state.x < -31) offscreenRecoveryClock += dt; else offscreenRecoveryClock = 0;
-    if (offscreenRecoveryClock > .45) recover();
-    if (physics.finished) finish();
+    if(physics.checkpointIndex>checkpoint){checkpoint=physics.checkpointIndex;showToast(`CHECKPOINT ${checkpoint} · RECOVERY SAVED`,1.7);}
+    if(state.fuel<23&&!lowFuelWarned){showToast('LOW FUEL · FIND AN AMBER CAN',2);lowFuelWarned=true;}
+    dustClock+=dt;if(dustClock>.035&&state.grounded&&Math.abs(state.speed)>1){dustClock=0;for(const wheel of state.wheels)addDust(wheel.x,wheel.y-.65,1,Math.min(1.5,Math.abs(state.speed)/12));}
+    const angle=Math.abs(Math.atan2(Math.sin(state.angle),Math.cos(state.angle)));
+    if(angle>1.7&&Math.abs(state.speed)<2)flippedTime+=dt;else flippedTime=0;
+    $('recoverButton').classList.toggle('visible',flippedTime>1.2||state.y<-3);
+    if(state.y<-9||state.x<-31)offscreenRecoveryClock+=dt;else offscreenRecoveryClock=0;
+    if(physics.failed){fail(physics.failed);return;}
+    if(physics.finished){finish();return;}
+    if(offscreenRecoveryClock>.45)recover();
   }
-  function updateHUD() {
-    $('timeValue').textContent = fmtTime(time); $('airValue').innerHTML = `${bestAir.toFixed(2)} <small>s</small>`;
-    $('speedValue').textContent = String(Math.round(Math.abs(state.speed) * 3.6)).padStart(2, '0');
-    $('gearValue').textContent = mode === 'ready' ? 'N' : audio.gear;
-    const distance = clamp(state.x - physics.track.startX, 0, physics.track.length);
-    const progress = distance / physics.track.length * 100;
-    $('distanceValue').textContent = Math.floor(distance);
-    if (mode === 'finished') $('distanceValue').textContent = physics.track.length;
-    $('progressFill').style.width = `${mode === 'finished' ? 100 : progress}%`;
-    markers.forEach((m, i) => m.classList.toggle('passed', checkpoint > i));
-    $('checkpointLabel').textContent = mode === 'finished' ? 'TRAIL COMPLETE' : checkpoint ? `CHECKPOINT ${checkpoint} / ${markers.length}` : 'FIND YOUR LINE';
-    $('driveStatus').textContent = mode === 'ready' ? 'READY TO ROLL' : mode === 'paused' ? 'ENGINE PAUSED' : mode === 'finished' ? 'TRAIL CONQUERED' : !state.grounded && state.airtime > .15 ? 'CATCHING SOME AIR' : Math.abs(state.speed) < 1 ? 'OPEN THROTTLE. GO.' : input().brake ? 'EASY ON THE BRAKES' : 'LEAVE A LITTLE DUST';
-    $('rpmMeter').querySelectorAll('i').forEach((bar, i) => bar.classList.toggle('active', mode !== 'ready' && i < (audio.rpm / 5200 * 10)));
+  function updateHUD(){
+    $('bossHud').hidden=!state.rival||mode!=='playing';
+    $('timeValue').textContent=fmtTime(time);$('airValue').innerHTML=`${bestAir.toFixed(2)} <small>s</small>`;$('speedValue').textContent=String(Math.round(Math.abs(state.speed)*3.6)).padStart(2,'0');$('gearValue').textContent=mode==='ready'?'N':audio.gear;
+    const distance=clamp(state.x-physics.track.startX,0,physics.track.length),won=mode==='cleared'||mode==='victory';
+    $('distanceValue').textContent=won?physics.track.length:Math.floor(distance);$('progressFill').style.width=`${won?100:distance/physics.track.length*100}%`;markers.forEach((m,i)=>m.classList.toggle('passed',checkpoint>i));
+    $('checkpointLabel').textContent=won?'STAGE CLEAR':checkpoint?`CHECKPOINT ${checkpoint} / ${markers.length}`:'FOLLOW THE FUEL CANS';
+    $('fuelValue').textContent=`${Math.ceil(state.fuel)}%`;$('fuelFill').style.width=`${state.fuel}%`;$('fuelHud').classList.toggle('low',state.fuel<23);$('fuelHud').classList.toggle('critical',state.fuel<12);$('fuelMeter').setAttribute('aria-valuenow',String(Math.ceil(state.fuel)));$('zombieValue').textContent=`${state.cleared} / ${state.totalZombies}`;
+    if(state.rival){const gap=state.x-state.rival.x;$('bossPosition').textContent=gap>=0?'1 / 2':'2 / 2';$('bossGap').textContent=`${Math.abs(gap).toFixed(0)} M ${gap>=0?'AHEAD':'BEHIND'}`;$('bossProgress').style.width=`${clamp((state.rival.x-physics.track.startX)/physics.track.length*100,0,100)}%`;$('bossProgress').title=`Iron Maw: ${Math.floor(clamp(state.rival.x-physics.track.startX,0,physics.track.length))} / ${physics.track.length} m`;}
+    $('driveStatus').textContent=mode==='ready'?'READY TO SURVIVE':mode==='paused'?'ENGINE PAUSED':won?'STAGE CONQUERED':mode==='failed'?'RETRY. RECLAIM THE TRAIL.':state.fuel<23?'LOW FUEL · KEEP MOVING':!state.grounded&&state.airtime>.15?'CATCHING SOME AIR':Math.abs(state.speed)<1?'OPEN THROTTLE. GO.':input().brake?'EASY ON THE BRAKES':'CLEAR A PATH. STAY ALIVE.';
+    $('rpmMeter').querySelectorAll('i').forEach((bar,i)=>bar.classList.toggle('active',mode!=='ready'&&i<audio.rpm/5200*10));
   }
   function sx(x) { return (x - camera.x) * scale + width / 2; }
   function sy(y) { return height * groundRatio - (y - camera.y) * scale; }
@@ -241,13 +242,15 @@
       }
       if(n%3===0){const xx=screenX+scale*.9;line([xx,screenY],[xx+4,screenY-11],'#6c875b',1);line([xx,screenY],[xx-6,screenY-8],'#6c875b',1);}
     }
-    // Trail distance signs and ramp warnings.
-    for(const x of [55,86,165,212,283,326,402]) {
-      if(x<left||x>right)continue;const y=heightAt(x);const px=sx(x),py=sy(y);
-      line([px,py],[px,py-1.55*scale],'#5e6545',3);
-      const isRamp=[86,212,326].includes(x);const s=scale*.34;
-      if(isRamp){path([[px,py-scale*2.16],[px+s*1.1,py-scale*1.55],[px-s*1.1,py-scale*1.55]],'#e3cf76','#6a7145',1.5);line([px-s*.5,py-scale*1.7],[px+s*.4,py-scale*1.94],'#4f6244',2);}
-      else{ctx.fillStyle='#344f3b';ctx.fillRect(px-scale*.52,py-scale*1.95,scale*1.04,scale*.5);ctx.font=`bold ${Math.max(8,scale*.17)}px monospace`;ctx.textAlign='center';ctx.fillStyle='#e5e8bb';ctx.fillText(`${x} M`,px,py-scale*1.63);}
+    // Each launch face gets a warning; distance signs follow this stage's course.
+    const signs=[];
+    for(let distance=50;distance<physics.track.length;distance+=100)signs.push({x:physics.track.startX+distance,label:`${distance} M`});
+    for(const segment of physics.track.segments.slice(0,-1))signs.push({x:segment[segment.length-1].x-5,label:'JUMP'});
+    for(const sign of signs){
+      const x=sign.x;if(x<left||x>right)continue;const y=heightAt(x),px=sx(x),py=sy(y),r=scale*.36;
+      line([px,py],[px,py-scale*1.55],'#5e6545',3);
+      if(sign.label==='JUMP'){path([[px,py-scale*2.16],[px+r*1.1,py-scale*1.55],[px-r*1.1,py-scale*1.55]],'#e3cf76','#6a7145',1.5);line([px-r*.5,py-scale*1.7],[px+r*.4,py-scale*1.94],'#4f6244',2);}
+      else{ctx.fillStyle='#344f3b';ctx.fillRect(px-scale*.52,py-scale*1.95,scale*1.04,scale*.5);ctx.font=`bold ${Math.max(8,scale*.17)}px monospace`;ctx.textAlign='center';ctx.fillStyle='#e5e8bb';ctx.fillText(sign.label,px,py-scale*1.63);}
     }
     for(let i=0;i<physics.track.checkpoints.length;i++) drawFlag(physics.track.checkpoints[i],i);
     drawFinish();
@@ -259,7 +262,7 @@
     ctx.font=`bold ${scale*.22}px monospace`;ctx.textAlign='center';ctx.fillStyle='#3a593d';ctx.fillText(index===0?'GO':String(index).padStart(2,'0'),px+scale*.36,py-scale*2.77);
   }
   function drawFinish() {
-    const x=sx(physics.track.finishX),y=sy(0),s=scale;
+    const x=sx(physics.track.finishX),y=sy(heightAt(physics.track.finishX)),s=scale;
     if(x < -160 || x>width+160)return;
     for(const offset of [-1,1]) {line([x+offset*s*1.4,y],[x+offset*s*1.4,y-s*5],'#3d5946',s*.1);}
     ctx.fillStyle='#233d2d';ctx.fillRect(x-s*1.47,y-s*5.05,s*2.94,s*.8);
@@ -287,55 +290,105 @@
       for(let n=Math.ceil(visible[0].x*1.7);n<visible[visible.length-1].x*1.7;n++){if(rand(n+123)<.55)continue;const wx=n/1.7;const x=sx(wx),y=sy(heightAt(wx));const h=2+rand(n+444)*4;line([x-2,y],[x-4,y-h],'#5c7544',1.3);line([x,y],[x+1,y-h-2],'#6b8047',1.3);}
     }
   }
-  function drawTruck() {
-    const s=scale,x=sx(state.x),y=sy(state.y);
+  function drawTruck(truck=state,rival=false) {
+    const s=scale,x=sx(truck.x),y=sy(truck.y);
+    if(x < -180 || x > width+180)return;
+    const paint=rival?'#bb644a':'#ccdb78',door=rival?'#a75341':'#bfce67',hood=rival?'#d88a62':'#e2e69d';
     // Elliptical ground shadow is separate from the rigid body's rotation.
-    if(state.y-heightAt(state.x)<5){ctx.save();ctx.globalAlpha=clamp(.22-(state.y-heightAt(state.x)-1)*.035,.04,.23);ctx.fillStyle='#243d2c';ctx.beginPath();ctx.ellipse(x,sy(heightAt(state.x))+.1*s,s*2.4,s*.17,0,0,Math.PI*2);ctx.fill();ctx.restore();}
-    const local=(lx,ly)=>({x:state.x+Math.cos(state.angle)*lx-Math.sin(state.angle)*ly,y:state.y+Math.sin(state.angle)*lx+Math.cos(state.angle)*ly});
+    if(truck.y-heightAt(truck.x)<5){ctx.save();ctx.globalAlpha=clamp(.22-(truck.y-heightAt(truck.x)-1)*.035,.04,.23);ctx.fillStyle='#243d2c';ctx.beginPath();ctx.ellipse(x,sy(heightAt(truck.x))+.1*s,s*2.4,s*.17,0,0,Math.PI*2);ctx.fill();ctx.restore();}
+    const local=(lx,ly)=>({x:truck.x+Math.cos(truck.angle)*lx-Math.sin(truck.angle)*ly,y:truck.y+Math.sin(truck.angle)*lx+Math.cos(truck.angle)*ly});
     // Visible coilovers join the actual wheel bodies to the moving chassis.
     for(let i=0;i<2;i++){
-      const mount=local(i===0?-1.25:1.25,.16),w=state.wheels[i];const a=[sx(mount.x),sy(mount.y)],b=[sx(w.x),sy(w.y)];
+      const mount=local(i===0?-1.25:1.25,.16),w=truck.wheels[i];const a=[sx(mount.x),sy(mount.y)],b=[sx(w.x),sy(w.y)];
       line(a,b,'#1e3028',s*.14);line(a,b,'#a4ada0',s*.055);
       const dx=b[0]-a[0],dy=b[1]-a[1],len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;
       ctx.beginPath();ctx.moveTo(...a);for(let j=1;j<9;j++){const t=j/9,offset=j%2?3:-3;ctx.lineTo(a[0]+dx*t+nx*offset,a[1]+dy*t+ny*offset);}ctx.lineTo(...b);ctx.strokeStyle='#d0d881';ctx.lineWidth=1.5;ctx.stroke();
     }
-    ctx.save();ctx.translate(x,y);ctx.rotate(-state.angle);ctx.scale(s,-s);
+    ctx.save();ctx.translate(x,y);ctx.rotate(-truck.angle);ctx.scale(s,-s);
     const p=(points,fill,stroke,w=.025)=>path(points,fill,stroke,w);
     // Chassis, roll cage and a tough two-tone pickup body.
     p([[-2.1,-.36],[2.1,-.36],[2.1,-.19],[-2.1,-.19]],'#26392e');
-    p([[-2.12,-.12],[-2.12,.43],[-1.1,.43],[-.82,1.21],[.57,1.21],[1.14,.47],[1.87,.37],[2.13,.15],[2.13,-.1],[1.84,-.24],[-1.9,-.24]],'#ccdb78','#344e38');
+    p([[-2.12,-.12],[-2.12,.43],[-1.1,.43],[-.82,1.21],[.57,1.21],[1.14,.47],[1.87,.37],[2.13,.15],[2.13,-.1],[1.84,-.24],[-1.9,-.24]],paint,'#344e38');
     p([[-2.05,.26],[-1.1,.26],[-1.12,.46],[-2.05,.46]],'#71844c');
     p([[-1.03,.47],[-.77,1.13],[.51,1.13],[1.04,.47]],'#2e493d','#45613c');
     p([[-.77,.58],[-.67,1.03],[-.08,1.03],[-.08,.58]],'#9dbda2');
     p([[.03,.58],[.03,1.03],[.43,1.03],[.82,.58]],'#8cab92');
     p([[-.62,.64],[-.53,.97],[-.19,.97]],'#c1d2a8');
     p([[-.87,1.18],[.59,1.18],[.62,1.28],[-.83,1.28]],'#4f653b');
-    p([[-1.07,.45],[1.03,.45],[1.05,-.12],[-1.09,-.12]],'#bfce67');
+    p([[-1.07,.45],[1.03,.45],[1.05,-.12],[-1.09,-.12]],door);
     line([-.03,.48],[-.03,-.13],'#778c48',.018);line([-.9,.47],[-.9,-.13],'#7f924c',.018);
-    p([[1.04,.45],[1.86,.36],[2.06,.18],[1.14,.23]],'#e2e69d');
+    p([[1.04,.45],[1.86,.36],[2.06,.18],[1.14,.23]],hood);
     p([[-2.15,.03],[-2.15,-.21],[-1.9,-.21],[-1.9,.02]],'#374b37');
     p([[1.93,.06],[2.21,.06],[2.21,-.17],[1.98,-.17]],'#354d3d');
     p([[1.97,.23],[2.12,.15],[2.12,.04],[1.96,.04]],'#f3edb4');
     p([[-2.13,.23],[-2.02,.23],[-2.02,.05],[-2.13,.05]],'#b5744a');
     p([[-1.94,-.15],[-1.88,.06],[-1.72,.18],[-1.42,.18],[-1.2,.04],[-1.13,-.15]],'#344d36');
     p([[1.08,-.15],[1.16,.05],[1.34,.18],[1.7,.18],[1.92,.04],[1.99,-.15]],'#344d36');
-    ctx.save();ctx.scale(1,-1);ctx.fillStyle='#3b5939';ctx.font='900 .32px Arial';ctx.textAlign='center';ctx.fillText('IRON',.46,-.05);ctx.font='bold .12px monospace';ctx.fillText('TRAILBREAKER',-.45,.02);ctx.restore();
+    ctx.save();ctx.scale(1,-1);ctx.fillStyle='#3b5939';ctx.font='900 .32px Arial';ctx.textAlign='center';ctx.fillText(rival?'MAW':'IRON',.46,-.05);ctx.font='bold .12px monospace';ctx.fillText(rival?'WARLORD V8':'TRAILBREAKER',-.45,.02);ctx.restore();
     p([[-.97,.51],[-1.17,.6],[-1.17,.71],[-.94,.7]],'#344a37');
     // Exhaust stack and bumper hardware.
     line([-1.29,.4],[-1.29,1.05],'#59664d',.075);line([-1.29,1.05],[-1.42,1.12],'#59664d',.075);
+    if(rival){
+      for(let i=0;i<4;i++)p([[-.8+i*.37,1.27],[-.63+i*.37,1.58],[-.48+i*.37,1.27]],'#7d493d');
+      for(let i=0;i<3;i++)p([[2.06,-.12+i*.1],[2.37,-.04+i*.1],[2.06,.02+i*.1]],'#6a4537');
+    }
     ctx.restore();
-    for(const wheel of state.wheels) drawWheel(wheel);
+    for(const wheel of truck.wheels) drawWheel(wheel,rival);
+    if(rival){ctx.fillStyle='#a64f38';ctx.font=`bold ${Math.max(8,scale*.22)}px monospace`;ctx.textAlign='center';ctx.fillText('IRON MAW',x,y-scale*1.82);}
+
   }
-  function drawWheel(wheel) {
+  function drawWheel(wheel,rival=false) {
     const x=sx(wheel.x),y=sy(wheel.y),r=scale*.72;ctx.save();ctx.translate(x,y);ctx.rotate(-wheel.angle);
     circle(0,0,r*1.04,'#263a2d');circle(0,0,r*.91,'#314435');circle(0,0,r*.72,'#1f352c');
     for(let i=0;i<18;i++){ctx.save();ctx.rotate(i*Math.PI/9);ctx.fillStyle=i%2?'#4c5b3e':'#526044';ctx.fillRect(-r*.115,-r*.97,r*.23,r*.23);ctx.restore();}
-    circle(0,0,r*.55,'#7e8d68');circle(0,0,r*.43,'#b0ba8d');
+    circle(0,0,r*.55,rival?'#985d46':'#7e8d68');circle(0,0,r*.43,rival?'#d19a75':'#b0ba8d');
     for(let i=0;i<6;i++){const a=i*Math.PI/3;circle(Math.cos(a)*r*.31,Math.sin(a)*r*.31,r*.075,'#344c36');}
     circle(0,0,r*.15,'#445e3f');circle(0,0,r*.065,'#cdd4a2');ctx.restore();
   }
+  function nowForScene(){return time;}
+  function drawFuelCans(clock){
+    for(const can of physics.fuelCans){
+      if(can.collected)continue;const x=sx(can.x),y=sy(can.y)-Math.sin(clock*2.6+can.id)*scale*.09;
+      if(x < -45 || x>width+45)continue;
+      const glow=ctx.createRadialGradient(x,y,2,x,y,scale*1.1);glow.addColorStop(0,'#f9d97750');glow.addColorStop(1,'#f9d97700');ctx.fillStyle=glow;ctx.fillRect(x-scale*1.1,y-scale*1.1,scale*2.2,scale*2.2);
+      ctx.save();ctx.translate(x,y);ctx.rotate(-.08);ctx.scale(scale,scale);
+      path([[-.32,-.41],[.14,-.41],[.35,-.2],[.35,.39],[-.32,.39]],'#d9aa54','#795e35',.035);
+      path([[-.17,-.45],[-.17,-.61],[.11,-.61],[.11,-.45]],null,'#765a32',.06);
+      path([[.17,-.42],[.37,-.32],[.42,-.43],[.23,-.53]],'#5d6641');
+      line([-.19,-.2],[.22,.23],'#a4793d',.035);line([.22,-.2],[-.19,.23],'#a4793d',.035);
+      path([[.02,-.22],[-.1,.02],[.03,.02],[-.02,.24],[.19,-.06],[.04,-.06]],'#f7e6a2');
+      ctx.restore();ctx.fillStyle='#5c6038';ctx.textAlign='center';ctx.font=`bold ${Math.max(8,scale*.17)}px monospace`;ctx.fillText('+32%',x,y-scale*.8);
+    }
+  }
+  function drawZombies(){
+    for(const zombie of physics.zombies){
+      if(zombie.hit&&zombie.timeSinceHit>2.4)continue;
+      const x=sx(zombie.x),y=sy(zombie.y);if(x<-80||x>width+80)continue;
+      ctx.save();ctx.translate(x,y);ctx.rotate(-(zombie.angle||0));ctx.scale(scale,-scale);
+      if(zombie.hit)ctx.globalAlpha=clamp(1-(zombie.timeSinceHit||0)/2.4,0,1);
+      const gait=zombie.hit?.3:Math.sin(time*4+zombie.id)*.12;
+      const coat=zombie.id%3===0?'#56695b':zombie.id%3===1?'#7b7455':'#6c7e54';
+      // Rigid body is the torso. Draw limbs around its actual transform.
+      line([-.11,-.27],[-.14-gait,-.69],'#3a5545',.14);line([.12,-.27],[.16+gait,-.69],'#3a5545',.14);
+      line([-.16-gait,-.68],[-.31-gait,-.7],'#263f34',.13);line([.16+gait,-.68],[.33+gait,-.7],'#263f34',.13);
+      path([[-.24,.59],[.23,.59],[.27,-.33],[.06,-.28],[-.09,-.39],[-.26,-.29]],coat,'#3d5945',.025);
+      line([-.23,.2],[-.43,.04-gait],'#829d69',.13);line([-.43,.04-gait],[-.61,.13-gait],'#91ac77',.11);
+      line([.22,.2],[.42,.28+gait],'#829d69',.13);line([.42,.28+gait],[.63,.24+gait],'#91ac77',.11);
+      circle(.01,.84,.255,'#94b47c');path([[-.22,.90],[-.18,1.08],[.09,1.13],[.23,.98],[.02,1.03],[-.11,.97]],'#4c6e4d');
+      circle(-.075,.87,.05,'#293f33');circle(.105,.87,.05,'#293f33');circle(-.075,.88,.015,'#e8db90');circle(.105,.88,.015,'#e8db90');
+      line([-.05,.72],[.11,.71],'#42513b',.045);line([.03,.31],[.03,-.2],'#425b42',.022);
+      ctx.restore();
+    }
+  }
+  function drawRivalIndicator(){
+    if(!state.rival||mode!=='playing')return;
+    const x=sx(state.rival.x);if(x>40&&x<width-40)return;
+    const right=x>=width-40,px=right?width-21:21,py=height*.48;
+    path(right?[[px,py],[px-10,py-7],[px-10,py+7]]:[[px,py],[px+10,py-7],[px+10,py+7]],'#a8543c');
+    ctx.fillStyle='#6d4934';ctx.font='bold 9px monospace';ctx.textAlign=right?'right':'left';ctx.fillText('IRON MAW',right?px-17:px+17,py+3);
+  }
   function drawParticles(dt) {
-    for(let i=particles.length-1;i>=0;i--){const p=particles[i];if(mode==='playing'){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy-=dt*.7;p.life-=dt;p.r+=dt*.12;}if(p.life<=0){particles.splice(i,1);continue;}ctx.globalAlpha=clamp(p.life*.4,0,.35);circle(sx(p.x),sy(p.y),p.r*scale,'#d0ce96');}ctx.globalAlpha=1;
+    for(let i=particles.length-1;i>=0;i--){const p=particles[i];if(mode==='playing'){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy-=dt*.7;p.life-=dt;p.r+=dt*.12;}if(p.life<=0){particles.splice(i,1);continue;}ctx.globalAlpha=clamp(p.life*.4,0,.35);circle(sx(p.x),sy(p.y),p.r*scale,p.color||'#d0ce96');}ctx.globalAlpha=1;
   }
   function render(dt) {
     const touchLayout = width < 780 || window.matchMedia('(pointer:coarse)').matches;
@@ -344,7 +397,7 @@
     const targetX=state.x+width/scale*.21+clamp(state.speed*.12,-1.8,2.5);
     camera.x=lerp(camera.x,targetX,1-Math.exp(-dt*4));camera.y=lerp(camera.y,Math.max(0,state.y-2.9),1-Math.exp(-dt*3));
     ctx.save();if(shake>.05){ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=Math.exp(-dt*14);}
-    drawBackground();drawDecor();drawTerrain();drawTruck();drawParticles(dt);ctx.restore();
+    drawBackground();drawDecor();drawTerrain();drawFuelCans(nowForScene());drawZombies();if(state.rival)drawTruck(state.rival,true);drawTruck();drawParticles(dt);drawRivalIndicator();ctx.restore();
   }
   function frame(now) {
     const dt=clamp((now-last)/1000,0,.05);last=now;
@@ -358,7 +411,7 @@
     if(toastUntil&&now>toastUntil){$('toast').classList.remove('show');toastUntil=0;}
     requestAnimationFrame(frame);
   }
-  // Small read-only diagnostics object for QA and future model handoff.
-  window.irontrail = { get mode(){return mode;}, get telemetry(){return {...state,time,bestAir,checkpoint,recoveries};}, get physics(){return physics;}, get audio(){return audio;} };
-  audio.setPaused(true);resize();updateHUD();requestAnimationFrame(frame);
+  // Read-only diagnostics for QA and future model handoff.
+  window.irontrail = { get mode(){return mode;}, get telemetry(){return {...state,time,bestAir,checkpoint,recoveries};}, get physics(){return physics;}, get audio(){return audio;}, get campaign(){return JSON.parse(JSON.stringify(campaign));}, get stage(){return selectedStage+1;} };
+  syncStageUI();stageBrief();audio.setPaused(true);resize();updateHUD();requestAnimationFrame(frame);
 })();

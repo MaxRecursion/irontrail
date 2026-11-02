@@ -1,6 +1,10 @@
-# IRONTRAIL — Monster Rally
+# IRONTRAIL — Deadland Rally
 
-A complete single-page 2D monster truck rally. Open **index.html** in a modern browser and press **Start your engine**. The file contains its physics library, graphics, UI and procedural audio; it works without a network connection.
+A single-page 2D monster truck campaign through zombie country. Open **index.html** in a modern browser and press **Start your engine**. The portable file contains its physics library, graphics, interface and synthesized audio; gameplay has no network dependencies.
+
+Private playable URL: https://irontrail-monster-rally.mellowdew4.chatgpt.site
+
+The zombie campaign expansion is implemented in the local sources. Expansion verification and publication are in progress; see `HANDOFF.md` for the latest verified result.
 
 ## Play
 
@@ -8,24 +12,57 @@ A complete single-page 2D monster truck rally. Open **index.html** in a modern b
 - Down / S: reverse
 - Left / A and Right / D: balance in the air
 - Space: brake
-- C: recover at the last checkpoint (run clock continues)
-- R: new run
+- C: recover at the last checkpoint, spending **12% fuel**; the run clock continues
+- R: retry the current stage with a fresh tank and pickups
 - P / Escape: pause or resume
 - M: mute / unmute
 - F: fullscreen, where supported
 
-Phone controls are on screen. Ramps launch the truck physically. Keep the wheels under you and follow the flags to the finish. The 440 m course includes three gaps and three recovery checkpoints. Best time is stored in the browser when storage is available.
+Touch controls are on screen. Use **Choose stage** or the map icon to open the campaign. Finish a stage to unlock the next one; cleared stages remain replayable. The game saves unlocks, selected stage and per-stage best times locally when browser storage is available.
+
+Fuel drains continuously during active play, including at idle. Throttle increases consumption. Collect the amber cans along the track to restore **up to 32% fuel**, capped at 100%. Emptying the tank ends the run. Pause freezes the fuel and rival. Checkpoint recovery preserves collected cans and cleared zombies, so it never supplies a free refill.
+
+Zombies physically tumble when a truck hits them. Keep your wheels underneath you, collect fuel and reach the stage finish. Stage 10 is a race against **Iron Maw**, an AI monster truck with its own suspension and solid vehicle collisions. First truck across the line wins. Lose the race or run dry to retry the stage.
+
+## Ten-stage campaign
+
+| Stage | Route | Length | Fuel-can interval |
+| --- | --- | ---: | ---: |
+| 01 | Redstone Outbreak | 220 m | 51 m |
+| 02 | Dry Creek | 250 m | 54 m |
+| 03 | Hollow Ridge | 285 m | 57 m |
+| 04 | Graveyard Pass | 320 m | 60 m |
+| 05 | Deadwood Dunes | 355 m | 63 m |
+| 06 | Rust Canyon | 390 m | 66 m |
+| 07 | Bone Valley | 425 m | 69 m |
+| 08 | Ashen Heights | 465 m | 72 m |
+| 09 | Last Refuge | 510 m | 75 m |
+| 10 | Iron Maw Showdown | 560 m | 78 m |
+
+Routes grow longer, gaps and hills become more demanding, zombie density rises, and fuel pressure increases. Can placement is shifted onto safe ground near the nominal intervals.
 
 ## Build and validate
 
 ```sh
 python3 build.py
+node --check src/physics.js
+node --check src/audio.js
+node --check src/game.js
 node tests/physics-smoke.cjs
 python3 -m http.server 4173 --bind 127.0.0.1
 ```
 
-Open http://127.0.0.1:4173/ to play. Open http://127.0.0.1:4173/tests/audio-check.html for Web Audio signal validation. Node is only needed for the physics smoke test; no npm install is required.
+Open http://127.0.0.1:4173/ to play, and http://127.0.0.1:4173/tests/audio-check.html for Web Audio signal validation. No npm install is required. Node is needed only for JavaScript syntax and physics checks; the bundler uses the Python standard library.
 
-Edit files in `src/` and rebuild. `index.html` and `dist/index.html` are generated, identical outputs. `dist/` is the hosted static directory. Planck.js 1.5.0 is included under its MIT license in `vendor/LICENSE-planck.txt` and in the bundled HTML.
+Optional browser QA fixtures let developers inspect late stages or fuel failure without changing the shipped campaign:
 
-Read `PLAN.md` and `HANDOFF.md` for architecture, completed milestones, testing and a Claude continuation prompt.
+```sh
+python3 tests/make-browser-fixture.py --stage 10 --output boss-preview.html
+python3 tests/make-browser-fixture.py --stage 1 --fuel 1 --output fuel-preview.html
+```
+
+Open `/tests/boss-preview.html` or `/tests/fuel-preview.html` on the local server. Fixtures use the separate `irontrail-campaign-qa-only` storage key and are excluded from the hosted `dist/` output. Production campaign progress uses `irontrail-campaign-v1`.
+
+Edit `src/`, then rebuild. Generated `index.html` and `dist/index.html` must remain identical. `dist/` is the hosted static directory. Planck.js 1.5.0 is included under its MIT license in `vendor/LICENSE-planck.txt` and in the bundled HTML. Preserve the license and the single-file contract.
+
+Read `PLAN.md` and `HANDOFF.md` for architecture, current verification, remaining work and a Claude continuation prompt.

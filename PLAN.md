@@ -37,7 +37,7 @@ Do not edit generated `index.html` directly. Edit `src/`, then run `python3 buil
 8. [x] Bundle the single file and launch a local preview.
 9. [x] Validate keyboard/touch input, progression, jumps, landing, checkpoint recovery, pause/mute/restart, finish and offline loading. Fix observed issues.
 10. [x] Update HANDOFF.md with real results and any unfinished items.
-11. [ ] Package/publish private playable copy; return game and handoff links.
+11. [x] Package/publish private playable copy; return game and handoff links.
 
 ## Verification / acceptance criteria
 
@@ -62,7 +62,7 @@ Read this file and `HANDOFF.md` first. Inspect the actual sources before changin
 
 ## Status
 
-Implementation and browser QA complete. Single-file bundle is ready. Private publication is being packaged. See HANDOFF.md for exact validation and continuation instructions.
+All milestones complete. Private deployment succeeded: https://irontrail-monster-rally.mellowdew4.chatgpt.site . Single-file HTML and handoff are ready. See HANDOFF.md for exact validation and continuation instructions.
 
 ## Final tuning decisions
 
@@ -71,3 +71,52 @@ Implementation and browser QA complete. Single-file bundle is ready. Private pub
 - Best air is committed on landing. Falling into a gap does not set a jump record.
 - Mobile camera lifts the driving line above touch pedals. Fullscreen uses a flexible scene height.
 - Browser audio signal QA found a finite non-clipping engine waveform (~.26 peak) and exact silence while muted. Subjective sound realism is a future listening/tuning task if desired.
+
+# Expansion plan — zombie campaign (2 November 2026)
+
+User request: add zombies on the track, continuously depleting fuel with periodic collectible cans, and ten stages with increasing difficulty. Stage 10 is a race against another monster truck with real vehicle collisions.
+
+## Gameplay decisions
+
+- Keep the original single-file/offline delivery, visual identity, Planck suspension and Web Audio.
+- Ten named, individually selectable stages. Winning unlocks the next stage; unlocked stages and per-stage best times persist locally. Stage 1 is initially open. A campaign map shows the progression and the final boss.
+- Increase course length, terrain severity, gap size, zombie density and fuel pressure across stages. Stage 10 introduces IRON MAW, an AI-driven physical rival on the same course.
+- Zombies are stylized green characters. Physical vehicle contact knocks them into a brief cartoon tumble; no graphic effects. Track the cleared count.
+- Fuel drains during active play, with throttle adding consumption. Floating fuel cans appear at regular safe track intervals and refill the tank on contact. The level fails when the tank empties. Fuel freezes on pause and restarts on stage retry.
+- Checkpoint recovery costs fuel and run time continues. Depleted fuel never becomes a free refill through recovery; a full stage retry restores the tank/cans.
+- Rival truck has its own chassis, wheels and joints. Collision filters suppress self-collision per vehicle but permit player/rival chassis and tyre contact. Restitution, friction, mass and impulse-based effects produce a physical battle. Rival uses motor/torque AI; first across the line wins. No teleporting to overtake.
+- Fuel/lose/retry/stage-clear/campaign-win states must be explicit; the next-stage button works and the boss has a race position/distance HUD.
+
+## Expanded API / file ownership
+
+- `src/physics.js`: `TruckPhysics(stageIndex=0)`, static `STAGES`, procedural authored stage layouts, zombies, fuel pickups/depletion, rival AI/collisions, finish winner and resource telemetry/events. Own smoke tests for all stages and collision behavior.
+- `src/audio.js`: retain V8 graph and add fuel pickup, zombie impact, truck collision and stage result cues.
+- `src/shell.html`: fuel HUD, boss race HUD, ten-stage selector/progression panel, revised labels and responsive presentation.
+- `src/game.js`: campaign persistence/state transitions, physics/audio event integration, zombie/fuel/rival rendering and complete UI wiring.
+- `build.py`: unchanged four-script bundle contract; regenerate both HTML copies.
+
+## Expansion checklist
+
+1. [x] Open same hosted Site and preserve existing source/project identity.
+2. [x] Record expansion plan before implementation; agree module boundaries.
+3. [x] Implement ten tuned tracks, resource loop, zombie contact physics, rival AI and collision filtering.
+4. [x] Implement fuel/race/progression UI and persistent stage unlocks.
+5. [x] Draw zombies, cans and boss truck from simulation state; add event sound/particles.
+6. [x] Implement stage retry, fuel failure, boss loss, next-stage and campaign victory.
+7. [x] Validate all ten stages, pickups/depletion, recovery, same-vehicle filtering/cross-vehicle impacts and race outcomes; inspect browser desktop/mobile and audio.
+8. [x] Update README/HANDOFF with exact new controls, architecture and checks.
+9. [ ] Rebuild and republish the same private URL; return updated HTML and handoff.
+
+## Continuation note
+
+This expansion supersedes the original single-course scope. Keep historical verification distinguished from expansion results. Resume unchecked work in this section; avoid undoing existing work. Subagents may own individual files, but main agent owns game.js, integration, browser QA and publication.
+
+## Expansion validation results
+
+- All ten stages pass at 60 and 120 Hz. Complete campaign physics checks, all recovery gates, fuel depletion/pickup/conservation/retry, real-contact zombies, self/cross-truck filtering, two-way impulse transfer, both race outcomes, brake/reverse pass.
+- The one-second-idle headless runs finish stages1–9 in12.12–26.97 s and stage10 in29.26 s at120 Hz. Boss run includes two vehicle impacts and a minimum18.6 fuel; missing all cans fails later stages.
+- Production browser save: stage1 cleared in11.19 s, 5/5zombies,97fuel; stage2 cleared in18.72 s whilecoasting, unlock/continue buttons work and per-stage records persist.
+- Isolated browser QA fixtures (separate storage): boss won in31.30 s,26/32zombies,80fuel; actual rival crossing produced a loss/retry at30.21 s in a fixture with an initial opponent lead. Low-fuel fixture reached0, displayedfailure and retry restored100fuel.
+- Phone viewport390×844: touch throttle works, fuel drops from100to93, pause keeps time/fuel fixed, campaign scroll and HUD fit. Fullscreen styles avoid resource/pedal overlap; real devices remain untested.
+- Audio checks: engine and every new cue audible/finite/belowclipping; stacked events safe; mute/pause producezero; canceled eventtails do not reappear onresume. Inspected gameplay console hasnoerrors/warnings.
+- Final build containsfourinline scripts, uniqueUI IDs, noexternalassetdependencies andidentical index/distHTML.
