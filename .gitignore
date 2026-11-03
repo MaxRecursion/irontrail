@@ -4,3 +4,7 @@ __pycache__/
 *.tar.gz
 preview*.jpg
 tests/*-preview.html
+
+.vercel/
+.vercel
+.env*

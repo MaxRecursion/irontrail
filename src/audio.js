@@ -262,9 +262,10 @@ class TruckAudio {
     if (!this._ready) return;
     this._automationClock+=dt;if(this._automationClock<1/60)return;this._automationClock%=1/60;
     const rev = (this.rpm - 780) / 4420;
-    this._set(this.engine.frequency, this.rpm / 120, 0.045);
-    this._set(this.sub.frequency, this.rpm / 60, 0.06);
-    this._set(this.intake.frequency, this.rpm / 30, 0.055);
+    const pitch=.58+.42*Math.sqrt(TruckAudio.clamp(input?.timeScale??1,0,1));
+    this._set(this.engine.frequency, pitch*this.rpm / 120, 0.045);
+    this._set(this.sub.frequency, pitch*this.rpm / 60, 0.06);
+    this._set(this.intake.frequency, pitch*this.rpm / 30, 0.055);
     this._set(this.engineGain.gain, 0.115 + throttle * 0.065 + rev * 0.014);
     this._set(this.subGain.gain, 0.028 + throttle * 0.021);
     this._set(this.exhaustFilter.frequency, 400 + rev * 850 + throttle * 700);

@@ -15,7 +15,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const argv = process.argv.slice(2);
-const target = argv.find(a => !a.startsWith('--') && !argv[argv.indexOf(a) - 1]?.startsWith('--'));
+const target = argv.find((a, i) => !a.startsWith('--') && !(i > 0 && argv[i - 1].startsWith('--')));
 const opt = name => { const i = argv.indexOf(`--${name}`); return i >= 0 ? argv[i + 1] : undefined; };
 if (!target) { console.error('usage: node tests/page-check.mjs <page.html> [--timeout s] [--query q] [--shot file] [--eval js]'); process.exit(2); }
 const timeout = (Number(opt('timeout')) || 60) * 1000;
@@ -65,8 +65,18 @@ try {
   const s = (m, p) => send(m, p, sessionId);
   await s('Runtime.enable'); await s('Log.enable'); await s('Page.enable');
   await s('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: dpr, mobile: false });
-  const url = pathToFileURL(path.resolve(target)).href + (opt('query') ? `?${opt('query')}` : '');
+  // Targets may be local files or http(s) URLs (pages that fetch() their bundle need a local server).
+  const url = (/^https?:/.test(target) ? target : pathToFileURL(path.resolve(target)).href) + (opt('query') ? `?${opt('query')}` : '');
   await s('Page.navigate', { url });
+  if (opt('click')) {
+    // Optional: click a selector once it exists (for harnesses that start from a button).
+    const selector = JSON.stringify(opt('click'));
+    for (let i = 0; i < 240; i++) {
+      const clicked = (await s('Runtime.evaluate', { expression: `(() => { const el = document.querySelector(${selector}); if (!el || el.disabled) return false; el.click(); return true; })()`, returnByValue: true })).result.value;
+      if (clicked) break;
+      await new Promise(r => setTimeout(r, 250));
+    }
+  }
   const started = Date.now();
   let title = '';
   while (Date.now() - started < timeout) {

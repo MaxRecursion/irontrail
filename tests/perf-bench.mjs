@@ -222,6 +222,8 @@ try {
     intervalMs: { mean: +mean(intervals).toFixed(3), p50: +pct(intervals, .5).toFixed(3), p95: +pct(intervals, .95).toFixed(3), p99: +pct(intervals, .99).toFixed(3) },
     achievedFps: +(1000 / mean(intervals)).toFixed(1),
     gamePerf: await evaluate('window.__bench.perf || null'),
+    // Optional per-subsystem timings published by instrumented QA builds (window.__segs).
+    segments: await evaluate(`(() => { const s = window.__segs; if (!s || !s.frames) return null; const o = {}; for (const k in s) if (k !== 'frames') o[k] = +(s[k] / s.frames).toFixed(3); o.frames = s.frames; return o; })()`),
     pacing: await evaluate(`(() => {
       // v3 only: rendered chassis X per frame. With interpolation, on-screen velocity stays steady
       // even when frame intervals are irregular; without it, X advances in 120 Hz stair steps.

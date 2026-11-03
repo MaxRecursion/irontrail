@@ -128,3 +128,12 @@ Audio is procedural rather than recorded. Physical phones/controllers, Safari/iO
 ## Continuation prompt
 
 Continue IRONTRAIL in `/Users/akshaykulkarni/NewGame/irontrail`. Read PLAN.md, SPEC.md, HANDOFF.md and current sources/tests before editing. V3 modules and integration are complete; do not restart or regress to v2. Preserve the single offline HTML, Planck MIT license, one charge/one mandatory random giant, zombie contacts, fuel/can/recovery invariants, torque-only rival, upgrades/stars/scrap, best ghosts and existing saves. Change src files and rebuild with python3 build.py. Run relevant Node and browser harnesses; keep QA storage/fixtures outside dist. Exact full-main-thread/GPU/4×CPU budgets and physical120Hz/mobile/controller hardware checks are optional unverified follow-ups, not completed measurements. For publication reuse .openai/hosting.json and the existing private Sites project through the supported open/package/save/deploy workflow; never create a new Site or change its audience without a user request.
+
+
+## Current follow-up — shooting UX and Vercel migration
+
+Current sources preserve the user's runner changes, complete partial UI/renderer edits, and add ShotDirector in game.js. Pure Node tests cover bounded aim/shot/impact/miss, retry reset and reduced-motion bypass. Whole-world time scaling preserves120Hz steps and equal rival/fuel/run/ghost time. The render camera fits truck+target, tracer and impactring add feedback, and the engine pitch eases down with time scale. Icon cues retain screen-reader labels.
+
+Build, bundle, rules, pacing, structural render, UI and audio checks pass. Browser integration passes slow-motion flight+impact assertions, stage clear, one-charge encounter, garage/persistence/ghost/pause/retry, both mandatory-monster/fuel failure paths, boss victory and synthetic gamepad. Boss29.07s/7.92mlead; one-shot stage1clear11.91s. Render stress max169drawops.
+
+New private repo: https://github.com/MaxRecursion/irontrail . Vercel team max-recursion/project irontrail is connected. Requested domain irontrail.maxrecursion.dev is assigned, but DNS awaits a signed-in Namecheap browser session. Exact Vercel recommendation: CNAME host irontrail target1c83a48bcee72fc4.vercel-dns-017.com. User explicitly authorized browser DNS setup. No other domain records should change. Legacy Sites IDs above are historical hosting; this follow-up uses GitHub/Vercel at the user's request.

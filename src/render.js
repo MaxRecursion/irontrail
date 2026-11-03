@@ -30,7 +30,8 @@
       this._banks=[];this._bank=null;this._spriteBytes=0;this._screenBytes=0;this._baseScale=32;this._cachePPU=0;
       this._cameraX=0;this._cameraY=0;this._cameraScale=32;this._cameraVX=0;this._cameraVY=0;this._snap=true;
       this._ox=0;this._oy=0;this._left=0;this._right=0;this._top=0;this._bottom=0;
-      this._clock=0;this._trauma=0;this._zoomPunch=0;this._kick=0;this._muzzle=0;this._flashTime=0;this._flashDuration=1;this._flashColor='#fff2c4';
+      this._clock=0;this._worldClock=0;this._trauma=0;this._zoomPunch=0;this._kick=0;this._muzzle=0;this._flashTime=0;this._flashDuration=1;this._flashColor='#fff2c4';
+      this._impactTime=0;this._impactX=0;this._impactY=0;this._focus=0;this._worldDetail=2;
       this._particles=new Float32Array(MAX_PARTICLES*PS);this._particleHead=0;this._particleCount=0;
       this._popupData=new Float32Array(POPUPS*5);this._popupText=new Array(POPUPS).fill('');this._popupHead=0;
       this._fallbackPose=new Float64Array(64);this._scratch=new Float64Array(3);this._screenPoint=new Float64Array(2);
@@ -51,7 +52,7 @@
       const length=Math.max(21,finite(physics.poseLength,3*(7+(physics.zombies?physics.zombies.length:0))));
       if(this._fallbackPose.length<length)this._fallbackPose=new Float64Array(length);
       this._particles.fill(0);this._popupData.fill(0);this._particleCount=0;this._dustClock=0;this._exhaustClock=0;this._weatherClock=0;
-      this._kick=0;this._muzzle=0;this._trauma=0;this._clock=0;this.snapCamera();
+      this._kick=0;this._muzzle=0;this._trauma=0;this._clock=0;this._worldClock=0;this._impactTime=0;this._focus=0;this.snapCamera();
     }
     resize(cssWidth,cssHeight){
       this.width=Math.max(1,finite(cssWidth,960));this.height=Math.max(1,finite(cssHeight,540));
@@ -384,30 +385,48 @@
     _updateCamera(frame,dt){
       const p=this._pose,state=this._state,layout=frame.layout||EMPTY;let px=finite(p&&p[0],finite(state.x)),py=finite(p&&p[1],finite(state.y,1.43));
       const speed=Math.abs(finite(state.speed)),flight=finite(state.airtime),zoom=1-Math.min(.12,speed/210)-((flight>.4&&!state.grounded)?Math.min(.08,(flight-.4)*.07):0);
-      const targetScale=this._baseScale*zoom*(1+this._zoomPunch*.035);
-      if(this._snap)this._cameraScale=targetScale;else this._cameraScale+=(targetScale-this._cameraScale)*(1-Math.exp(-dt*3.7));
+      const settings=frame.settings||EMPTY,encounter=frame.encounter||EMPTY,m=state.monster;
+      const requested=frame.mode==='playing'&&m&&encounter.phase!=='idle'?clamp(finite(encounter.intensity),0,1):0;
+      this._focus+=(requested-this._focus)*(1-Math.exp(-dt*9));
+      if(this._snap)this._focus=requested;
+      // Fit both ends of the shot instead of letting the target live outside the
+      // phone viewport. The minimum-size reticle below stays legible when wide.
+      const focus=settings.reducedMotion?0:this._focus;
+      let targetScale=this._baseScale*zoom*(1+(settings.reducedMotion?0:this._zoomPunch*.035));
+      if(focus>.001&&m){
+        const span=Math.max(8,Math.abs(m.x-px)+7),fit=(this.width-Math.max(34,this.width*.13)*2)/span;
+        targetScale+=(Math.min(targetScale,fit)-targetScale)*focus;
+      }
+      if(this._snap)this._cameraScale=targetScale;else this._cameraScale+=(targetScale-this._cameraScale)*(1-Math.exp(-dt*(focus>.01?9:3.7)));
       const s=this._cameraScale,view=this.width/s,look=clamp(finite(state.vx,finite(state.speed))*.35,-3,7);
       let tx=px+clamp(view*.14+look,-view*.15,view*.3);
       const safeTop=clamp(finite(layout.safeTop),0,this.height*.45),safeBottom=clamp(finite(layout.safeBottom),0,this.height*.55);
       const desired=clamp(this.height*(layout.touch?.64:.67),safeTop+s*1.7,Math.max(safeTop+s*1.7,this.height-safeBottom-s*1.4));
       let ty=py+(desired-this.height*.73)/s;
+      if(focus>.001&&m){
+        tx+=((px+m.x)*.5-tx)*focus;
+        const centerY=(Math.min(py-1.1,m.y)+Math.max(py+2,m.y+5.4))*.5;
+        const safeCenter=(safeTop+this.height-safeBottom)*.5;
+        ty+=(centerY+(safeCenter-this.height*.73)/s-ty)*focus;
+      }
       if(frame.mode==='title'){
         const track=this._track,travel=track?Math.max(1,track.length-35):100;
         tx=(track?track.startX:0)+12+(this._clock*2.1)%travel;ty=this._heightAt(tx)-.25;
       }
       if(this._snap){this._cameraX=tx;this._cameraY=ty;this._snap=false;}
       else if(dt>0){
-        const omega=5.3,e=Math.exp(-omega*dt),dx=this._cameraX-tx,jx=this._cameraVX+omega*dx,dy=this._cameraY-ty,jy=this._cameraVY+omega*dy;
+        const omega=focus>.01?9:5.3,e=Math.exp(-omega*dt),dx=this._cameraX-tx,jx=this._cameraVX+omega*dx,dy=this._cameraY-ty,jy=this._cameraVY+omega*dy;
         this._cameraX=tx+(dx+jx*dt)*e;this._cameraVX=(this._cameraVX-omega*jx*dt)*e;
         this._cameraY=ty+(dy+jy*dt)*e;this._cameraVY=(this._cameraVY-omega*jy*dt)*e;
       }
       this._trauma=Math.max(0,this._trauma-dt*1.4);this._zoomPunch*=Math.exp(-dt*10);
-      const settings=frame.settings||EMPTY,shake=settings.shake!==false&&!settings.reducedMotion?this._trauma*this._trauma*7:0;
+      const shake=settings.shake!==false&&!settings.reducedMotion?this._trauma*this._trauma*7:0;
       const sx=Math.sin(this._clock*39.7)*Math.cos(this._clock*17.3)*shake,sy=Math.sin(this._clock*31.1+.7)*Math.cos(this._clock*13.7)*shake;
       // Translation is snapped AFTER interpolating the physical pose/camera.
       this._ox=Math.round((this.width*.5-this._cameraX*s+sx)*this.renderScale)/this.renderScale;
       this._oy=Math.round((this.height*.73+this._cameraY*s+sy)*this.renderScale)/this.renderScale;
       this._left=-this._ox/s-3;this._right=(this.width-this._ox)/s+3;this._top=this._oy/s+3;this._bottom=(this._oy-this.height)/s-3;
+      this._worldDetail=Math.min(this._detail,s<this._baseScale*.72?0:this._detail);
       const actual=s*this.renderScale;let best=Infinity;
       for(let i=0;i<this._banks.length;i++){const error=Math.abs(Math.log(actual/this._banks[i].ppu));if(error<best){best=error;this._bank=this._banks[i];}}
     }
@@ -432,15 +451,15 @@
       const c=this.ctx,b=this._biome,bank=this._bank,left=this._left,right=this._right;
       for(let i=0;i<this._gaps.length;i++){const g=this._gaps[i];if(g.right<left||g.left>right)continue;c.drawImage(this._chasm,g.left,-80,g.right-g.left,g.top+80);this._stats.drawOps++;this._fill(g.leftFace,b.ground.chasm[0]);this._fill(g.rightFace,b.ground.body);}
       for(let i=0;i<this._props.length;i++){
-        const p=this._props[i];if(p.x<left-2||p.x>right+2||p.detail>this._detail)continue;
+        const p=this._props[i];if(p.x<left-2||p.x>right+2||p.detail>this._worldDetail)continue;
         c.save();c.translate(p.x,p.y);c.scale(p.scale*p.flip,p.scale);const s=bank.props[p.kind]||bank.props.rock;c.drawImage(s.canvas,s.left,s.bottom,s.w,s.h);c.restore();this._stats.drawOps++;
       }
       for(let i=0;i<this._chunks.length;i++){
         const ch=this._chunks[i];if(ch.right<left||ch.left>right)continue;
         this._fill(ch.body,b.ground.body);
-        const bands=this._detail===0?2:4;for(let j=0;j<bands;j++)this._fill(ch.bands[j],b.ground.strata[j]);
-        if(this._detail>0){this._fill(ch.specks[0],b.ground.speckle[0]);this._fill(ch.specks[1],b.ground.speckle[1]);}
-        this._fill(ch.top,b.ground.top);this._fill(ch.rim,b.ground.rim);if(this._detail>0)this._fill(ch.grass,b.ground.grass);
+        const bands=this._worldDetail===0?2:4;for(let j=0;j<bands;j++)this._fill(ch.bands[j],b.ground.strata[j]);
+        if(this._worldDetail>0){this._fill(ch.specks[0],b.ground.speckle[0]);this._fill(ch.specks[1],b.ground.speckle[1]);}
+        this._fill(ch.top,b.ground.top);this._fill(ch.rim,b.ground.rim);if(this._worldDetail>0)this._fill(ch.grass,b.ground.grass);
       }
       for(let i=0;i<this._signs.length;i++){const p=this._signs[i];if(p.x>=left-1&&p.x<=right+1)this._sprite(bank.signs[p.label],p.x,p.y);}
       const cp=finite(this._state.checkpointIndex,finite(this._physics.checkpointIndex));
@@ -478,12 +497,12 @@
         const z=zombies[i],n=(ZOMBIES+i)*3,x=Number.isFinite(pose[n])?pose[n]:z.x,y=Number.isFinite(pose[n+1])?pose[n+1]:z.y;
         if(x<this._left-1||x>this._right+1||(z.hit&&z.timeSinceHit>2.2))continue;
         c.globalAlpha=z.hit?clamp(1-finite(z.timeSinceHit)/2.2,0,1):1;
-        const walk=z.hit?0:((Math.floor(this._clock*5+i)&1));this._sprite(bank.zombies[(i%3)*2+walk],x,y,Number.isFinite(pose[n+2])?pose[n+2]:finite(z.angle));
+        const walk=z.hit?0:((Math.floor(this._worldClock*5+i)&1));this._sprite(bank.zombies[(i%3)*2+walk],x,y,Number.isFinite(pose[n+2])?pose[n+2]:finite(z.angle));
       }
       c.globalAlpha=1;const m=state.monster;
       if(m&&m.x>=this._left-3&&m.x<=this._right+3&&(m.alive||finite(m.timeSinceHit)<1.2)){
         const t=finite(m.timeSinceHit);c.globalAlpha=m.alive?1:clamp(1-t/1.2,0,1);this._sprite(bank.monster,m.x,m.y,m.alive?0:-Math.min(1.3,t*1.7));c.globalAlpha=1;
-        if(m.alive){c.globalAlpha=state.weapon&&state.weapon.canHit?1:.6;this._sprite(bank.target,m.weakpoint?m.weakpoint.x:m.x,m.weakpoint?m.weakpoint.y:m.y+2.85,Math.sin(this._clock)*.07);c.globalAlpha=1;}
+        if(m.alive){const tx=m.weakpoint?m.weakpoint.x:m.x,ty=m.weakpoint?m.weakpoint.y:m.y+2.85,locked=state.weapon&&state.weapon.canHit;c.globalAlpha=locked?1:.55;this._sprite(bank.target,tx,ty,Math.sin(this._clock)*.07);if(locked){const radius=Math.max(.65,18/this._cameraScale)*(1+Math.sin(this._clock*6)*.08);c.strokeStyle='#e4f5ab';c.lineWidth=2/this._cameraScale;c.beginPath();for(let i=0;i<4;i++)c.arc(tx,ty,radius,i*Math.PI/2+.14,i*Math.PI/2+1.1);c.stroke();this._stats.drawOps++;}c.globalAlpha=1;}
       }
     }
     _drawCannon(){
@@ -495,7 +514,7 @@
       this._sprite(this._bank.cannon,mx-Math.cos(angle)*this._kick*.13,my-Math.sin(angle)*this._kick*.13,angle);
       if(this._muzzle>0){this.ctx.globalAlpha=clamp(this._muzzle/.07,0,1);this._sprite(this._bank.flash,mx+Math.cos(angle)*1.45,my+Math.sin(angle)*1.45,angle);this.ctx.globalAlpha=1;}
       const n=PROJECTILE*3;
-      if(state.projectile){const px=Number.isFinite(this._pose[n])?this._pose[n]:state.projectile.x,py=Number.isFinite(this._pose[n+1])?this._pose[n+1]:state.projectile.y;this._sprite(this._bank.projectile,px,py,finite(state.projectile.angle));}
+      if(state.projectile){const px=Number.isFinite(this._pose[n])?this._pose[n]:state.projectile.x,py=Number.isFinite(this._pose[n+1])?this._pose[n+1]:state.projectile.y;const a=finite(state.projectile.angle);this.ctx.strokeStyle='#f9e9ac';this.ctx.lineWidth=2/this._cameraScale;this.ctx.beginPath();this.ctx.moveTo(px-Math.cos(a)*2,py-Math.sin(a)*2);this.ctx.lineTo(px,py);this.ctx.stroke();this._stats.drawOps++;this._sprite(this._bank.projectile,px,py,a);}
     }
     _spawn(x,y,count,kind,power=1){
       const total=Math.min(MAX_PARTICLES,Math.ceil(count*this.particleScale));
@@ -524,7 +543,7 @@
         case 'fuel':this._spawn(x,y,11,2,1.1);this.popup('+'+Math.round(finite(event.amount,32))+' FUEL',x,y+1,'fuel');break;
         case 'zombie':this._spawn(x,y,7,7,.8);this._spawn(x,y+.5,4,3,.65);break;
         case 'collision':this._spawn(x,y,10+Math.floor(s*12),2,1+s);this._spawn(x,y,7,4,s+1);this.addTrauma(s*.3);break;
-        case 'monsterHit':this._spawn(x,y,35,7,2.3);this._spawn(x,y,18,2,2);this._spawn(x,y,10,4,2);this.addTrauma(.35);this._zoomPunch=1;this.flash('#f7df9b',.09);break;
+        case 'monsterHit':this._impactTime=.6;this._impactX=x;this._impactY=y;this._spawn(x,y,35,7,2.3);this._spawn(x,y,18,2,2);this._spawn(x,y,10,4,2);this.addTrauma(.35);this._zoomPunch=1;this.flash('#f7df9b',.09);break;
         case 'monsterCrash':this._spawn(x,y,28,4,2.2);this._spawn(x,y,25,0,2.5);this._spawn(x,y,14,2,2);this.addTrauma(.85);this.flash('#df8264',.12);break;
         case 'flip':this._spawn(x,y,4,3,.8);break;
         case 'checkpoint':this._spawn(x,y+2.5,10,2,1.3);break;
@@ -579,11 +598,11 @@
     }
     _drawIndicators(){
       if(this._frame.mode!=='playing')return;const c=this.ctx,state=this._state,s=this._cameraScale;c.font='700 11px monospace';c.textBaseline='middle';
-      if(state.rival){const px=finite(this._pose[9],state.rival.x)*s+this._ox;if(px<30||px>this.width-30){const right=px>this.width-30,x=right?this.width-18:18,y=this.height*.46;c.beginPath();c.moveTo(x,y);c.lineTo(x+(right?-9:9),y-6);c.lineTo(x+(right?-9:9),y+6);c.closePath();c.fillStyle='#df9c77';c.fill();c.textAlign=right?'right':'left';c.fillText('IRON MAW',x+(right?-16:16),y);this._stats.drawOps+=2;}}
+      if(state.rival){const px=finite(this._pose[9],state.rival.x)*s+this._ox;if(px<30||px>this.width-30){const right=px>this.width-30,x=right?this.width-18:18,y=this.height*.46;c.beginPath();c.moveTo(x,y);c.lineTo(x+(right?-9:9),y-6);c.lineTo(x+(right?-9:9),y+6);c.closePath();c.fillStyle='#df9c77';c.fill();c.textAlign=right?'right':'left';c.fillText('⚑',x+(right?-16:16),y);this._stats.drawOps+=2;}}
       const m=state.monster;
       if(m&&m.alive){const px=m.x*s+this._ox;if(px>this.width-25){const x=this.width-18,y=this.height*.55;c.beginPath();c.moveTo(x,y);c.lineTo(x-9,y-6);c.lineTo(x-9,y+6);c.closePath();c.fillStyle='#e0b878';c.fill();c.textAlign='right';
         const distance=Math.ceil(state.weapon?finite(state.weapon.distance):Math.max(0,m.x-finite(state.x)));
-        if(distance!==this._lastMonsterDistance){this._lastMonsterDistance=distance;this._monsterLabel='MONSTER '+distance+' M';}c.fillText(this._monsterLabel,x-16,y);this._stats.drawOps+=2;}}
+        if(distance!==this._lastMonsterDistance){this._lastMonsterDistance=distance;this._monsterLabel='◎ '+distance+' m';}c.fillText(this._monsterLabel,x-16,y);this._stats.drawOps+=2;}}
     }
     _drawScreen(dt){
       const c=this.ctx,w=this.width,h=this.height,state=this._state,settings=this._frame.settings||EMPTY,speed=Math.abs(finite(state.speed))*3.6;
@@ -596,18 +615,20 @@
       if(this._biome.weather.kind==='fog'&&this._detail>0){c.globalAlpha=.6;c.fillStyle=this._haze;c.fillRect(0,h*.45,w,h*.55);c.globalAlpha=1;this._stats.drawOps++;}
       c.fillStyle=this._vignette;c.fillRect(0,0,w,h);this._stats.drawOps++;
       this._drawPopups(dt);this._drawIndicators();
+      if(this._impactTime>0){const t=1-this._impactTime/.6,x=this._impactX*this._cameraScale+this._ox,y=-this._impactY*this._cameraScale+this._oy;c.globalAlpha=(1-t)*.8;c.strokeStyle='#f3e6a3';c.lineWidth=3;c.beginPath();c.arc(x,y,10+t*65,0,TAU);c.stroke();this._stats.drawOps++;c.globalAlpha=1;this._impactTime=Math.max(0,this._impactTime-dt);}
+
       if(this._flashTime>0){c.globalCompositeOperation='screen';c.globalAlpha=clamp(this._flashTime/this._flashDuration,0,1)*.16;c.fillStyle=this._flashColor;c.fillRect(0,0,w,h);c.globalAlpha=1;c.globalCompositeOperation='source-over';this._stats.drawOps++;this._flashTime=Math.max(0,this._flashTime-dt);}
     }
     render(frame=EMPTY){
       const start=performance.now();this._stats.drawOps=0;
       if(!this._biome||!this._banks.length){this.ctx.fillStyle='#152a2d';this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);this._stats.drawOps=1;this._stats.renderMs=performance.now()-start;return;}
       this._frame=frame;this._state=frame.state||EMPTY;this._input=frame.input||EMPTY;
-      const dt=clamp(finite(frame.dt),0,.1);this._clock+=dt;this._kick*=Math.exp(-dt*19);this._muzzle=Math.max(0,this._muzzle-dt);
+      const dt=clamp(finite(frame.dt),0,.1);this._clock+=dt;this._worldClock+=Number.isFinite(frame.worldDt)?frame.worldDt:dt;this._kick*=Math.exp(-dt*19);this._muzzle=Math.max(0,this._muzzle-dt);
       this._preparePose(this._state,frame.pose);this._updateCamera(frame,dt);this._drawBackground();this._worldTransform();this._drawWorld();
       this._drawEntities();
       if(frame.ghost&&frame.ghost.pose&&frame.ghost.pose.length>=9){this.ctx.globalAlpha=.35*clamp(finite(frame.ghost.alpha,1),0,1);this._drawTruck(frame.ghost.pose,0,false,true);this.ctx.globalAlpha=1;}
       if(this._state.rival||Number.isFinite(this._pose[RIVAL*3]))this._drawTruck(this._pose,RIVAL*3,true);
-      this._drawTruck(this._pose,PLAYER*3);this._drawCannon();this._emitAmbient(dt);this._drawParticles(dt);this._drawScreen(dt);
+      this._drawTruck(this._pose,PLAYER*3);this._drawCannon();this._emitAmbient(Number.isFinite(frame.worldDt)?frame.worldDt:dt);this._drawParticles(Number.isFinite(frame.worldDt)?frame.worldDt:dt);this._drawScreen(dt);
       this._stats.spriteBytes=this._spriteBytes+this._screenBytes;this._stats.renderScale=this.renderScale;this._stats.renderMs=performance.now()-start;
     }
   }

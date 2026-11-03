@@ -233,3 +233,13 @@ Completed on3November2026. The nine-module single-file v3 build is published at 
 https://irontrail-monster-rally.mellowdew4.chatgpt.site . README.md and HANDOFF.md describe the finished implementation,
 exact passing checks, measurement limits and continuation prompt. Source/deployment identifiers are returned by the
 supported Sites publication workflow; historical release identifiers above refer to earlier builds.
+
+
+# Shooting experience and GitHub/Vercel delivery
+
+- Preserve current edits. Add a bounded slow-motion aim/shot/impact envelope; the whole120Hz world, fuel, rival and ghost clock share time scale. Pause freezes the envelope; retries reset it.
+- Use animated crosshairs, one ammo pip, numeric rewards and icon cues. Keep accessible labels and reduced-motion support.
+- Verify hit/miss/one-charge/pause/retry and desktop/phone layout; preserve existing campaign.
+- Create MaxRecursion/irontrail, deploy static dist to Vercel and connect irontrail.maxrecursion.dev. Add the exact Vercel DNS target in Namecheap through browser once signed in.
+
+Shooting implementation and functional validation complete. GitHub repo and Vercel project created and connected; custom domain assigned. Remaining: production deployment verification, then Namecheap CNAME/save and DNS/TLS verification once user signs in.

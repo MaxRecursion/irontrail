@@ -11,6 +11,8 @@
 @media(max-width:370px){.hud-stage{width:157px}.hud-stage-name{font-size:12px;max-width:155px}.hud-clock{font-size:22px}.hud-run{min-width:119px}.hud-fuel{width:139px}.fuel-bottom{font-size:5.5px}.hud-speed{gap:8px;min-width:118px}.speed-readout strong{font-size:37px}.rpm-track{width:68px}.touch-controls{left:12px;right:12px}.touch-group{gap:5px}.pedal{width:39px}.pedal.gas{width:65px}.hud-cannon{width:184px}.menu-panel{padding:16px}.screen-layer{padding:12px}.brief-name{font-size:38px}.attract-title{font-size:60px;letter-spacing:-4px}.secondary-actions{gap:5px}.menu-button{font-size:7px}}
 @media(max-height:520px) and (min-width:600px){.screen-layer{padding:15px}.menu-panel{padding:17px 22px}.menu-header{margin-bottom:14px;padding-bottom:10px}.menu-title{font-size:27px}.menu-copy{font-size:10px;margin-bottom:14px}.menu-actions{margin-top:14px;padding-top:13px;flex-direction:row;align-items:center}.primary-button{width:auto;min-height:42px;padding:10px 17px;font-size:10px}.secondary-actions{display:flex}.menu-button{min-height:35px;padding:9px 11px;font-size:8px}.screen-title .menu-header{margin-bottom:15px;padding-bottom:0}.screen-title .menu-actions{flex-direction:row;width:auto;align-items:center;margin-top:15px;gap:12px}.screen-title .primary-button{width:auto;min-width:200px;padding:12px 18px}.screen-title .secondary-actions{display:flex;width:auto}.screen-title .title-badges,.screen-title .title-tag,.screen-title .menu-hint{display:none}.attract-title{font-size:70px;letter-spacing:-4px;margin-bottom:16px}.title-tag{font-size:8px;margin-bottom:11px}.title-copy{font-size:11px;line-height:1.5;max-width:360px}.title-badges{margin:14px 0;font-size:7px}.screen-title.menu-panel{padding:9px 7px}.stage-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}.stage-card{min-height:126px;padding:9px}.stage-name{font-size:11px;margin-top:8px}.stage-meta{font-size:6px;margin-top:5px}.stage-stars{font-size:15px;margin-top:5px}.stage-best{font-size:6px;margin-top:4px}.campaign-summary{margin-bottom:12px}.garage-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.upgrade-card{padding:11px}.upgrade-icon{height:30px;width:30px;margin-bottom:9px}.upgrade-icon svg{height:19px;width:19px}.upgrade-title{font-size:14px}.upgrade-current,.upgrade-next{font-size:6px;line-height:1.5;margin-bottom:7px}.upgrade-description{font-size:8px;margin-bottom:10px;min-height:35px}.upgrade-levels{margin-bottom:10px}.upgrade-subtitle{font-size:6px;margin-bottom:9px}.buy-button{min-height:33px;font-size:8px}.buy-button small{font-size:6px}.settings-grid{grid-template-columns:1fr 1fr;gap:0 25px}.setting-item{padding:9px 0}.setting-item>label{font-size:10px}.setting-item small{font-size:8px}.brief-layout,.result-layout{grid-template-columns:1.1fr 1fr;gap:25px}.brief-name{font-size:37px;margin:8px 0 12px}.brief-description{font-size:10px}.brief-objectives{border-top:0;border-left:1px solid #92ab7545;padding:0 0 0 22px;gap:12px}.objective{font-size:10px}.objective small{font-size:7px}.brief-facts{margin:12px 0;gap:20px;font-size:8px}.brief-facts strong{font-size:18px}.onboarding{margin-top:11px;font-size:6px}.pause-layout{display:flex}.pause-heading{font-size:54px}.result-stars{font-size:37px;margin:10px 0}.result-big-score{font-size:30px}.result-summary{font-size:8px}.score-breakdown{padding:10px 12px}.breakdown-row{font-size:7px;padding:4px 0}.scrap-earned{font-size:8px;margin-top:8px;padding-top:9px}.scrap-earned strong{font-size:18px}.failure-icon{font-size:35px;margin-bottom:9px}.failure-tip{margin:13px 0;font-size:10px;padding:12px 15px}.hud-stage{top:12px;left:16px;width:230px}.hud-stage-name{font-size:13px;margin:4px 0 8px;max-width:230px}.hud-run{top:12px;right:16px}.hud-clock{font-size:24px}.hud-tools{right:16px;top:78px}.hud-combo{left:16px;top:91px;width:140px}.recover-slot{top:94px;width:188px}.recover-button{width:188px;height:42px}.hud-banner{top:147px;font-size:23px}.hud-banner.big{font-size:27px}.hud-toast{top:182px;font-size:7px;padding:8px 11px}.hud-fuel{left:16px;bottom:15px;width:168px;padding:9px 11px}.hud-speed{right:16px;bottom:15px}.hud-cannon{left:50%;right:auto;bottom:16px;transform:translateX(-50%);width:250px}.touch-controls{left:16px;right:16px;bottom:108px}.pedal{height:49px;width:47px}.pedal.gas{width:82px}.fps-panel{left:16px;top:143px}.hud-ghost{margin-top:4px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.result-stars .earned{animation:none}.menu-button,.stage-card,.hud-toast,.hud-banner{transition:none}}
+
+.hud-cue{position:absolute;left:50%;top:24%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:12px 18px;background:#102c27e8;border:1px solid #e4b15a66;border-radius:40px;color:#f2d68b;pointer-events:none}.hud-cue svg{width:34px;height:34px;stroke-width:2}.hud-cue strong{font:700 17px var(--mono)}.cue-hit,.cue-success,.cue-upgrade{color:#d6ef9c}.cue-miss,.cue-error,.cue-fuel{color:#efa477}.replay-a{animation:cueA .7s both}.replay-b{animation:cueB .7s both}@keyframes cueA{0%{opacity:0;transform:translate(-50%,12px) scale(.7)}35%{opacity:1;transform:translate(-50%,0) scale(1.08)}100%{transform:translate(-50%,0) scale(1)}}@keyframes cueB{0%{opacity:0;transform:translate(-50%,12px) scale(.7)}35%{opacity:1;transform:translate(-50%,0) scale(1.08)}100%{transform:translate(-50%,0) scale(1)}}.fire-button svg{width:30px;height:30px;margin:auto;display:block}.ammo-pip{display:inline-block;width:9px;height:20px;border-radius:5px 5px 2px 2px;background:#f6dc91;box-shadow:0 0 10px #e4b15a55}.spent .ammo-pip{background:transparent;border:1px solid #83977f}.locked .fire-button{animation:lockPulse 1s infinite}.cleared .fire-button{animation:none}.failure-icon svg{height:55px;width:55px}.reduced-motion *{animation:none!important;transition:none!important}@keyframes lockPulse{50%{box-shadow:0 0 0 7px #d5ed9b22}}@media(prefers-reduced-motion:reduce){.hud-cue,.locked .fire-button{animation:none}}@media(max-width:600px){.hud-cue{top:23%;padding:9px 14px}.hud-cue svg{width:27px;height:27px}}
 </style><!-- Planck.js 1.5.0 license:
 The MIT License
 Copyright (c) Erin Catto, Ali Shakiba
@@ -38,17 +40,17 @@ SOFTWARE.
 <canvas id="gameCanvas" tabindex="-1" role="img" aria-label="IRONTRAIL physics driving game. Arrow keys or WASD drive and balance, Space brakes, X or J fires your one cannon charge, C recovers for 12 fuel."></canvas>
 <div id="gameHud" class="hud" hidden>
   <div class="hud-block hud-stage"><div id="hudStageNumber" class="hud-eyebrow">STAGE 01 / 10</div><div id="hudStageName" class="hud-stage-name">Redstone Outbreak</div><div class="hud-track"><div id="hudProgressFill" class="bar-fill"></div><div id="hudCheckpointTicks"></div><div id="hudMonsterMarker" class="hud-marker-track"><i></i></div><div id="hudRivalMarker" class="hud-marker-track rival" hidden><i></i></div></div><div class="hud-progress-copy"><span id="hudDistance">0 / 220 M</span><span id="hudStageStatus">ONE SHOT. ONE GIANT.</span></div></div>
-  <div class="hud-block hud-run"><div id="hudTime" class="hud-clock">00:00.00</div><div class="hud-score-row">SCORE <strong id="hudScore">0</strong></div><div id="hudGhost" class="hud-ghost" hidden>GHOST —</div></div>
+  <div class="hud-block hud-run"><div id="hudTime" class="hud-clock">00:00.00</div><div class="hud-score-row">◆ <strong id="hudScore">0</strong></div><div id="hudGhost" class="hud-ghost" hidden>GHOST —</div></div>
   <div class="hud-block hud-tools"><button id="pauseButton" class="icon-button" aria-label="Pause game" title="Pause (P / Escape)"><svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg></button><button id="restartButton" class="icon-button" aria-label="Restart stage" title="Retry (R)"><svg viewBox="0 0 24 24"><path d="M5 8a8 8 0 1 1-1 7M5 3v6h6"/></svg></button><button id="soundButton" class="icon-button" aria-label="Mute sound" title="Sound (M)"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM17 8q4 4 0 8M20 5q7 7 0 14"/></svg></button><button id="fullscreenButton" class="icon-button" aria-label="Enter fullscreen" title="Fullscreen (F)"><svg viewBox="0 0 24 24"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M8 20H4v-4"/></svg></button></div>
-  <div id="hudCombo" class="hud-block hud-combo" hidden><div class="combo-top"><strong id="hudComboValue">×1</strong><span>ZOMBIE COMBO</span></div><div class="combo-track"><div id="hudComboFill" class="bar-fill"></div></div></div>
-  <div id="fuelHud" class="hud-block hud-fuel"><div class="fuel-top"><span>FUEL RESERVE</span><strong id="fuelValue">100%</strong></div><div id="fuelMeter" class="fuel-track" role="meter" aria-label="Fuel remaining" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="fuelFill" class="bar-fill"></div></div><div class="fuel-bottom"><span>ZOMBIES CLEARED</span><strong id="zombieValue">0 / 5</strong></div></div>
+  <div id="hudCombo" class="hud-block hud-combo" hidden><div class="combo-top"><strong id="hudComboValue">×1</strong><span>☠</span></div><div class="combo-track"><div id="hudComboFill" class="bar-fill"></div></div></div>
+  <div id="fuelHud" class="hud-block hud-fuel"><div class="fuel-top"><span>⛽</span><strong id="fuelValue">100%</strong></div><div id="fuelMeter" class="fuel-track" role="meter" aria-label="Fuel remaining" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="fuelFill" class="bar-fill"></div></div><div class="fuel-bottom"><span>☠</span><strong id="zombieValue">0 / 5</strong></div></div>
   <div class="hud-block hud-speed"><div class="gear-chip">GEAR<b id="gearValue">N</b></div><div class="speed-readout"><strong id="speedValue">00</strong><span>KM / H</span><div class="rpm-track"><div id="hudRpmFill" class="bar-fill"></div></div></div></div>
-  <div id="weaponHud" class="hud-block hud-cannon"><div class="cannon-top"><span>CANNON</span><strong id="ammoValue">1 / 1</strong></div><div id="weaponStatus" class="cannon-status">SAVE YOUR ONE SHOT</div><div id="monsterDistance" class="cannon-distance">GIANT AHEAD</div><button id="fireButton" class="fire-button" aria-label="Fire cannon" title="Fire once (X / J)">FIRE<small>X / J</small></button></div>
+  <div id="weaponHud" class="hud-block hud-cannon"><div class="cannon-top"><span aria-hidden="true">◎</span><i id="ammoPip" class="ammo-pip" role="img" aria-label="One charge ready"></i><strong class="sr-only" id="ammoValue">1 / 1</strong></div><div id="weaponStatus" class="cannon-status sr-only">SAVE YOUR ONE SHOT</div><div id="monsterDistance" class="cannon-distance">GIANT AHEAD</div><button id="fireButton" class="fire-button" aria-label="Fire cannon" title="Fire once (X / J)"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#cue-target"/></svg><small>X / J</small></button></div>
   <div class="recover-slot"><button id="recoverButton" class="recover-button" hidden aria-label="Recover at checkpoint for 12 fuel"><span>↻ RECOVER</span><small>C · −12 FUEL</small></button></div>
   <div id="fpsPanel" class="fps-panel" hidden></div>
   <div class="touch-controls"><div class="touch-group"><button class="pedal lean" data-input="left" aria-label="Lean nose up">↶</button><button class="pedal lean" data-input="right" aria-label="Lean nose down">↷</button></div><div class="touch-group"><button class="pedal" data-input="reverse" aria-label="Reverse">REV</button><button class="pedal" data-input="brake" aria-label="Brake">■</button><button class="pedal gas" data-input="gas" aria-label="Accelerate">GAS ↑</button></div></div>
 </div>
-<div class="feedback-layer"><div id="hudToast" class="hud-toast" role="status" aria-live="polite"></div><div id="hudBanner" class="hud-banner" aria-live="polite"></div></div>
+<svg class="sr-only" aria-hidden="true"><defs><symbol id="cue-target" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M12 1v6M12 17v6M1 12h6M17 12h6"/></symbol><symbol id="cue-shot" viewBox="0 0 24 24"><path d="M3 12h16M14 6l6 6-6 6"/></symbol><symbol id="cue-hit" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></symbol><symbol id="cue-miss" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></symbol><symbol id="cue-fuel" viewBox="0 0 24 24"><path d="M5 21V4h9v17M4 21h12M5 9h9M16 5l3 3v9c0 2 3 2 3 0v-5l-3-3"/></symbol><symbol id="cue-checkpoint" viewBox="0 0 24 24"><path d="M5 22V3m0 1h14l-3 4 3 4H5"/></symbol><symbol id="cue-recover" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v7h7"/></symbol><symbol id="cue-trick" viewBox="0 0 24 24"><path d="M5 7a8 8 0 1 1-1 9M5 2v6h6"/></symbol><symbol id="cue-success" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></symbol><symbol id="cue-error" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 9v5M12 17v1"/></symbol><symbol id="cue-upgrade" viewBox="0 0 24 24"><path d="M12 21V3M5 10l7-7 7 7"/></symbol></defs></svg><div class="feedback-layer"><div id="hudCue" class="hud-cue" role="status" hidden><svg aria-hidden="true" viewBox="0 0 24 24"><use id="cueGlyph" href="#cue-target"/></svg><strong id="cueValue"></strong><span id="cueLabel" class="sr-only"></span></div><div id="hudToast" class="hud-toast" role="status" aria-live="polite"></div><div id="hudBanner" class="hud-banner" aria-live="polite"></div></div>
 <div id="screenLayer" class="screen-layer"><section id="menuPanel" class="menu-panel screen-title" role="dialog" aria-modal="true" aria-labelledby="screenHeading"><header class="menu-header"><div class="brand"><span class="brand-mark" aria-hidden="true"></span>IRONTRAIL</div><div id="menuCrumb" class="menu-crumb">DEADLAND RALLY · V3</div></header><div id="menuBody"></div><footer class="menu-actions"><button id="playButton" class="primary-button">Start your engine <span aria-hidden="true">→</span></button><div id="secondaryActions" class="secondary-actions"></div></footer><div id="menuHint" class="menu-hint">ARROWS / WASD · X / J FIRE · C RECOVER · GAMEPAD READY</div></section></div>
 </div>
 <script>
@@ -981,9 +983,10 @@ class TruckAudio {
     if (!this._ready) return;
     this._automationClock+=dt;if(this._automationClock<1/60)return;this._automationClock%=1/60;
     const rev = (this.rpm - 780) / 4420;
-    this._set(this.engine.frequency, this.rpm / 120, 0.045);
-    this._set(this.sub.frequency, this.rpm / 60, 0.06);
-    this._set(this.intake.frequency, this.rpm / 30, 0.055);
+    const pitch=.58+.42*Math.sqrt(TruckAudio.clamp(input?.timeScale??1,0,1));
+    this._set(this.engine.frequency, pitch*this.rpm / 120, 0.045);
+    this._set(this.sub.frequency, pitch*this.rpm / 60, 0.06);
+    this._set(this.intake.frequency, pitch*this.rpm / 30, 0.055);
     this._set(this.engineGain.gain, 0.115 + throttle * 0.065 + rev * 0.014);
     this._set(this.subGain.gain, 0.028 + throttle * 0.021);
     this._set(this.exhaustFilter.frequency, 400 + rev * 850 + throttle * 700);
@@ -1527,7 +1530,7 @@ globalThis.TruckAudio = TruckAudio;
  * {stageIndex,stageName,progress,distance,length,time,score,ghostDelta,fuel,
  *  cleared,totalZombies,speed,gear,rpm,ammo,locked,monsterDistance,monsterAlive,
  *  monsterProgress,rivalProgress,racePosition,combo,comboLeft,comboMax,
- *  checkpointProgress:[0..1],paused,muted,status}
+ *  checkpointProgress:[0..1],paused,muted,status,shootingPhase}
  *
  * Screen data:
  * title/stages/garage/settings read setCampaign(save,stages,biomes,rulesInfo).
@@ -1537,7 +1540,8 @@ globalThis.TruckAudio = TruckAudio;
  *          scrap,newBest,newScoreBest,challenge,nextAvailable}
  * failed:{reason,stageName,time,score,scrap,tip}
  * showScreen(null) hides menus. Menu events are emitted; UI never starts physics.
- * clearFeedback() cancels transient toast/banner feedback on screen/run transitions.
+ * cue(kind,{value,seconds}) shows a persistent SVG badge with optional numeric value.
+ * clearFeedback() cancels transient cue/toast/banner feedback on screen/run transitions.
  * on(name,fn) returns an unsubscribe. navigate(direction),activate(),back() support
  * gamepads. setCampaign updates source data; call showScreen again to refresh a menu.
  * metrics() is cached and reserves recover top-center, independently of all controls.
@@ -1551,8 +1555,9 @@ globalThis.TruckAudio = TruckAudio;
     return `${String(Math.floor(n/6000)).padStart(2,'0')}:${String(Math.floor(n/100)%60).padStart(2,'0')}.${String(n%100).padStart(2,'0')}`;
   };
   const scoreText = value => Math.max(0,Math.floor(Number(value)||0)).toLocaleString('en-US');
+  const CUES=Object.freeze({target:'Target locked',shot:'Shot fired',hit:'Monster cleared',miss:'Shot missed',fuel:'Fuel',checkpoint:'Checkpoint',recover:'Recovered',trick:'Trick',success:'Success',error:'Unavailable',upgrade:'Upgrade installed'});
   const icon = kind => {
-    const paths={engine:'M4 8h3V5h8v3h4v9h-3v3H7v-3H4zM9 3h5M2 11v4M22 10v7M10 10l-2 4h4l-2 4',tyre:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 7v3M12 14v3M7 12h3M14 12h3M8.5 8.5l2 2M13.5 13.5l2 2M8.5 15.5l2-2M13.5 10.5l2-2',suspension:'M5 3l4 3-3 3 7 3-3 3 7 3-2 3M14 3l5 3-3 3 3 3-5 3 3 3-3 3',fuel:'M5 21V4h9v17M4 21h12M5 9h9M16 5l3 3v9c0 2 3 2 3 0v-5l-3-3'};
+    const paths={target:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M12 1v6M12 17v6M1 12h6M17 12h6',checkpoint:'M5 22V3m0 1h14l-3 4 3 4H5',engine:'M4 8h3V5h8v3h4v9h-3v3H7v-3H4zM9 3h5M2 11v4M22 10v7M10 10l-2 4h4l-2 4',tyre:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 7v3M12 14v3M7 12h3M14 12h3M8.5 8.5l2 2M13.5 13.5l2 2M8.5 15.5l2-2M13.5 10.5l2-2',suspension:'M5 3l4 3-3 3 7 3-3 3 7 3-2 3M14 3l5 3-3 3 3 3-5 3 3 3-3 3',fuel:'M5 21V4h9v17M4 21h12M5 9h9M16 5l3 3v9c0 2 3 2 3 0v-5l-3-3'};
     return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[kind]||paths.engine}"/></svg>`;
   };
   class IronUI {
@@ -1589,26 +1594,28 @@ globalThis.TruckAudio = TruckAudio;
     _bar(id,value){const n=Math.round(clamp(value,0,1)*1000)/1000,key=`bar:${id}`;if(this.values[key]!==n){this.values[key]=n;this.nodes[id].style.transform=`scaleX(${n})`;}}
     _marker(id,value){this._hidden(id,value===null||value===undefined||!Number.isFinite(Number(value)));if(value==null)return;const n=Math.round(clamp(value,0,1)*1000)/10,key=`marker:${id}`;if(this.values[key]!==n){this.values[key]=n;this.nodes[id].style.transform=`translateX(${n}%)`;}}
     _updateHUD(v){
-      if(v.stageIndex!==undefined)this._text('hudStageNumber',`STAGE ${String(Number(v.stageIndex)+1).padStart(2,'0')} / 10`);
+      if(v.stageIndex!==undefined)this._text('hudStageNumber',`${String(Number(v.stageIndex)+1).padStart(2,'0')} / 10`);
       if(v.stageName!==undefined)this._text('hudStageName',v.stageName);
       if(v.progress!==undefined)this._bar('hudProgressFill',v.progress);
       if(v.distance!==undefined||v.length!==undefined)this._text('hudDistance',`${Math.floor(Math.max(0,Number(v.distance)||0))} / ${Math.floor(Number(v.length)||0)} M`);
       if(v.time!==undefined)this._text('hudTime',timeText(v.time));
       if(v.score!==undefined)this._text('hudScore',scoreText(v.score));
-      if(v.ghostDelta!==undefined){const active=v.ghostDelta!==null&&Number.isFinite(Number(v.ghostDelta));this._hidden('hudGhost',!active);if(active){this._text('hudGhost',`${v.ghostDelta<=0?'−':'+'}${Math.abs(v.ghostDelta).toFixed(2)}s · GHOST`);this._class('hudGhost','ahead',v.ghostDelta<=0);this._class('hudGhost','behind',v.ghostDelta>0);}}
+      if(v.ghostDelta!==undefined){const active=v.ghostDelta!==null&&Number.isFinite(Number(v.ghostDelta));this._hidden('hudGhost',!active);if(active){this._text('hudGhost',`${v.ghostDelta<=0?'−':'+'}${Math.abs(v.ghostDelta).toFixed(2)}s`);this._class('hudGhost','ahead',v.ghostDelta<=0);this._class('hudGhost','behind',v.ghostDelta>0);}}
       if(v.fuel!==undefined){const fuel=clamp(v.fuel,0,100);this._text('fuelValue',`${Math.ceil(fuel)}%`);this._bar('fuelFill',fuel/100);this._attr('fuelMeter','aria-valuenow',Math.ceil(fuel));this._class('fuelHud','low',fuel<23);this._class('fuelHud','critical',fuel<12);}
       if(v.cleared!==undefined||v.totalZombies!==undefined)this._text('zombieValue',`${v.cleared||0} / ${v.totalZombies||0}`);
       if(v.speed!==undefined)this._text('speedValue',String(Math.round(Math.abs(v.speed)*3.6)).padStart(2,'0'));
       if(v.gear!==undefined)this._text('gearValue',v.gear);
       if(v.rpm!==undefined)this._bar('hudRpmFill',v.rpm/5200);
-      if(v.ammo!==undefined){this._text('ammoValue',`${v.ammo} / 1`);const disabled=!v.ammo;const key='disabled:fire';if(this.values[key]!==disabled){this.values[key]=disabled;this.nodes.fireButton.disabled=disabled;}this._class('weaponHud','spent',!v.ammo);this._attr('fireButton','aria-label',v.ammo?'Fire cannon, one charge available':'Cannon empty');}
+      if(v.ammo!==undefined){this._text('ammoValue',`${v.ammo} / 1`);const disabled=!v.ammo;const key='disabled:fire';if(this.values[key]!==disabled){this.values[key]=disabled;this.nodes.fireButton.disabled=disabled;}this._class('weaponHud','spent',!v.ammo);this._attr('ammoPip','aria-label',v.ammo?'One charge ready':'No charges');this._attr('fireButton','aria-label',v.ammo?'Fire cannon, one charge available':'Cannon empty');}
       if(v.locked!==undefined)this._class('weaponHud','locked',v.locked);
+      if(v.shootingPhase!==undefined)this._attr('weaponHud','data-phase',v.shootingPhase);
+      if(v.monsterAlive!==undefined)this._class('weaponHud','cleared',!v.monsterAlive);
       if(v.monsterAlive!==undefined||v.ammo!==undefined||v.locked!==undefined){const alive=v.monsterAlive!==false;this._text('weaponStatus',!alive?'MONSTER CLEARED':v.ammo===0?'CHARGE SPENT':v.locked?'TARGET LOCKED · FIRE':'SAVE YOUR ONE SHOT');}
-      if(v.monsterDistance!==undefined||v.monsterAlive!==undefined){this._text('monsterDistance',v.monsterAlive===false?'PATH OPEN':`${Math.ceil(Math.max(0,Number(v.monsterDistance)||0))} M TO GIANT`);this._monsterAlive=v.monsterAlive!==false;this._monsterDistance=Number(v.monsterDistance);}
+      if(v.monsterDistance!==undefined||v.monsterAlive!==undefined){this._text('monsterDistance',v.monsterAlive===false?'✓':`${Math.ceil(Math.max(0,Number(v.monsterDistance)||0))} m`);this._monsterAlive=v.monsterAlive!==false;this._monsterDistance=Number(v.monsterDistance);}
       if(v.monsterDistance!==undefined||v.monsterAlive!==undefined||v.locked!==undefined)this._class('weaponHud','warning',this._monsterAlive!==false&&this._monsterDistance<70&&!this.values['class:weaponHud:locked']);
       if(v.monsterProgress!==undefined)this._marker('hudMonsterMarker',v.monsterAlive===false?null:v.monsterProgress);
       if(v.rivalProgress!==undefined)this._marker('hudRivalMarker',v.rivalProgress);
-      if(v.status!==undefined)this._text('hudStageStatus',v.status);else if(v.racePosition!==undefined)this._text('hudStageStatus',v.rivalProgress==null?'ONE SHOT. ONE GIANT.':`RACE ${v.racePosition} / 2`);
+      if(v.status!==undefined)this._text('hudStageStatus',v.status);else if(v.racePosition!==undefined)this._text('hudStageStatus',v.rivalProgress==null?'':`⚑ ${v.racePosition} / 2`);
       if(v.combo!==undefined){this._hidden('hudCombo',v.combo<2);this._text('hudComboValue',`×${v.combo||1}`);}
       if(v.comboLeft!==undefined)this._bar('hudComboFill',v.comboLeft/(v.comboMax||3));
       if(v.checkpointProgress){const signature=v.checkpointProgress.join(',');if(this.values.checkpoints!==signature){this.values.checkpoints=signature;this.nodes.hudCheckpointTicks.replaceChildren();for(const progress of v.checkpointProgress){const tick=this.document.createElement('i');tick.className='hud-checkpoint';tick.style.left=`${clamp(progress,0,1)*100}%`;this.nodes.hudCheckpointTicks.appendChild(tick);}}}
@@ -1630,17 +1637,17 @@ globalThis.TruckAudio = TruckAudio;
       this.nodes.menuCrumb.textContent=name==='title'?'DEADLAND RALLY · V3':`${name.toUpperCase()} / IRONTRAIL`;
       let html='',primary='Continue',action='back',args=[],secondary='';
       if(name==='title'){
-        html=`<p class="menu-eyebrow">TEN STAGES. ONE WAY OUT.</p><h1 id="screenHeading" class="attract-title">DEADLAND<br><span>RALLY.</span></h1><p class="title-copy">Big tyres. Wild ground. One cannon charge.<br>Make your mark on the road nobody came back from.</p><div class="title-badges"><span>REAL SUSPENSION</span><span>ONE SHOT</span><span>NO EASY ROAD</span></div><div class="title-tag">${this.save.completed?.length||0} / 10 CLEARED &nbsp; · &nbsp; ${esc(this._stageName(this.save.selected||0)).toUpperCase()}</div>`;
+        html=`<p class="menu-eyebrow">TEN STAGES. ONE WAY OUT.</p><h1 id="screenHeading" class="attract-title">DEADLAND<br><span>RALLY.</span></h1><p class="title-copy">Big tyres. One shot. Make it count.</p><div class="title-badges"><span>REAL SUSPENSION</span><span>ONE SHOT</span><span>NO EASY ROAD</span></div><div class="title-tag">${this.save.completed?.length||0} / 10 CLEARED &nbsp; · &nbsp; ${esc(this._stageName(this.save.selected||0)).toUpperCase()}</div>`;
         primary=this.save.completed?.length?'Continue the rally':'Start your engine';action='play';secondary=this._button('Stage select','stages')+this._button('Garage','garage')+this._button('Settings','settings');
       }else if(name==='stages'){
-        html=`<p class="menu-eyebrow">THE ROAD OUT</p><h1 id="screenHeading" class="menu-title">Choose your line.</h1><p class="menu-copy">Clear each route to unlock the next. Three stars reward pace, survival and a little nerve.</p><div class="campaign-summary"><span>${this.save.completed?.length||0} / 10 ROUTES CLEARED</span><span>${Object.values(this.save.stars||{}).reduce((sum,v)=>sum+(Array.isArray(v)?v.filter(Boolean).length:0),0)} / 30 STARS</span><span class="scrap-chip">◆ ${scoreText(this.save.scrap)} SCRAP</span></div><div class="stage-grid">`;
+        html=`<p class="menu-eyebrow">THE ROAD OUT</p><h1 id="screenHeading" class="menu-title">Choose your line.</h1><p class="menu-copy">Ten routes. Thirty stars.</p><div class="campaign-summary"><span>${this.save.completed?.length||0} / 10 ROUTES CLEARED</span><span>${Object.values(this.save.stars||{}).reduce((sum,v)=>sum+(Array.isArray(v)?v.filter(Boolean).length:0),0)} / 30 STARS</span><span class="scrap-chip">◆ ${scoreText(this.save.scrap)} SCRAP</span></div><div class="stage-grid">`;
         for(let n=0;n<10;n++){
           const locked=n>=(this.save.unlocked||1),stars=this.save.stars?.[n]||[false,false,false],biome=this.biomes[n]||{};
           html+=`<button type="button" class="stage-card${locked?' locked':''}${n===(this.save.selected||0)?' current':''}" style="--card-accent:${esc(biome.accent||'#b9bd75')}" data-ui="selectStage" data-stage="${n}" aria-label="Stage ${n+1}: ${esc(this._stageName(n))}${locked?', locked':''}" ${locked?'disabled':''}><span class="stage-card-top"><b>${String(n+1).padStart(2,'0')}</b><span class="stage-lock">${locked?'LOCKED':n===9?'BOSS RACE':'SURVIVAL'}</span></span><span class="stage-name">${esc(this._stageName(n))}</span><span class="stage-meta">${this.stages[n]?.length||0} M · ${esc(biome.timeOfDay||'DEADLANDS').toUpperCase()}</span><span class="stage-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${this._stars(stars)}</span><span class="stage-best">${this.save.best?.[n]?timeText(this.save.best[n]):locked?'CLEAR THE PREVIOUS ROUTE':'SET THE FIRST TIME'}</span></button>`;
         }
         html+='</div>';primary='Continue selected route';action='selectStage';args=[this.save.selected||0];secondary=this._button('Garage','garage')+this._button('Title','title');
       }else if(name==='garage'){
-        html=`<p class="menu-eyebrow">TRAILBREAKER WORKSHOP</p><h1 id="screenHeading" class="menu-title">Build a better escape.</h1><p class="menu-copy">Earn scrap on the road. Make it yours. Your cannon still has one charge, cans restore 32, and recovery costs 12 fuel.</p><div class="campaign-summary"><span class="scrap-chip">◆ ${scoreText(this.save.scrap)} SCRAP AVAILABLE</span><span>UPGRADES APPLY TO YOUR NEXT RUN</span></div><div class="garage-grid">`;
+        html=`<p class="menu-eyebrow">TRAILBREAKER WORKSHOP</p><h1 id="screenHeading" class="menu-title">Build a better escape.</h1><p class="menu-copy">Earn scrap. Upgrade your ride.</p><div class="campaign-summary"><span class="scrap-chip">◆ ${scoreText(this.save.scrap)} SCRAP AVAILABLE</span><span>UPGRADES APPLY TO YOUR NEXT RUN</span></div><div class="garage-grid">`;
         for(const track of ['engine','tyres','suspension','tank']){
           const info=global.IronRules.upgradeInfo(track,this.save.upgrades?.[track]||0,this.rulesInfo.upgrades||this.rulesInfo.UPGRADES);
           const max=info.level>=3,canBuy=!max&&this.save.scrap>=info.cost;
@@ -1649,7 +1656,7 @@ globalThis.TruckAudio = TruckAudio;
         html+='</div>';primary='Back to the rally';action='back';secondary=this._button('Stage select','stages')+this._button('Settings','settings');
       }else if(name==='settings'){
         const settings=this.save.settings||{};
-        html='<p class="menu-eyebrow">TUNE YOUR EXPERIENCE</p><h1 id="screenHeading" class="menu-title">Make yourself at home.</h1><p class="menu-copy">Your preferences save automatically. Music is fully synthesized; the engine stays the loudest voice.</p><div class="settings-grid">';
+        html='<p class="menu-eyebrow">TUNE YOUR EXPERIENCE</p><h1 id="screenHeading" class="menu-title">Make yourself at home.</h1><p class="menu-copy">Saved automatically.</p><div class="settings-grid">';
         const ranges=[['master','Master volume',.9],['music','Music volume',.55],['sfx','Engine & effects',.9]];
         for(const [key,label,def]of ranges){const value=Math.round(clamp(settings[key]??def,0,1)*100);html+=`<div class="setting-item"><label for="setting-${key}">${label}<output id="setting-value-${key}">${value}%</output></label><input id="setting-${key}" type="range" min="0" max="100" step="1" value="${value}" data-setting="${key}" aria-label="${label}"></div>`;}
         html+=`<div class="setting-item"><label for="setting-quality">Graphics quality<select id="setting-quality" data-setting="quality" aria-label="Graphics quality">${[['auto','Auto · adaptive'],['high','High'],['balanced','Balanced'],['performance','Performance']].map(([value,label])=>`<option value="${value}" ${settings.quality===value?'selected':''}>${label}</option>`).join('')}</select></label><small>Auto adjusts resolution and effects to keep motion smooth.</small></div>`;
@@ -1657,23 +1664,24 @@ globalThis.TruckAudio = TruckAudio;
         html+='</div>';primary='Save & return';action='back';secondary=this._button('Stage select','stages')+this._button('Title','title');
       }else if(name==='brief'){
         const par=d.par??this._par(i),challenge=typeof d.challenge==='string'?d.challenge:d.challenge?.label||this._challenge(i),best=d.best??this.save.best?.[i];
-        html=`<div class="brief-layout"><div><p class="brief-kicker">STAGE ${String(i+1).padStart(2,'0')} / 10 ${i===9?'· FINAL BOSS':''}</p><h1 id="screenHeading" class="brief-name">${esc(d.name||stage.name||this._stageName(i))}</h1><p class="brief-description">${esc(d.description||stage.subtitle||'Find a line through the deadlands. Keep your fuel up and stop the giant before it stops you.')}</p><div class="brief-facts"><span>DISTANCE<strong>${d.length||stage.length||0}<small> M</small></strong></span><span>PAR TIME<strong>${timeText(par)}</strong></span><span>BEST<strong>${best?timeText(best):'—'}</strong></span></div><div class="onboarding"><span>↑ / W · DRIVE</span><span>← → · BALANCE</span><span>X / J · FIRE ON LOCK</span><span>C · RECOVER −12 FUEL</span></div></div><div class="brief-objectives"><div class="objective"><span class="star">★</span><div>Survive the route<small>One giant. One cannon charge. Reach the finish.</small></div></div><div class="objective"><span class="star">★</span><div>Beat the par time<small>${timeText(par)} OR FASTER</small></div></div><div class="objective"><span class="star">★</span><div>${esc(challenge)}<small>YOUR EXTRA CHALLENGE</small></div></div></div></div>`;
+        html=`<div class="brief-layout"><div><p class="brief-kicker">STAGE ${String(i+1).padStart(2,'0')} / 10 ${i===9?'· FINAL BOSS':''}</p><h1 id="screenHeading" class="brief-name">${esc(d.name||stage.name||this._stageName(i))}</h1><p class="brief-description">${esc(d.description||stage.subtitle||'Find your line.')}</p><div class="brief-facts"><span>DISTANCE<strong>${d.length||stage.length||0}<small> M</small></strong></span><span>PAR TIME<strong>${timeText(par)}</strong></span><span>BEST<strong>${best?timeText(best):'—'}</strong></span></div><div class="onboarding"><span aria-label="Throttle with Up or W">↑ W</span><span aria-label="Balance with Left and Right">↶ ↷</span><span class="onboarding-shot" aria-label="Wait for the crosshair to lock, then fire with X or J"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 1v5m0 12v5M1 12h5m12 0h5"/></svg> X / J</span><span aria-label="Recover with C for 12 fuel">↻ C · −12</span></div></div><div class="brief-objectives"><div class="objective"><span class="star">★</span><div>Finish<small>One shot. One giant.</small></div></div><div class="objective"><span class="star">★</span><div>Beat the clock<small>${timeText(par)} OR FASTER</small></div></div><div class="objective"><span class="star">★</span><div>${esc(challenge)}<small>CHALLENGE</small></div></div></div></div>`;
         primary=i===9?'Challenge Iron Maw':'Start this run';action='play';secondary=this._button('Stage select','stages')+this._button('Garage','garage');
       }else if(name==='pause'){
-        html=`<div class="pause-layout"><div><p class="menu-eyebrow">${esc(d.stageName||this._stageName(this.save.selected||0))}</p><h1 id="screenHeading" class="pause-heading">PARKED.<br>FOR NOW.</h1><p class="menu-copy">The road, fuel and rival wait for you. Catch your breath.</p></div><div class="pause-data"><span>RUN TIME<strong>${timeText(d.time||0)}</strong></span><span>FUEL<strong>${Math.ceil(d.fuel??100)}%</strong></span></div></div>`;
+        html=`<div class="pause-layout"><div><p class="menu-eyebrow">${esc(d.stageName||this._stageName(this.save.selected||0))}</p><h1 id="screenHeading" class="pause-heading">PARKED.<br>FOR NOW.</h1><p class="menu-copy">Take a breath.</p></div><div class="pause-data"><span>RUN TIME<strong>${timeText(d.time||0)}</strong></span><span>FUEL<strong>${Math.ceil(d.fuel??100)}%</strong></span></div></div>`;
         primary='Back to the trail';action='resume';secondary=this._button('Retry stage','retry')+this._button('Settings','settings')+this._button('Stage select','stages');
       }else if(name==='results'){
         const stars=d.stars||[true,false,false],par=d.par??this._par(i),challenge=typeof d.challenge==='string'?d.challenge:d.challenge?.label||this._challenge(i);
-        html=`<div class="result-layout"><div><p class="menu-eyebrow">${i===9?'DEADLAND CAMPAIGN COMPLETE':`STAGE ${String(i+1).padStart(2,'0')} CLEARED`} · ${esc(d.name||this._stageName(i))}</p><h1 id="screenHeading" class="menu-title">${i===9?'You own the wasteland.':'That’s how you leave a mark.'}</h1><div class="result-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${this._stars(stars,true)}</div><div class="result-summary">YOUR TIME <b>${timeText(d.time||0)}</b><br>PAR TIME ${timeText(par)}<br>${esc(challenge)} ${stars[2]?'✓':'· TRY ANOTHER RUN'}</div><div class="result-badges">${d.newBest?'<span class="result-badge">NEW BEST TIME</span>':''}${d.newScoreBest?'<span class="result-badge">NEW BEST SCORE</span>':''}</div><div class="result-big-score">${scoreText(d.score)}<small>TOTAL SCORE</small></div></div><div><div class="score-breakdown">${(d.breakdown||[]).map(row=>`<div class="breakdown-row"><span>${esc(row.label)}</span><b>${scoreText(row.value)}</b></div>`).join('')||'<div class="breakdown-row"><span>Run complete</span><b>0</b></div>'}<div class="scrap-earned"><span>SCRAP EARNED</span><strong>+${scoreText(d.scrap)}</strong></div></div></div></div>`;
+        html=`<div class="result-layout"><div><p class="menu-eyebrow">${i===9?'DEADLAND CAMPAIGN COMPLETE':`STAGE ${String(i+1).padStart(2,'0')} CLEARED`} · ${esc(d.name||this._stageName(i))}</p><h1 id="screenHeading" class="menu-title">${i===9?'Wasteland conquered.':'Stage clear.'}</h1><div class="result-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${this._stars(stars,true)}</div><div class="result-summary">YOUR TIME <b>${timeText(d.time||0)}</b><br>PAR TIME ${timeText(par)}<br>${esc(challenge)} ${stars[2]?'✓':'· —'}</div><div class="result-badges">${d.newBest?'<span class="result-badge">BEST TIME</span>':''}${d.newScoreBest?'<span class="result-badge">BEST SCORE</span>':''}</div><div class="result-big-score">${scoreText(d.score)}<small>TOTAL SCORE</small></div></div><div><div class="score-breakdown">${(d.breakdown||[]).map(row=>`<div class="breakdown-row"><span>${esc(row.label)}</span><b>${scoreText(row.value)}</b></div>`).join('')||'<div class="breakdown-row"><span>Run complete</span><b>0</b></div>'}<div class="scrap-earned"><span>SCRAP EARNED</span><strong>+${scoreText(d.scrap)}</strong></div></div></div></div>`;
         primary=d.nextAvailable!==false&&i<9?`Continue to stage ${String(i+2).padStart(2,'0')}`:'Back to the stages';action=d.nextAvailable!==false&&i<9?'next':'stages';secondary=this._button('Run it again','retry')+this._button('Garage','garage')+this._button('Stage select','stages');
       }else if(name==='failed'){
-        const reason=d.reason||'fuel',tips={fuel:'Keep rolling and collect amber cans. Idle still burns fuel; checkpoint recovery costs 12.',monster:'Wait for TARGET LOCKED, then fire once with X / J or FIRE. A fresh retry restores your only charge.',rival:'Iron Maw took the flag. Carry speed through the run-ups, trade paint, and keep the landing upright.'};
-        html=`<div class="failure-icon" aria-hidden="true">${reason==='fuel'?'▱':reason==='monster'?'◆':'⚑'}</div><p class="menu-eyebrow">${esc(d.stageName||this._stageName(this.save.selected||0))}</p><h1 id="screenHeading" class="menu-title">${reason==='fuel'?'Empty tank. Unfinished business.':reason==='monster'?'The giant stopped this run.':'Iron Maw got there first.'}</h1><p class="menu-copy">The road still has your name on it. Your earned scrap stays with you.</p><div class="failure-tip">${esc(d.tip||tips[reason]||tips.fuel)}</div><div class="result-summary">RUN TIME ${timeText(d.time||0)} &nbsp; · &nbsp; SCORE ${scoreText(d.score)} &nbsp; · &nbsp; +${scoreText(d.scrap)} SCRAP</div>`;
+        const reason=d.reason||'fuel',tips={fuel:'Collect the amber cans.',monster:'Wait for the green crosshair. X / J to fire.',rival:'Keep your speed through the jumps.'};
+        const failureIcon=reason==='fuel'?'fuel':reason==='monster'?'target':'checkpoint';
+        html=`<div class="failure-icon">${icon(failureIcon)}</div><p class="menu-eyebrow">${esc(d.stageName||this._stageName(this.save.selected||0))}</p><h1 id="screenHeading" class="menu-title">${reason==='fuel'?'Out of fuel.':reason==='monster'?'Monster ahead.':'Iron Maw wins.'}</h1><div class="failure-tip">${esc(tips[reason]||tips.fuel)}</div><div class="result-summary">${timeText(d.time||0)} &nbsp; · &nbsp; ${scoreText(d.score)} &nbsp; · &nbsp; ◆ +${scoreText(d.scrap)}</div>`;
         primary='One more run';action='retry';secondary=this._button('Garage','garage')+this._button('Stage select','stages')+this._button('Title','title');
       }else{this.showScreen('title');return;}
       this.nodes.menuBody.innerHTML=html;this.nodes.secondaryActions.innerHTML=secondary;
       this.nodes.playButton.innerHTML=`${esc(primary)} <span aria-hidden="true">→</span>`;this._primary={name:action,args};
-      this.nodes.menuHint.textContent=name==='title'?'ARROWS / WASD DRIVE · X / J FIRE · C RECOVER · GAMEPAD READY':name==='garage'?'UPGRADES NEVER ADD AMMO OR CHANGE CAN VALUE / RECOVERY COST':'ARROWS TO NAVIGATE · ENTER TO CHOOSE · ESC TO GO BACK';
+      this.nodes.menuHint.textContent=name==='title'?'↑ / WASD · X / J · GAMEPAD':name==='garage'?'◆ SCRAP → UPGRADES':'↑ ↓ · ENTER · ESC';
       this.nodes.menuPanel.scrollTop=0;this.nodes.playButton.focus({preventScroll:true});
     }
     _setting(event){
@@ -1703,7 +1711,14 @@ globalThis.TruckAudio = TruckAudio;
     activate(){if(this.screen===null)return false;const active=this.document.activeElement;if(active&&this.nodes.screenLayer.contains(active)&&!active.disabled){if(active.tagName==='BUTTON')active.click();else if(active.tagName==='INPUT'){if(active.type==='checkbox'){active.checked=!active.checked;active.dispatchEvent(new global.Event('change',{bubbles:true}));}return true;}else if(active.tagName==='SELECT'){active.selectedIndex=(active.selectedIndex+1)%active.options.length;active.dispatchEvent(new global.Event('change',{bubbles:true}));return true;}}else this.nodes.playButton.click();return true;}
     back(){this.emit('back');return true;}
     clearFeedback(){
-      if(this._toastTimer)global.clearTimeout(this._toastTimer);if(this._bannerTimer)global.clearTimeout(this._bannerTimer);this._toastTimer=null;this._bannerTimer=null;this._text('hudToast','');this._text('hudBanner','');this.nodes.hudToast.className='hud-toast';this.nodes.hudBanner.className='hud-banner';
+      if(this._toastTimer)global.clearTimeout(this._toastTimer);if(this._bannerTimer)global.clearTimeout(this._bannerTimer);if(this._cueTimer)global.clearTimeout(this._cueTimer);this._toastTimer=null;this._bannerTimer=null;this._cueTimer=null;this._hidden('hudCue',true);this._text('cueValue','');this._text('cueLabel','');this.nodes.hudCue.className='hud-cue';this._text('hudToast','');this._text('hudBanner','');this.nodes.hudToast.className='hud-toast';this.nodes.hudBanner.className='hud-banner';
+    }
+    cue(kind,{value,seconds=1.05}={}){
+      const key=CUES[kind]?kind:'error',label=CUES[key];
+      if(this._cueTimer)global.clearTimeout(this._cueTimer);
+      this._cueReplay=!this._cueReplay;this.nodes.hudCue.className=`hud-cue cue-${key} visible replay-${this._cueReplay?'a':'b'}`;
+      this._attr('cueGlyph','href',`#cue-${key}`);this._text('cueValue',value===undefined?'':value);this._text('cueLabel',label);this._attr('hudCue','aria-label',value===undefined?label:`${label} ${value}`);this._hidden('hudCue',false);
+      this._cueTimer=global.setTimeout(()=>{this._hidden('hudCue',true);this.nodes.hudCue.className='hud-cue';this._cueTimer=null;},clamp(seconds,.12,6)*1000);
     }
     toast(text,seconds=2,style=''){
       if(this._toastTimer)global.clearTimeout(this._toastTimer);this._text('hudToast',text);this.nodes.hudToast.className=`hud-toast visible${style==='warn'?' warn':''}`;
@@ -1759,7 +1774,8 @@ globalThis.TruckAudio = TruckAudio;
       this._banks=[];this._bank=null;this._spriteBytes=0;this._screenBytes=0;this._baseScale=32;this._cachePPU=0;
       this._cameraX=0;this._cameraY=0;this._cameraScale=32;this._cameraVX=0;this._cameraVY=0;this._snap=true;
       this._ox=0;this._oy=0;this._left=0;this._right=0;this._top=0;this._bottom=0;
-      this._clock=0;this._trauma=0;this._zoomPunch=0;this._kick=0;this._muzzle=0;this._flashTime=0;this._flashDuration=1;this._flashColor='#fff2c4';
+      this._clock=0;this._worldClock=0;this._trauma=0;this._zoomPunch=0;this._kick=0;this._muzzle=0;this._flashTime=0;this._flashDuration=1;this._flashColor='#fff2c4';
+      this._impactTime=0;this._impactX=0;this._impactY=0;this._focus=0;this._worldDetail=2;
       this._particles=new Float32Array(MAX_PARTICLES*PS);this._particleHead=0;this._particleCount=0;
       this._popupData=new Float32Array(POPUPS*5);this._popupText=new Array(POPUPS).fill('');this._popupHead=0;
       this._fallbackPose=new Float64Array(64);this._scratch=new Float64Array(3);this._screenPoint=new Float64Array(2);
@@ -1780,7 +1796,7 @@ globalThis.TruckAudio = TruckAudio;
       const length=Math.max(21,finite(physics.poseLength,3*(7+(physics.zombies?physics.zombies.length:0))));
       if(this._fallbackPose.length<length)this._fallbackPose=new Float64Array(length);
       this._particles.fill(0);this._popupData.fill(0);this._particleCount=0;this._dustClock=0;this._exhaustClock=0;this._weatherClock=0;
-      this._kick=0;this._muzzle=0;this._trauma=0;this._clock=0;this.snapCamera();
+      this._kick=0;this._muzzle=0;this._trauma=0;this._clock=0;this._worldClock=0;this._impactTime=0;this._focus=0;this.snapCamera();
     }
     resize(cssWidth,cssHeight){
       this.width=Math.max(1,finite(cssWidth,960));this.height=Math.max(1,finite(cssHeight,540));
@@ -2113,30 +2129,48 @@ globalThis.TruckAudio = TruckAudio;
     _updateCamera(frame,dt){
       const p=this._pose,state=this._state,layout=frame.layout||EMPTY;let px=finite(p&&p[0],finite(state.x)),py=finite(p&&p[1],finite(state.y,1.43));
       const speed=Math.abs(finite(state.speed)),flight=finite(state.airtime),zoom=1-Math.min(.12,speed/210)-((flight>.4&&!state.grounded)?Math.min(.08,(flight-.4)*.07):0);
-      const targetScale=this._baseScale*zoom*(1+this._zoomPunch*.035);
-      if(this._snap)this._cameraScale=targetScale;else this._cameraScale+=(targetScale-this._cameraScale)*(1-Math.exp(-dt*3.7));
+      const settings=frame.settings||EMPTY,encounter=frame.encounter||EMPTY,m=state.monster;
+      const requested=frame.mode==='playing'&&m&&encounter.phase!=='idle'?clamp(finite(encounter.intensity),0,1):0;
+      this._focus+=(requested-this._focus)*(1-Math.exp(-dt*9));
+      if(this._snap)this._focus=requested;
+      // Fit both ends of the shot instead of letting the target live outside the
+      // phone viewport. The minimum-size reticle below stays legible when wide.
+      const focus=settings.reducedMotion?0:this._focus;
+      let targetScale=this._baseScale*zoom*(1+(settings.reducedMotion?0:this._zoomPunch*.035));
+      if(focus>.001&&m){
+        const span=Math.max(8,Math.abs(m.x-px)+7),fit=(this.width-Math.max(34,this.width*.13)*2)/span;
+        targetScale+=(Math.min(targetScale,fit)-targetScale)*focus;
+      }
+      if(this._snap)this._cameraScale=targetScale;else this._cameraScale+=(targetScale-this._cameraScale)*(1-Math.exp(-dt*(focus>.01?9:3.7)));
       const s=this._cameraScale,view=this.width/s,look=clamp(finite(state.vx,finite(state.speed))*.35,-3,7);
       let tx=px+clamp(view*.14+look,-view*.15,view*.3);
       const safeTop=clamp(finite(layout.safeTop),0,this.height*.45),safeBottom=clamp(finite(layout.safeBottom),0,this.height*.55);
       const desired=clamp(this.height*(layout.touch?.64:.67),safeTop+s*1.7,Math.max(safeTop+s*1.7,this.height-safeBottom-s*1.4));
       let ty=py+(desired-this.height*.73)/s;
+      if(focus>.001&&m){
+        tx+=((px+m.x)*.5-tx)*focus;
+        const centerY=(Math.min(py-1.1,m.y)+Math.max(py+2,m.y+5.4))*.5;
+        const safeCenter=(safeTop+this.height-safeBottom)*.5;
+        ty+=(centerY+(safeCenter-this.height*.73)/s-ty)*focus;
+      }
       if(frame.mode==='title'){
         const track=this._track,travel=track?Math.max(1,track.length-35):100;
         tx=(track?track.startX:0)+12+(this._clock*2.1)%travel;ty=this._heightAt(tx)-.25;
       }
       if(this._snap){this._cameraX=tx;this._cameraY=ty;this._snap=false;}
       else if(dt>0){
-        const omega=5.3,e=Math.exp(-omega*dt),dx=this._cameraX-tx,jx=this._cameraVX+omega*dx,dy=this._cameraY-ty,jy=this._cameraVY+omega*dy;
+        const omega=focus>.01?9:5.3,e=Math.exp(-omega*dt),dx=this._cameraX-tx,jx=this._cameraVX+omega*dx,dy=this._cameraY-ty,jy=this._cameraVY+omega*dy;
         this._cameraX=tx+(dx+jx*dt)*e;this._cameraVX=(this._cameraVX-omega*jx*dt)*e;
         this._cameraY=ty+(dy+jy*dt)*e;this._cameraVY=(this._cameraVY-omega*jy*dt)*e;
       }
       this._trauma=Math.max(0,this._trauma-dt*1.4);this._zoomPunch*=Math.exp(-dt*10);
-      const settings=frame.settings||EMPTY,shake=settings.shake!==false&&!settings.reducedMotion?this._trauma*this._trauma*7:0;
+      const shake=settings.shake!==false&&!settings.reducedMotion?this._trauma*this._trauma*7:0;
       const sx=Math.sin(this._clock*39.7)*Math.cos(this._clock*17.3)*shake,sy=Math.sin(this._clock*31.1+.7)*Math.cos(this._clock*13.7)*shake;
       // Translation is snapped AFTER interpolating the physical pose/camera.
       this._ox=Math.round((this.width*.5-this._cameraX*s+sx)*this.renderScale)/this.renderScale;
       this._oy=Math.round((this.height*.73+this._cameraY*s+sy)*this.renderScale)/this.renderScale;
       this._left=-this._ox/s-3;this._right=(this.width-this._ox)/s+3;this._top=this._oy/s+3;this._bottom=(this._oy-this.height)/s-3;
+      this._worldDetail=Math.min(this._detail,s<this._baseScale*.72?0:this._detail);
       const actual=s*this.renderScale;let best=Infinity;
       for(let i=0;i<this._banks.length;i++){const error=Math.abs(Math.log(actual/this._banks[i].ppu));if(error<best){best=error;this._bank=this._banks[i];}}
     }
@@ -2161,15 +2195,15 @@ globalThis.TruckAudio = TruckAudio;
       const c=this.ctx,b=this._biome,bank=this._bank,left=this._left,right=this._right;
       for(let i=0;i<this._gaps.length;i++){const g=this._gaps[i];if(g.right<left||g.left>right)continue;c.drawImage(this._chasm,g.left,-80,g.right-g.left,g.top+80);this._stats.drawOps++;this._fill(g.leftFace,b.ground.chasm[0]);this._fill(g.rightFace,b.ground.body);}
       for(let i=0;i<this._props.length;i++){
-        const p=this._props[i];if(p.x<left-2||p.x>right+2||p.detail>this._detail)continue;
+        const p=this._props[i];if(p.x<left-2||p.x>right+2||p.detail>this._worldDetail)continue;
         c.save();c.translate(p.x,p.y);c.scale(p.scale*p.flip,p.scale);const s=bank.props[p.kind]||bank.props.rock;c.drawImage(s.canvas,s.left,s.bottom,s.w,s.h);c.restore();this._stats.drawOps++;
       }
       for(let i=0;i<this._chunks.length;i++){
         const ch=this._chunks[i];if(ch.right<left||ch.left>right)continue;
         this._fill(ch.body,b.ground.body);
-        const bands=this._detail===0?2:4;for(let j=0;j<bands;j++)this._fill(ch.bands[j],b.ground.strata[j]);
-        if(this._detail>0){this._fill(ch.specks[0],b.ground.speckle[0]);this._fill(ch.specks[1],b.ground.speckle[1]);}
-        this._fill(ch.top,b.ground.top);this._fill(ch.rim,b.ground.rim);if(this._detail>0)this._fill(ch.grass,b.ground.grass);
+        const bands=this._worldDetail===0?2:4;for(let j=0;j<bands;j++)this._fill(ch.bands[j],b.ground.strata[j]);
+        if(this._worldDetail>0){this._fill(ch.specks[0],b.ground.speckle[0]);this._fill(ch.specks[1],b.ground.speckle[1]);}
+        this._fill(ch.top,b.ground.top);this._fill(ch.rim,b.ground.rim);if(this._worldDetail>0)this._fill(ch.grass,b.ground.grass);
       }
       for(let i=0;i<this._signs.length;i++){const p=this._signs[i];if(p.x>=left-1&&p.x<=right+1)this._sprite(bank.signs[p.label],p.x,p.y);}
       const cp=finite(this._state.checkpointIndex,finite(this._physics.checkpointIndex));
@@ -2207,12 +2241,12 @@ globalThis.TruckAudio = TruckAudio;
         const z=zombies[i],n=(ZOMBIES+i)*3,x=Number.isFinite(pose[n])?pose[n]:z.x,y=Number.isFinite(pose[n+1])?pose[n+1]:z.y;
         if(x<this._left-1||x>this._right+1||(z.hit&&z.timeSinceHit>2.2))continue;
         c.globalAlpha=z.hit?clamp(1-finite(z.timeSinceHit)/2.2,0,1):1;
-        const walk=z.hit?0:((Math.floor(this._clock*5+i)&1));this._sprite(bank.zombies[(i%3)*2+walk],x,y,Number.isFinite(pose[n+2])?pose[n+2]:finite(z.angle));
+        const walk=z.hit?0:((Math.floor(this._worldClock*5+i)&1));this._sprite(bank.zombies[(i%3)*2+walk],x,y,Number.isFinite(pose[n+2])?pose[n+2]:finite(z.angle));
       }
       c.globalAlpha=1;const m=state.monster;
       if(m&&m.x>=this._left-3&&m.x<=this._right+3&&(m.alive||finite(m.timeSinceHit)<1.2)){
         const t=finite(m.timeSinceHit);c.globalAlpha=m.alive?1:clamp(1-t/1.2,0,1);this._sprite(bank.monster,m.x,m.y,m.alive?0:-Math.min(1.3,t*1.7));c.globalAlpha=1;
-        if(m.alive){c.globalAlpha=state.weapon&&state.weapon.canHit?1:.6;this._sprite(bank.target,m.weakpoint?m.weakpoint.x:m.x,m.weakpoint?m.weakpoint.y:m.y+2.85,Math.sin(this._clock)*.07);c.globalAlpha=1;}
+        if(m.alive){const tx=m.weakpoint?m.weakpoint.x:m.x,ty=m.weakpoint?m.weakpoint.y:m.y+2.85,locked=state.weapon&&state.weapon.canHit;c.globalAlpha=locked?1:.55;this._sprite(bank.target,tx,ty,Math.sin(this._clock)*.07);if(locked){const radius=Math.max(.65,18/this._cameraScale)*(1+Math.sin(this._clock*6)*.08);c.strokeStyle='#e4f5ab';c.lineWidth=2/this._cameraScale;c.beginPath();for(let i=0;i<4;i++)c.arc(tx,ty,radius,i*Math.PI/2+.14,i*Math.PI/2+1.1);c.stroke();this._stats.drawOps++;}c.globalAlpha=1;}
       }
     }
     _drawCannon(){
@@ -2224,7 +2258,7 @@ globalThis.TruckAudio = TruckAudio;
       this._sprite(this._bank.cannon,mx-Math.cos(angle)*this._kick*.13,my-Math.sin(angle)*this._kick*.13,angle);
       if(this._muzzle>0){this.ctx.globalAlpha=clamp(this._muzzle/.07,0,1);this._sprite(this._bank.flash,mx+Math.cos(angle)*1.45,my+Math.sin(angle)*1.45,angle);this.ctx.globalAlpha=1;}
       const n=PROJECTILE*3;
-      if(state.projectile){const px=Number.isFinite(this._pose[n])?this._pose[n]:state.projectile.x,py=Number.isFinite(this._pose[n+1])?this._pose[n+1]:state.projectile.y;this._sprite(this._bank.projectile,px,py,finite(state.projectile.angle));}
+      if(state.projectile){const px=Number.isFinite(this._pose[n])?this._pose[n]:state.projectile.x,py=Number.isFinite(this._pose[n+1])?this._pose[n+1]:state.projectile.y;const a=finite(state.projectile.angle);this.ctx.strokeStyle='#f9e9ac';this.ctx.lineWidth=2/this._cameraScale;this.ctx.beginPath();this.ctx.moveTo(px-Math.cos(a)*2,py-Math.sin(a)*2);this.ctx.lineTo(px,py);this.ctx.stroke();this._stats.drawOps++;this._sprite(this._bank.projectile,px,py,a);}
     }
     _spawn(x,y,count,kind,power=1){
       const total=Math.min(MAX_PARTICLES,Math.ceil(count*this.particleScale));
@@ -2253,7 +2287,7 @@ globalThis.TruckAudio = TruckAudio;
         case 'fuel':this._spawn(x,y,11,2,1.1);this.popup('+'+Math.round(finite(event.amount,32))+' FUEL',x,y+1,'fuel');break;
         case 'zombie':this._spawn(x,y,7,7,.8);this._spawn(x,y+.5,4,3,.65);break;
         case 'collision':this._spawn(x,y,10+Math.floor(s*12),2,1+s);this._spawn(x,y,7,4,s+1);this.addTrauma(s*.3);break;
-        case 'monsterHit':this._spawn(x,y,35,7,2.3);this._spawn(x,y,18,2,2);this._spawn(x,y,10,4,2);this.addTrauma(.35);this._zoomPunch=1;this.flash('#f7df9b',.09);break;
+        case 'monsterHit':this._impactTime=.6;this._impactX=x;this._impactY=y;this._spawn(x,y,35,7,2.3);this._spawn(x,y,18,2,2);this._spawn(x,y,10,4,2);this.addTrauma(.35);this._zoomPunch=1;this.flash('#f7df9b',.09);break;
         case 'monsterCrash':this._spawn(x,y,28,4,2.2);this._spawn(x,y,25,0,2.5);this._spawn(x,y,14,2,2);this.addTrauma(.85);this.flash('#df8264',.12);break;
         case 'flip':this._spawn(x,y,4,3,.8);break;
         case 'checkpoint':this._spawn(x,y+2.5,10,2,1.3);break;
@@ -2308,11 +2342,11 @@ globalThis.TruckAudio = TruckAudio;
     }
     _drawIndicators(){
       if(this._frame.mode!=='playing')return;const c=this.ctx,state=this._state,s=this._cameraScale;c.font='700 11px monospace';c.textBaseline='middle';
-      if(state.rival){const px=finite(this._pose[9],state.rival.x)*s+this._ox;if(px<30||px>this.width-30){const right=px>this.width-30,x=right?this.width-18:18,y=this.height*.46;c.beginPath();c.moveTo(x,y);c.lineTo(x+(right?-9:9),y-6);c.lineTo(x+(right?-9:9),y+6);c.closePath();c.fillStyle='#df9c77';c.fill();c.textAlign=right?'right':'left';c.fillText('IRON MAW',x+(right?-16:16),y);this._stats.drawOps+=2;}}
+      if(state.rival){const px=finite(this._pose[9],state.rival.x)*s+this._ox;if(px<30||px>this.width-30){const right=px>this.width-30,x=right?this.width-18:18,y=this.height*.46;c.beginPath();c.moveTo(x,y);c.lineTo(x+(right?-9:9),y-6);c.lineTo(x+(right?-9:9),y+6);c.closePath();c.fillStyle='#df9c77';c.fill();c.textAlign=right?'right':'left';c.fillText('⚑',x+(right?-16:16),y);this._stats.drawOps+=2;}}
       const m=state.monster;
       if(m&&m.alive){const px=m.x*s+this._ox;if(px>this.width-25){const x=this.width-18,y=this.height*.55;c.beginPath();c.moveTo(x,y);c.lineTo(x-9,y-6);c.lineTo(x-9,y+6);c.closePath();c.fillStyle='#e0b878';c.fill();c.textAlign='right';
         const distance=Math.ceil(state.weapon?finite(state.weapon.distance):Math.max(0,m.x-finite(state.x)));
-        if(distance!==this._lastMonsterDistance){this._lastMonsterDistance=distance;this._monsterLabel='MONSTER '+distance+' M';}c.fillText(this._monsterLabel,x-16,y);this._stats.drawOps+=2;}}
+        if(distance!==this._lastMonsterDistance){this._lastMonsterDistance=distance;this._monsterLabel='◎ '+distance+' m';}c.fillText(this._monsterLabel,x-16,y);this._stats.drawOps+=2;}}
     }
     _drawScreen(dt){
       const c=this.ctx,w=this.width,h=this.height,state=this._state,settings=this._frame.settings||EMPTY,speed=Math.abs(finite(state.speed))*3.6;
@@ -2325,18 +2359,20 @@ globalThis.TruckAudio = TruckAudio;
       if(this._biome.weather.kind==='fog'&&this._detail>0){c.globalAlpha=.6;c.fillStyle=this._haze;c.fillRect(0,h*.45,w,h*.55);c.globalAlpha=1;this._stats.drawOps++;}
       c.fillStyle=this._vignette;c.fillRect(0,0,w,h);this._stats.drawOps++;
       this._drawPopups(dt);this._drawIndicators();
+      if(this._impactTime>0){const t=1-this._impactTime/.6,x=this._impactX*this._cameraScale+this._ox,y=-this._impactY*this._cameraScale+this._oy;c.globalAlpha=(1-t)*.8;c.strokeStyle='#f3e6a3';c.lineWidth=3;c.beginPath();c.arc(x,y,10+t*65,0,TAU);c.stroke();this._stats.drawOps++;c.globalAlpha=1;this._impactTime=Math.max(0,this._impactTime-dt);}
+
       if(this._flashTime>0){c.globalCompositeOperation='screen';c.globalAlpha=clamp(this._flashTime/this._flashDuration,0,1)*.16;c.fillStyle=this._flashColor;c.fillRect(0,0,w,h);c.globalAlpha=1;c.globalCompositeOperation='source-over';this._stats.drawOps++;this._flashTime=Math.max(0,this._flashTime-dt);}
     }
     render(frame=EMPTY){
       const start=performance.now();this._stats.drawOps=0;
       if(!this._biome||!this._banks.length){this.ctx.fillStyle='#152a2d';this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);this._stats.drawOps=1;this._stats.renderMs=performance.now()-start;return;}
       this._frame=frame;this._state=frame.state||EMPTY;this._input=frame.input||EMPTY;
-      const dt=clamp(finite(frame.dt),0,.1);this._clock+=dt;this._kick*=Math.exp(-dt*19);this._muzzle=Math.max(0,this._muzzle-dt);
+      const dt=clamp(finite(frame.dt),0,.1);this._clock+=dt;this._worldClock+=Number.isFinite(frame.worldDt)?frame.worldDt:dt;this._kick*=Math.exp(-dt*19);this._muzzle=Math.max(0,this._muzzle-dt);
       this._preparePose(this._state,frame.pose);this._updateCamera(frame,dt);this._drawBackground();this._worldTransform();this._drawWorld();
       this._drawEntities();
       if(frame.ghost&&frame.ghost.pose&&frame.ghost.pose.length>=9){this.ctx.globalAlpha=.35*clamp(finite(frame.ghost.alpha,1),0,1);this._drawTruck(frame.ghost.pose,0,false,true);this.ctx.globalAlpha=1;}
       if(this._state.rival||Number.isFinite(this._pose[RIVAL*3]))this._drawTruck(this._pose,RIVAL*3,true);
-      this._drawTruck(this._pose,PLAYER*3);this._drawCannon();this._emitAmbient(dt);this._drawParticles(dt);this._drawScreen(dt);
+      this._drawTruck(this._pose,PLAYER*3);this._drawCannon();this._emitAmbient(Number.isFinite(frame.worldDt)?frame.worldDt:dt);this._drawParticles(Number.isFinite(frame.worldDt)?frame.worldDt:dt);this._drawScreen(dt);
       this._stats.spriteBytes=this._spriteBytes+this._screenBytes;this._stats.renderScale=this.renderScale;this._stats.renderMs=performance.now()-start;
     }
   }
@@ -2384,14 +2420,39 @@ globalThis.TruckAudio = TruckAudio;
     load(raw){this.replay=null;try{const v=typeof raw==='string'?JSON.parse(raw):raw;if(!v||v.version!==1||v.hz!==20||!Array.isArray(v.data)||v.data.length<18||v.data.length%9||v.data.length>4096*9||!v.data.every(Number.isFinite))return false;this.replay=Float64Array.from(v.data,(x,i)=>x/(i%3===2?10000:1000));return true;}catch(_){return false;}}
     at(time){const b=this.replay;if(!b)return null;const index=Math.floor(time*20),n=b.length/9;if(index>=n-1)return null;const f=time*20-index,a=index*9,c=a+9;for(let j=0;j<9;j++){let d=b[c+j]-b[a+j];if(j%3===2)d=Math.atan2(Math.sin(d),Math.cos(d));this.pose[j]=b[a+j]+d*f;}return this.frame;}
   }
-  if(typeof document==='undefined'){if(typeof module!=='undefined')module.exports={FramePacer,GhostTape,QUALITY};return;}
+  // Real-time presentation envelope; the entire physics world shares its scale.
+  class ShotDirector {
+    constructor(){this.state={phase:'idle',intensity:0,timeScale:1,progress:0};this.reset();}
+    reset(){this.elapsed=0;this.aimUsed=false;Object.assign(this.state,{phase:'idle',intensity:0,timeScale:1,progress:0});}
+    start(phase){this.elapsed=0;this.state.phase=phase;this.state.progress=0;}
+    shoot(){this.aimUsed=true;this.start('shot');}
+    hit(){this.start('impact');}
+    update(dt,state,reduced=false){
+      const v=this.state;dt=Math.max(0,Math.min(.1,dt));
+      if(v.phase==='idle'&&!this.aimUsed&&state.ammo>0&&state.weapon.canHit&&state.weapon.distance<33){this.aimUsed=true;this.start('aim');}
+      this.elapsed+=dt;
+      if(v.phase==='shot'&&!state.projectile&&this.elapsed>.1)this.start(state.monster.alive?'miss':'impact');
+      const duration={aim:1.35,shot:3.2,impact:.64,miss:.38}[v.phase]||1;
+      v.progress=Math.min(1,this.elapsed/duration);
+      const smooth=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
+      if(v.phase==='aim'){v.intensity=smooth(this.elapsed/.18)*(1-smooth((this.elapsed-.95)/.4));v.timeScale=1-.55*v.intensity;}
+      else if(v.phase==='shot'){v.intensity=1;v.timeScale=1-.78*smooth(this.elapsed/.1);}
+      else if(v.phase==='impact'){v.intensity=1-smooth(this.elapsed/.64);v.timeScale=.14+.86*smooth((this.elapsed-.08)/.56);}
+      else if(v.phase==='miss'){v.intensity=.5*(1-v.progress);v.timeScale=.4+.6*smooth(v.progress);}
+      else{v.intensity=0;v.timeScale=1;}
+      if(v.progress>=1&&v.phase!=='idle'){v.phase='idle';v.intensity=0;v.timeScale=1;}
+      if(reduced){v.timeScale=1;v.intensity=0;}
+      return v;
+    }
+  }
+  if(typeof document==='undefined'){if(typeof module!=='undefined')module.exports={FramePacer,GhostTape,ShotDirector,QUALITY};return;}
   const Rules=global.IronRules,stages=global.TruckPhysics.STAGES,biomes=global.IRON_BIOMES;
   const canvas=document.getElementById('gameCanvas'),app=document.getElementById('app');
   const ui=new global.IronUI(document),audio=new global.TruckAudio(),pacer=new FramePacer(),ghost=new GhostTape();
   let storage;try{storage=global.localStorage;}catch(_){storage=null;}
   const save=Rules.Save.load(storage);let stageIndex=clamp(save.selected|0,0,save.unlocked-1);
   let physics=new global.TruckPhysics(stageIndex,{tuning:save.upgrades}),state=physics.getState(),pose=new Float64Array(physics.poseLength);
-  const renderer=new global.IronRenderer(canvas,{biomes});
+  const renderer=new global.IronRenderer(canvas,{biomes}),shotDirector=new ShotDirector();
   let mode='title',screen='title',pausedFrom='playing';const navigation=[];let primePending=false;
   let run=Rules.createRun(stageIndex),runTime=0,recoveries=0,accumulator=0,last=performance.now();
   let countdownLeft=0,countdownNumber=0,hitStop=0,slowLeft=0,flippedTime=0,fallenTime=0;
@@ -2437,7 +2498,7 @@ globalThis.TruckAudio = TruckAudio;
     index=clamp(index|0,0,9);if(!bypass&&index>=save.unlocked)return false;
     ui.clearFeedback();
     stageIndex=index;save.selected=index;persist();physics=new global.TruckPhysics(index,{tuning:save.upgrades});state=physics.getState();pose=new Float64Array(physics.poseLength);
-    frame.state=state;frame.pose=pose;physics.getPose(pose);renderer.setStage(physics,index);renderer.snapCamera();
+    shotDirector.reset();frame.state=state;frame.pose=pose;physics.getPose(pose);renderer.setStage(physics,index);renderer.snapCamera();
     view.checkpointProgress=physics.track.checkpoints.slice(1).map(p=>(p.x-physics.track.startX)/physics.track.length);
     run=Rules.createRun(index);run.previousStars=save.stars[index]||[false,false,false];runTime=0;recoveries=0;accumulator=0;countdownLeft=0;hitStop=0;slowLeft=0;flippedTime=0;fallenTime=0;stageResult=null;lowFuelWarned=false;monsterWarned=false;lockWarned=false;ghost.reset();
     try{ghost.load(storage?.getItem(`irontrail-ghost-v1-${index}`));}catch(_){ghost.replay=null;}
@@ -2481,12 +2542,12 @@ globalThis.TruckAudio = TruckAudio;
   function recover(){
     if(mode!=='playing')return;const ok=physics.reset(physics.checkpointIndex);state=physics.getState();
     if(!ok){if(physics.failed)finishRun(false,physics.failed);return;}
-    recoveries++;accumulator=0;flippedTime=0;fallenTime=0;physics.getPose(pose);renderer.snapCamera();ui.toast('RECOVERED · −12 FUEL',1.8,'warn');audio.ui('back');ui.setRecoverVisible(false);
+    recoveries++;accumulator=0;flippedTime=0;fallenTime=0;physics.getPose(pose);renderer.snapCamera();ui.cue('recover',{value:'−12'});audio.ui('back');ui.setRecoverVisible(false);
   }
-  function fire(){if(mode!=='playing')return;if(physics.fire()){state=physics.getState();}else audio.ui('error');}
+  function fire(){if(mode!=='playing')return;if(physics.fire()){state=physics.getState();shotDirector.shoot();ui.cue('shot');}else audio.ui('error');}
   function toggleSound(){audio.setMuted(!audio.muted);view.muted=audio.muted;ui.hud.update(view);audio.ui('confirm');}
   async function fullscreen(){try{ignoreBlurUntil=performance.now()+800;if(document.fullscreenElement)await document.exitFullscreen();else await app.requestFullscreen();}catch(_){ui.toast('Fullscreen is not available here',2,'warn');}}
-  function buy(track){const result=Rules.buyUpgrade(save,track);if(result.ok){persist();refreshCampaign();ui.showScreen('garage');audio.ui('buy');ui.toast(`${Rules.UPGRADE_META[track].label.toUpperCase()} UPGRADED`,1.7,'score');}else{audio.ui('error');ui.toast(result.reason==='max'?'ALREADY FULLY UPGRADED':'MORE SCRAP NEEDED',1.5,'warn');}}
+  function buy(track){const result=Rules.buyUpgrade(save,track);if(result.ok){persist();refreshCampaign();ui.showScreen('garage');audio.ui('buy');ui.cue('upgrade');}else{audio.ui('error');ui.cue('error',{value:result.reason==='max'?'✓':'◆'});}}
   function setting(key,value){
     if(!(key in save.settings))return;
     if(['master','music','sfx'].includes(key))value=clamp(Number(value)||0,0,1);
@@ -2551,18 +2612,18 @@ globalThis.TruckAudio = TruckAudio;
     switch(event.type){
       case 'takeoff':audio.takeoff(event.strength);break;
       case 'land':audio.landing(event.strength);break;
-      case 'landing':if(event.perfect){audio.perfect();ui.banner('PERFECT LANDING','perfect',1);}if(event.flips>0)ui.banner(`${event.flips>1?event.flips+'× ':''}${event.dir==='front'?'FRONTFLIP':'BACKFLIP'}`,'trick',1.3);break;
+      case 'landing':if(event.perfect){audio.perfect();ui.cue('trick',{value:'★'});}if(event.flips>0)ui.cue('trick',{value:'↻ ×'+event.flips});break;
       case 'flip':audio.flip(event.count);if(!save.settings.reducedMotion)slowLeft=.10;break;
       case 'fuel':audio.pickup();lowFuelWarned=false;break;
       case 'zombie':audio.zombieHit(event.strength);break;
       case 'collision':audio.collision(event.strength);break;
       case 'shot':audio.gunshot();break;
-      case 'monsterHit':audio.monsterHit();ui.banner('GIANT DOWN','big',1.3);if(!save.settings.reducedMotion)hitStop=.035;break;
+      case 'monsterHit':audio.monsterHit();shotDirector.hit();ui.cue('hit',{value:'+1000'});break;
       case 'monsterCrash':audio.monsterCrash();break;
-      case 'checkpoint':audio.checkpoint();ui.toast('CHECKPOINT SAVED',1.3,'score');break;
+      case 'checkpoint':audio.checkpoint();ui.cue('checkpoint');break;
     }
     const reward=Rules.onEvent(run,event,{state,time:runTime,recoveries});
-    if(reward){renderer.popup(`+${reward.points} ${reward.label}`,event.x??state.x,event.y??state.y+1,reward.kind);if(reward.combo>1)audio.combo(reward.combo);}
+    if(reward){renderer.popup(`+${reward.points}`,event.x??state.x,event.y??state.y+1,reward.kind);if(reward.combo>1)audio.combo(reward.combo);}
   }
   function finishRun(won,reason){
     if(mode!=='playing')return;clearInput();ui.setRecoverVisible(false);
@@ -2578,9 +2639,9 @@ globalThis.TruckAudio = TruckAudio;
     physics.step(STEP,input);state=physics.getState();runTime+=STEP;Rules.tick(run,STEP);
     for(const event of physics.drainEvents())physicsEvent(event);
     ghost.record(runTime,physics.poseCurr);
-    if(state.fuel<22&&!lowFuelWarned){lowFuelWarned=true;audio.lowFuel();ui.toast('LOW FUEL · FIND AN AMBER CAN',2,'warn');}
-    if(state.monster.alive&&state.weapon.distance<70&&!monsterWarned){monsterWarned=true;ui.toast('GIANT AHEAD · ONE SHOT',2,'warn');}
-    if(state.weapon.canHit&&state.ammo>0&&!lockWarned){lockWarned=true;ui.banner('LOCKED · X / J / FIRE','locked',1.3);}
+    if(state.fuel<22&&!lowFuelWarned){lowFuelWarned=true;audio.lowFuel();ui.cue('fuel');}
+    if(state.monster.alive&&state.weapon.distance<70&&!monsterWarned){monsterWarned=true;ui.cue('target',{value:'1'});}
+    if(state.weapon.canHit&&state.ammo>0&&!lockWarned){lockWarned=true;ui.cue('target',{value:'X / J'});}
     const angle=Math.abs(Math.atan2(Math.sin(state.angle),Math.cos(state.angle)));
     flippedTime=angle>1.7&&Math.abs(state.speed)<2?flippedTime+STEP:0;fallenTime=state.y<-9?fallenTime+STEP:0;
     const needRecover=state.inverted||flippedTime>1.2||state.y<-3||state.stalledTime>2.5;ui.setRecoverVisible(needRecover);
@@ -2590,7 +2651,7 @@ globalThis.TruckAudio = TruckAudio;
   function updateHud(ghostFrame){
     const track=physics.track;view.stageIndex=stageIndex;view.stageName=stages[stageIndex].name;view.progress=clamp((state.x-track.startX)/track.length,0,1);
     view.distance=clamp(state.x-track.startX,0,track.length);view.length=track.length;
-    view.time=runTime;view.score=stageResult?stageResult.score:run.score;view.ghostDelta=ghostFrame?(ghostFrame.pose[0]-state.x)/Math.max(8,Math.abs(state.speed)):null;
+    view.shootingPhase=shotDirector.state.phase;view.time=runTime;view.score=stageResult?stageResult.score:run.score;view.ghostDelta=ghostFrame?(ghostFrame.pose[0]-state.x)/Math.max(8,Math.abs(state.speed)):null;
     view.fuel=state.fuel;view.cleared=state.cleared;view.totalZombies=state.totalZombies;view.speed=state.speed;view.gear=audio.gear;view.rpm=audio.rpm;view.ammo=state.ammo;view.locked=state.weapon.canHit;view.monsterDistance=state.weapon.distance;view.monsterAlive=state.monster.alive;
     view.monsterProgress=state.monster.alive?clamp((state.monster.x-track.startX)/track.length,0,1):null;view.rivalProgress=state.rival?clamp((state.rival.x-track.startX)/track.length,0,1):null;view.racePosition=state.racePosition;view.combo=run.combo;view.comboLeft=run.comboLeft;view.comboMax=run.comboMax;view.paused=mode==='paused';view.muted=audio.muted;ui.hud.update(view);
   }
@@ -2603,13 +2664,14 @@ globalThis.TruckAudio = TruckAudio;
       if(countdownLeft<=0){mode='playing';accumulator=0;ui.hud.setVisible(true);ui.banner('GO!','go',.7);audio.go();}
     }
     if(mode==='playing'){
-      let simulationDt=dt;if(hitStop>0){hitStop=Math.max(0,hitStop-dt);simulationDt=0;}else if(slowLeft>0){slowLeft=Math.max(0,slowLeft-dt);simulationDt*=.75;}
+      const oldPhase=shotDirector.state.phase,encounter=shotDirector.update(dt,state,save.settings.reducedMotion);if(encounter.phase==='miss'&&oldPhase!=='miss')ui.cue('miss');
+      let simulationDt=dt*encounter.timeScale;if(hitStop>0){hitStop=Math.max(0,hitStop-dt);simulationDt=0;}else if(slowLeft>0){slowLeft=Math.max(0,slowLeft-dt);simulationDt*=.75;}
       accumulator+=simulationDt;while(accumulator>=STEP&&steps<8&&mode==='playing'){tick();accumulator-=STEP;steps++;}if(accumulator<0)accumulator=0;if(steps>=8&&accumulator>=STEP)accumulator%=STEP;
-      if(mode==='playing')audio.update(state,dt,input);
+      if(mode==='playing'){input.timeScale=shotDirector.state.timeScale;audio.update(state,dt,input);}
     }else accumulator=0;
     const alpha=mode==='playing'?clamp(accumulator/STEP,0,1):1;physics.interpolatePose(alpha,pose);
     const ghostFrame=mode==='playing'?ghost.at(runTime):null;
-    frame.state=state;frame.pose=pose;frame.alpha=alpha;frame.dt=mode==='paused'?0:dt;frame.time=runTime;frame.mode=mode;frame.ghost=ghostFrame;renderer.render(frame);
+    frame.state=state;frame.pose=pose;frame.alpha=alpha;frame.dt=mode==='paused'?0:dt;frame.worldDt=mode==='playing'?dt*shotDirector.state.timeScale:0;frame.encounter=shotDirector.state;frame.time=runTime;frame.mode=mode;frame.ghost=ghostFrame;renderer.render(frame);
     hudClock+=dt;if(hudClock>=1/30){hudClock%=1/30;updateHud(ghostFrame);}
     musicClock+=dt;if(musicClock>=.1){musicClock%=.1;updateMusic();}
     if(ui.tick)ui.tick(dt);
@@ -2619,7 +2681,7 @@ globalThis.TruckAudio = TruckAudio;
     pacer.push(now,pose[0],alpha,steps,cpu);requestAnimationFrame(animation);
   }
   const qa=Object.freeze({start(index=0){loadStage(index,{brief:false,bypass:true});countdown(true);return true;},get warm(){return warmReady;}});
-  global.irontrail=Object.freeze({get mode(){return mode;},get telemetry(){return {...state,time:runTime,bestAir:state.stats.maxAir,checkpoint:physics.checkpointIndex,recoveries,score:run.score};},get physics(){return physics;},get audio(){return audio;},get campaign(){return Rules.Save.migrate(save);},get stage(){return stageIndex+1;},get perf(){return perf;},qa});
+  global.irontrail=Object.freeze({get mode(){return mode;},get telemetry(){return {...state,time:runTime,bestAir:state.stats.maxAir,checkpoint:physics.checkpointIndex,recoveries,score:run.score};},get encounter(){return {...shotDirector.state};},get physics(){return physics;},get audio(){return audio;},get campaign(){return Rules.Save.migrate(save);},get stage(){return stageIndex+1;},get perf(){return perf;},qa});
   refreshCampaign();applySettings();resize();renderer.setStage(physics,stageIndex);physics.getPose(pose);view.checkpointProgress=physics.track.checkpoints.slice(1).map(p=>(p.x-physics.track.startX)/physics.track.length);show('title');updateHud(null);requestAnimationFrame(animation);
   const warm=()=>{global.TruckPhysics.warmUp(65);warmReady=true;};if(global.requestIdleCallback)requestIdleCallback(warm,{timeout:350});else setTimeout(warm,30);
 })(globalThis);

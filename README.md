@@ -2,7 +2,7 @@
 
 A self-contained 2D monster truck game: ten increasingly demanding routes, physical zombies, depleting fuel, a single-charge cannon, and a final race against Iron Maw.
 
-Play at https://irontrail-monster-rally.mellowdew4.chatgpt.site or open `index.html` in a modern browser. All physics, graphics, music and effects are inside that one file. No installation or network assets are needed.
+Vercel domain: https://irontrail.maxrecursion.dev (DNS setup in progress). Source: https://github.com/MaxRecursion/irontrail. Open `index.html` in a modern browser. All physics, graphics, music and effects are inside that one file. No installation or network assets are needed.
 
 ## Play
 
@@ -74,3 +74,9 @@ Browser checks on localhost:
 `tests/make-browser-fixture.py` creates isolated developer previews from the current build. Test pages and fixtures are excluded from the deployed `dist/` directory. Claude's optional `page-check.mjs` and `perf-bench.mjs` remain available for a developer-controlled Chrome session; they were not used for this release's browser checks.
 
 Edit `src/`, then rebuild. Generated `index.html` and `dist/index.html` must be identical. Preserve Planck.js 1.5.0 and its inline MIT license. `PLAN.md`, `SPEC.md` and `HANDOFF.md` contain module contracts, exact verification results and continuation instructions. Hosting retains the existing private Site identity in `.openai/hosting.json`.
+
+## Shooting update
+
+A short automatic aim window eases into slow motion. Firing slows the complete world to22% speed, tracks the shot, adds an impact ring, and smoothly restores pace. The rival, fuel and run/ghost clock share the same simulation time. The one-charge rule and actual projectile raycast still apply. Reduced motion keeps normal speed and removes camera emphasis. Crosshair pulses, one ammo pip, animated icon cues and numeric rewards replace long gameplay prompts.
+
+Vercel builds the portable file with `python3 build.py`, serves `dist/`, and is connected to the private GitHub repository. The requested custom domain needs a Namecheap CNAME host `irontrail` → `1c83a48bcee72fc4.vercel-dns-017.com.`. Keep other DNS records unchanged.

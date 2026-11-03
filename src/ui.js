@@ -4,7 +4,7 @@
  * {stageIndex,stageName,progress,distance,length,time,score,ghostDelta,fuel,
  *  cleared,totalZombies,speed,gear,rpm,ammo,locked,monsterDistance,monsterAlive,
  *  monsterProgress,rivalProgress,racePosition,combo,comboLeft,comboMax,
- *  checkpointProgress:[0..1],paused,muted,status}
+ *  checkpointProgress:[0..1],paused,muted,status,shootingPhase}
  *
  * Screen data:
  * title/stages/garage/settings read setCampaign(save,stages,biomes,rulesInfo).
@@ -14,7 +14,8 @@
  *          scrap,newBest,newScoreBest,challenge,nextAvailable}
  * failed:{reason,stageName,time,score,scrap,tip}
  * showScreen(null) hides menus. Menu events are emitted; UI never starts physics.
- * clearFeedback() cancels transient toast/banner feedback on screen/run transitions.
+ * cue(kind,{value,seconds}) shows a persistent SVG badge with optional numeric value.
+ * clearFeedback() cancels transient cue/toast/banner feedback on screen/run transitions.
  * on(name,fn) returns an unsubscribe. navigate(direction),activate(),back() support
  * gamepads. setCampaign updates source data; call showScreen again to refresh a menu.
  * metrics() is cached and reserves recover top-center, independently of all controls.
@@ -28,8 +29,9 @@
     return `${String(Math.floor(n/6000)).padStart(2,'0')}:${String(Math.floor(n/100)%60).padStart(2,'0')}.${String(n%100).padStart(2,'0')}`;
   };
   const scoreText = value => Math.max(0,Math.floor(Number(value)||0)).toLocaleString('en-US');
+  const CUES=Object.freeze({target:'Target locked',shot:'Shot fired',hit:'Monster cleared',miss:'Shot missed',fuel:'Fuel',checkpoint:'Checkpoint',recover:'Recovered',trick:'Trick',success:'Success',error:'Unavailable',upgrade:'Upgrade installed'});
   const icon = kind => {
-    const paths={engine:'M4 8h3V5h8v3h4v9h-3v3H7v-3H4zM9 3h5M2 11v4M22 10v7M10 10l-2 4h4l-2 4',tyre:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 7v3M12 14v3M7 12h3M14 12h3M8.5 8.5l2 2M13.5 13.5l2 2M8.5 15.5l2-2M13.5 10.5l2-2',suspension:'M5 3l4 3-3 3 7 3-3 3 7 3-2 3M14 3l5 3-3 3 3 3-5 3 3 3-3 3',fuel:'M5 21V4h9v17M4 21h12M5 9h9M16 5l3 3v9c0 2 3 2 3 0v-5l-3-3'};
+    const paths={target:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M12 1v6M12 17v6M1 12h6M17 12h6',checkpoint:'M5 22V3m0 1h14l-3 4 3 4H5',engine:'M4 8h3V5h8v3h4v9h-3v3H7v-3H4zM9 3h5M2 11v4M22 10v7M10 10l-2 4h4l-2 4',tyre:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 7v3M12 14v3M7 12h3M14 12h3M8.5 8.5l2 2M13.5 13.5l2 2M8.5 15.5l2-2M13.5 10.5l2-2',suspension:'M5 3l4 3-3 3 7 3-3 3 7 3-2 3M14 3l5 3-3 3 3 3-5 3 3 3-3 3',fuel:'M5 21V4h9v17M4 21h12M5 9h9M16 5l3 3v9c0 2 3 2 3 0v-5l-3-3'};
     return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[kind]||paths.engine}"/></svg>`;
   };
   class IronUI {
@@ -66,26 +68,28 @@
     _bar(id,value){const n=Math.round(clamp(value,0,1)*1000)/1000,key=`bar:${id}`;if(this.values[key]!==n){this.values[key]=n;this.nodes[id].style.transform=`scaleX(${n})`;}}
     _marker(id,value){this._hidden(id,value===null||value===undefined||!Number.isFinite(Number(value)));if(value==null)return;const n=Math.round(clamp(value,0,1)*1000)/10,key=`marker:${id}`;if(this.values[key]!==n){this.values[key]=n;this.nodes[id].style.transform=`translateX(${n}%)`;}}
     _updateHUD(v){
-      if(v.stageIndex!==undefined)this._text('hudStageNumber',`STAGE ${String(Number(v.stageIndex)+1).padStart(2,'0')} / 10`);
+      if(v.stageIndex!==undefined)this._text('hudStageNumber',`${String(Number(v.stageIndex)+1).padStart(2,'0')} / 10`);
       if(v.stageName!==undefined)this._text('hudStageName',v.stageName);
       if(v.progress!==undefined)this._bar('hudProgressFill',v.progress);
       if(v.distance!==undefined||v.length!==undefined)this._text('hudDistance',`${Math.floor(Math.max(0,Number(v.distance)||0))} / ${Math.floor(Number(v.length)||0)} M`);
       if(v.time!==undefined)this._text('hudTime',timeText(v.time));
       if(v.score!==undefined)this._text('hudScore',scoreText(v.score));
-      if(v.ghostDelta!==undefined){const active=v.ghostDelta!==null&&Number.isFinite(Number(v.ghostDelta));this._hidden('hudGhost',!active);if(active){this._text('hudGhost',`${v.ghostDelta<=0?'−':'+'}${Math.abs(v.ghostDelta).toFixed(2)}s · GHOST`);this._class('hudGhost','ahead',v.ghostDelta<=0);this._class('hudGhost','behind',v.ghostDelta>0);}}
+      if(v.ghostDelta!==undefined){const active=v.ghostDelta!==null&&Number.isFinite(Number(v.ghostDelta));this._hidden('hudGhost',!active);if(active){this._text('hudGhost',`${v.ghostDelta<=0?'−':'+'}${Math.abs(v.ghostDelta).toFixed(2)}s`);this._class('hudGhost','ahead',v.ghostDelta<=0);this._class('hudGhost','behind',v.ghostDelta>0);}}
       if(v.fuel!==undefined){const fuel=clamp(v.fuel,0,100);this._text('fuelValue',`${Math.ceil(fuel)}%`);this._bar('fuelFill',fuel/100);this._attr('fuelMeter','aria-valuenow',Math.ceil(fuel));this._class('fuelHud','low',fuel<23);this._class('fuelHud','critical',fuel<12);}
       if(v.cleared!==undefined||v.totalZombies!==undefined)this._text('zombieValue',`${v.cleared||0} / ${v.totalZombies||0}`);
       if(v.speed!==undefined)this._text('speedValue',String(Math.round(Math.abs(v.speed)*3.6)).padStart(2,'0'));
       if(v.gear!==undefined)this._text('gearValue',v.gear);
       if(v.rpm!==undefined)this._bar('hudRpmFill',v.rpm/5200);
-      if(v.ammo!==undefined){this._text('ammoValue',`${v.ammo} / 1`);const disabled=!v.ammo;const key='disabled:fire';if(this.values[key]!==disabled){this.values[key]=disabled;this.nodes.fireButton.disabled=disabled;}this._class('weaponHud','spent',!v.ammo);this._attr('fireButton','aria-label',v.ammo?'Fire cannon, one charge available':'Cannon empty');}
+      if(v.ammo!==undefined){this._text('ammoValue',`${v.ammo} / 1`);const disabled=!v.ammo;const key='disabled:fire';if(this.values[key]!==disabled){this.values[key]=disabled;this.nodes.fireButton.disabled=disabled;}this._class('weaponHud','spent',!v.ammo);this._attr('ammoPip','aria-label',v.ammo?'One charge ready':'No charges');this._attr('fireButton','aria-label',v.ammo?'Fire cannon, one charge available':'Cannon empty');}
       if(v.locked!==undefined)this._class('weaponHud','locked',v.locked);
+      if(v.shootingPhase!==undefined)this._attr('weaponHud','data-phase',v.shootingPhase);
+      if(v.monsterAlive!==undefined)this._class('weaponHud','cleared',!v.monsterAlive);
       if(v.monsterAlive!==undefined||v.ammo!==undefined||v.locked!==undefined){const alive=v.monsterAlive!==false;this._text('weaponStatus',!alive?'MONSTER CLEARED':v.ammo===0?'CHARGE SPENT':v.locked?'TARGET LOCKED · FIRE':'SAVE YOUR ONE SHOT');}
-      if(v.monsterDistance!==undefined||v.monsterAlive!==undefined){this._text('monsterDistance',v.monsterAlive===false?'PATH OPEN':`${Math.ceil(Math.max(0,Number(v.monsterDistance)||0))} M TO GIANT`);this._monsterAlive=v.monsterAlive!==false;this._monsterDistance=Number(v.monsterDistance);}
+      if(v.monsterDistance!==undefined||v.monsterAlive!==undefined){this._text('monsterDistance',v.monsterAlive===false?'✓':`${Math.ceil(Math.max(0,Number(v.monsterDistance)||0))} m`);this._monsterAlive=v.monsterAlive!==false;this._monsterDistance=Number(v.monsterDistance);}
       if(v.monsterDistance!==undefined||v.monsterAlive!==undefined||v.locked!==undefined)this._class('weaponHud','warning',this._monsterAlive!==false&&this._monsterDistance<70&&!this.values['class:weaponHud:locked']);
       if(v.monsterProgress!==undefined)this._marker('hudMonsterMarker',v.monsterAlive===false?null:v.monsterProgress);
       if(v.rivalProgress!==undefined)this._marker('hudRivalMarker',v.rivalProgress);
-      if(v.status!==undefined)this._text('hudStageStatus',v.status);else if(v.racePosition!==undefined)this._text('hudStageStatus',v.rivalProgress==null?'ONE SHOT. ONE GIANT.':`RACE ${v.racePosition} / 2`);
+      if(v.status!==undefined)this._text('hudStageStatus',v.status);else if(v.racePosition!==undefined)this._text('hudStageStatus',v.rivalProgress==null?'':`⚑ ${v.racePosition} / 2`);
       if(v.combo!==undefined){this._hidden('hudCombo',v.combo<2);this._text('hudComboValue',`×${v.combo||1}`);}
       if(v.comboLeft!==undefined)this._bar('hudComboFill',v.comboLeft/(v.comboMax||3));
       if(v.checkpointProgress){const signature=v.checkpointProgress.join(',');if(this.values.checkpoints!==signature){this.values.checkpoints=signature;this.nodes.hudCheckpointTicks.replaceChildren();for(const progress of v.checkpointProgress){const tick=this.document.createElement('i');tick.className='hud-checkpoint';tick.style.left=`${clamp(progress,0,1)*100}%`;this.nodes.hudCheckpointTicks.appendChild(tick);}}}
@@ -107,17 +111,17 @@
       this.nodes.menuCrumb.textContent=name==='title'?'DEADLAND RALLY · V3':`${name.toUpperCase()} / IRONTRAIL`;
       let html='',primary='Continue',action='back',args=[],secondary='';
       if(name==='title'){
-        html=`<p class="menu-eyebrow">TEN STAGES. ONE WAY OUT.</p><h1 id="screenHeading" class="attract-title">DEADLAND<br><span>RALLY.</span></h1><p class="title-copy">Big tyres. Wild ground. One cannon charge.<br>Make your mark on the road nobody came back from.</p><div class="title-badges"><span>REAL SUSPENSION</span><span>ONE SHOT</span><span>NO EASY ROAD</span></div><div class="title-tag">${this.save.completed?.length||0} / 10 CLEARED &nbsp; · &nbsp; ${esc(this._stageName(this.save.selected||0)).toUpperCase()}</div>`;
+        html=`<p class="menu-eyebrow">TEN STAGES. ONE WAY OUT.</p><h1 id="screenHeading" class="attract-title">DEADLAND<br><span>RALLY.</span></h1><p class="title-copy">Big tyres. One shot. Make it count.</p><div class="title-badges"><span>REAL SUSPENSION</span><span>ONE SHOT</span><span>NO EASY ROAD</span></div><div class="title-tag">${this.save.completed?.length||0} / 10 CLEARED &nbsp; · &nbsp; ${esc(this._stageName(this.save.selected||0)).toUpperCase()}</div>`;
         primary=this.save.completed?.length?'Continue the rally':'Start your engine';action='play';secondary=this._button('Stage select','stages')+this._button('Garage','garage')+this._button('Settings','settings');
       }else if(name==='stages'){
-        html=`<p class="menu-eyebrow">THE ROAD OUT</p><h1 id="screenHeading" class="menu-title">Choose your line.</h1><p class="menu-copy">Clear each route to unlock the next. Three stars reward pace, survival and a little nerve.</p><div class="campaign-summary"><span>${this.save.completed?.length||0} / 10 ROUTES CLEARED</span><span>${Object.values(this.save.stars||{}).reduce((sum,v)=>sum+(Array.isArray(v)?v.filter(Boolean).length:0),0)} / 30 STARS</span><span class="scrap-chip">◆ ${scoreText(this.save.scrap)} SCRAP</span></div><div class="stage-grid">`;
+        html=`<p class="menu-eyebrow">THE ROAD OUT</p><h1 id="screenHeading" class="menu-title">Choose your line.</h1><p class="menu-copy">Ten routes. Thirty stars.</p><div class="campaign-summary"><span>${this.save.completed?.length||0} / 10 ROUTES CLEARED</span><span>${Object.values(this.save.stars||{}).reduce((sum,v)=>sum+(Array.isArray(v)?v.filter(Boolean).length:0),0)} / 30 STARS</span><span class="scrap-chip">◆ ${scoreText(this.save.scrap)} SCRAP</span></div><div class="stage-grid">`;
         for(let n=0;n<10;n++){
           const locked=n>=(this.save.unlocked||1),stars=this.save.stars?.[n]||[false,false,false],biome=this.biomes[n]||{};
           html+=`<button type="button" class="stage-card${locked?' locked':''}${n===(this.save.selected||0)?' current':''}" style="--card-accent:${esc(biome.accent||'#b9bd75')}" data-ui="selectStage" data-stage="${n}" aria-label="Stage ${n+1}: ${esc(this._stageName(n))}${locked?', locked':''}" ${locked?'disabled':''}><span class="stage-card-top"><b>${String(n+1).padStart(2,'0')}</b><span class="stage-lock">${locked?'LOCKED':n===9?'BOSS RACE':'SURVIVAL'}</span></span><span class="stage-name">${esc(this._stageName(n))}</span><span class="stage-meta">${this.stages[n]?.length||0} M · ${esc(biome.timeOfDay||'DEADLANDS').toUpperCase()}</span><span class="stage-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${this._stars(stars)}</span><span class="stage-best">${this.save.best?.[n]?timeText(this.save.best[n]):locked?'CLEAR THE PREVIOUS ROUTE':'SET THE FIRST TIME'}</span></button>`;
         }
         html+='</div>';primary='Continue selected route';action='selectStage';args=[this.save.selected||0];secondary=this._button('Garage','garage')+this._button('Title','title');
       }else if(name==='garage'){
-        html=`<p class="menu-eyebrow">TRAILBREAKER WORKSHOP</p><h1 id="screenHeading" class="menu-title">Build a better escape.</h1><p class="menu-copy">Earn scrap on the road. Make it yours. Your cannon still has one charge, cans restore 32, and recovery costs 12 fuel.</p><div class="campaign-summary"><span class="scrap-chip">◆ ${scoreText(this.save.scrap)} SCRAP AVAILABLE</span><span>UPGRADES APPLY TO YOUR NEXT RUN</span></div><div class="garage-grid">`;
+        html=`<p class="menu-eyebrow">TRAILBREAKER WORKSHOP</p><h1 id="screenHeading" class="menu-title">Build a better escape.</h1><p class="menu-copy">Earn scrap. Upgrade your ride.</p><div class="campaign-summary"><span class="scrap-chip">◆ ${scoreText(this.save.scrap)} SCRAP AVAILABLE</span><span>UPGRADES APPLY TO YOUR NEXT RUN</span></div><div class="garage-grid">`;
         for(const track of ['engine','tyres','suspension','tank']){
           const info=global.IronRules.upgradeInfo(track,this.save.upgrades?.[track]||0,this.rulesInfo.upgrades||this.rulesInfo.UPGRADES);
           const max=info.level>=3,canBuy=!max&&this.save.scrap>=info.cost;
@@ -126,7 +130,7 @@
         html+='</div>';primary='Back to the rally';action='back';secondary=this._button('Stage select','stages')+this._button('Settings','settings');
       }else if(name==='settings'){
         const settings=this.save.settings||{};
-        html='<p class="menu-eyebrow">TUNE YOUR EXPERIENCE</p><h1 id="screenHeading" class="menu-title">Make yourself at home.</h1><p class="menu-copy">Your preferences save automatically. Music is fully synthesized; the engine stays the loudest voice.</p><div class="settings-grid">';
+        html='<p class="menu-eyebrow">TUNE YOUR EXPERIENCE</p><h1 id="screenHeading" class="menu-title">Make yourself at home.</h1><p class="menu-copy">Saved automatically.</p><div class="settings-grid">';
         const ranges=[['master','Master volume',.9],['music','Music volume',.55],['sfx','Engine & effects',.9]];
         for(const [key,label,def]of ranges){const value=Math.round(clamp(settings[key]??def,0,1)*100);html+=`<div class="setting-item"><label for="setting-${key}">${label}<output id="setting-value-${key}">${value}%</output></label><input id="setting-${key}" type="range" min="0" max="100" step="1" value="${value}" data-setting="${key}" aria-label="${label}"></div>`;}
         html+=`<div class="setting-item"><label for="setting-quality">Graphics quality<select id="setting-quality" data-setting="quality" aria-label="Graphics quality">${[['auto','Auto · adaptive'],['high','High'],['balanced','Balanced'],['performance','Performance']].map(([value,label])=>`<option value="${value}" ${settings.quality===value?'selected':''}>${label}</option>`).join('')}</select></label><small>Auto adjusts resolution and effects to keep motion smooth.</small></div>`;
@@ -134,23 +138,24 @@
         html+='</div>';primary='Save & return';action='back';secondary=this._button('Stage select','stages')+this._button('Title','title');
       }else if(name==='brief'){
         const par=d.par??this._par(i),challenge=typeof d.challenge==='string'?d.challenge:d.challenge?.label||this._challenge(i),best=d.best??this.save.best?.[i];
-        html=`<div class="brief-layout"><div><p class="brief-kicker">STAGE ${String(i+1).padStart(2,'0')} / 10 ${i===9?'· FINAL BOSS':''}</p><h1 id="screenHeading" class="brief-name">${esc(d.name||stage.name||this._stageName(i))}</h1><p class="brief-description">${esc(d.description||stage.subtitle||'Find a line through the deadlands. Keep your fuel up and stop the giant before it stops you.')}</p><div class="brief-facts"><span>DISTANCE<strong>${d.length||stage.length||0}<small> M</small></strong></span><span>PAR TIME<strong>${timeText(par)}</strong></span><span>BEST<strong>${best?timeText(best):'—'}</strong></span></div><div class="onboarding"><span>↑ / W · DRIVE</span><span>← → · BALANCE</span><span>X / J · FIRE ON LOCK</span><span>C · RECOVER −12 FUEL</span></div></div><div class="brief-objectives"><div class="objective"><span class="star">★</span><div>Survive the route<small>One giant. One cannon charge. Reach the finish.</small></div></div><div class="objective"><span class="star">★</span><div>Beat the par time<small>${timeText(par)} OR FASTER</small></div></div><div class="objective"><span class="star">★</span><div>${esc(challenge)}<small>YOUR EXTRA CHALLENGE</small></div></div></div></div>`;
+        html=`<div class="brief-layout"><div><p class="brief-kicker">STAGE ${String(i+1).padStart(2,'0')} / 10 ${i===9?'· FINAL BOSS':''}</p><h1 id="screenHeading" class="brief-name">${esc(d.name||stage.name||this._stageName(i))}</h1><p class="brief-description">${esc(d.description||stage.subtitle||'Find your line.')}</p><div class="brief-facts"><span>DISTANCE<strong>${d.length||stage.length||0}<small> M</small></strong></span><span>PAR TIME<strong>${timeText(par)}</strong></span><span>BEST<strong>${best?timeText(best):'—'}</strong></span></div><div class="onboarding"><span aria-label="Throttle with Up or W">↑ W</span><span aria-label="Balance with Left and Right">↶ ↷</span><span class="onboarding-shot" aria-label="Wait for the crosshair to lock, then fire with X or J"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 1v5m0 12v5M1 12h5m12 0h5"/></svg> X / J</span><span aria-label="Recover with C for 12 fuel">↻ C · −12</span></div></div><div class="brief-objectives"><div class="objective"><span class="star">★</span><div>Finish<small>One shot. One giant.</small></div></div><div class="objective"><span class="star">★</span><div>Beat the clock<small>${timeText(par)} OR FASTER</small></div></div><div class="objective"><span class="star">★</span><div>${esc(challenge)}<small>CHALLENGE</small></div></div></div></div>`;
         primary=i===9?'Challenge Iron Maw':'Start this run';action='play';secondary=this._button('Stage select','stages')+this._button('Garage','garage');
       }else if(name==='pause'){
-        html=`<div class="pause-layout"><div><p class="menu-eyebrow">${esc(d.stageName||this._stageName(this.save.selected||0))}</p><h1 id="screenHeading" class="pause-heading">PARKED.<br>FOR NOW.</h1><p class="menu-copy">The road, fuel and rival wait for you. Catch your breath.</p></div><div class="pause-data"><span>RUN TIME<strong>${timeText(d.time||0)}</strong></span><span>FUEL<strong>${Math.ceil(d.fuel??100)}%</strong></span></div></div>`;
+        html=`<div class="pause-layout"><div><p class="menu-eyebrow">${esc(d.stageName||this._stageName(this.save.selected||0))}</p><h1 id="screenHeading" class="pause-heading">PARKED.<br>FOR NOW.</h1><p class="menu-copy">Take a breath.</p></div><div class="pause-data"><span>RUN TIME<strong>${timeText(d.time||0)}</strong></span><span>FUEL<strong>${Math.ceil(d.fuel??100)}%</strong></span></div></div>`;
         primary='Back to the trail';action='resume';secondary=this._button('Retry stage','retry')+this._button('Settings','settings')+this._button('Stage select','stages');
       }else if(name==='results'){
         const stars=d.stars||[true,false,false],par=d.par??this._par(i),challenge=typeof d.challenge==='string'?d.challenge:d.challenge?.label||this._challenge(i);
-        html=`<div class="result-layout"><div><p class="menu-eyebrow">${i===9?'DEADLAND CAMPAIGN COMPLETE':`STAGE ${String(i+1).padStart(2,'0')} CLEARED`} · ${esc(d.name||this._stageName(i))}</p><h1 id="screenHeading" class="menu-title">${i===9?'You own the wasteland.':'That’s how you leave a mark.'}</h1><div class="result-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${this._stars(stars,true)}</div><div class="result-summary">YOUR TIME <b>${timeText(d.time||0)}</b><br>PAR TIME ${timeText(par)}<br>${esc(challenge)} ${stars[2]?'✓':'· TRY ANOTHER RUN'}</div><div class="result-badges">${d.newBest?'<span class="result-badge">NEW BEST TIME</span>':''}${d.newScoreBest?'<span class="result-badge">NEW BEST SCORE</span>':''}</div><div class="result-big-score">${scoreText(d.score)}<small>TOTAL SCORE</small></div></div><div><div class="score-breakdown">${(d.breakdown||[]).map(row=>`<div class="breakdown-row"><span>${esc(row.label)}</span><b>${scoreText(row.value)}</b></div>`).join('')||'<div class="breakdown-row"><span>Run complete</span><b>0</b></div>'}<div class="scrap-earned"><span>SCRAP EARNED</span><strong>+${scoreText(d.scrap)}</strong></div></div></div></div>`;
+        html=`<div class="result-layout"><div><p class="menu-eyebrow">${i===9?'DEADLAND CAMPAIGN COMPLETE':`STAGE ${String(i+1).padStart(2,'0')} CLEARED`} · ${esc(d.name||this._stageName(i))}</p><h1 id="screenHeading" class="menu-title">${i===9?'Wasteland conquered.':'Stage clear.'}</h1><div class="result-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${this._stars(stars,true)}</div><div class="result-summary">YOUR TIME <b>${timeText(d.time||0)}</b><br>PAR TIME ${timeText(par)}<br>${esc(challenge)} ${stars[2]?'✓':'· —'}</div><div class="result-badges">${d.newBest?'<span class="result-badge">BEST TIME</span>':''}${d.newScoreBest?'<span class="result-badge">BEST SCORE</span>':''}</div><div class="result-big-score">${scoreText(d.score)}<small>TOTAL SCORE</small></div></div><div><div class="score-breakdown">${(d.breakdown||[]).map(row=>`<div class="breakdown-row"><span>${esc(row.label)}</span><b>${scoreText(row.value)}</b></div>`).join('')||'<div class="breakdown-row"><span>Run complete</span><b>0</b></div>'}<div class="scrap-earned"><span>SCRAP EARNED</span><strong>+${scoreText(d.scrap)}</strong></div></div></div></div>`;
         primary=d.nextAvailable!==false&&i<9?`Continue to stage ${String(i+2).padStart(2,'0')}`:'Back to the stages';action=d.nextAvailable!==false&&i<9?'next':'stages';secondary=this._button('Run it again','retry')+this._button('Garage','garage')+this._button('Stage select','stages');
       }else if(name==='failed'){
-        const reason=d.reason||'fuel',tips={fuel:'Keep rolling and collect amber cans. Idle still burns fuel; checkpoint recovery costs 12.',monster:'Wait for TARGET LOCKED, then fire once with X / J or FIRE. A fresh retry restores your only charge.',rival:'Iron Maw took the flag. Carry speed through the run-ups, trade paint, and keep the landing upright.'};
-        html=`<div class="failure-icon" aria-hidden="true">${reason==='fuel'?'▱':reason==='monster'?'◆':'⚑'}</div><p class="menu-eyebrow">${esc(d.stageName||this._stageName(this.save.selected||0))}</p><h1 id="screenHeading" class="menu-title">${reason==='fuel'?'Empty tank. Unfinished business.':reason==='monster'?'The giant stopped this run.':'Iron Maw got there first.'}</h1><p class="menu-copy">The road still has your name on it. Your earned scrap stays with you.</p><div class="failure-tip">${esc(d.tip||tips[reason]||tips.fuel)}</div><div class="result-summary">RUN TIME ${timeText(d.time||0)} &nbsp; · &nbsp; SCORE ${scoreText(d.score)} &nbsp; · &nbsp; +${scoreText(d.scrap)} SCRAP</div>`;
+        const reason=d.reason||'fuel',tips={fuel:'Collect the amber cans.',monster:'Wait for the green crosshair. X / J to fire.',rival:'Keep your speed through the jumps.'};
+        const failureIcon=reason==='fuel'?'fuel':reason==='monster'?'target':'checkpoint';
+        html=`<div class="failure-icon">${icon(failureIcon)}</div><p class="menu-eyebrow">${esc(d.stageName||this._stageName(this.save.selected||0))}</p><h1 id="screenHeading" class="menu-title">${reason==='fuel'?'Out of fuel.':reason==='monster'?'Monster ahead.':'Iron Maw wins.'}</h1><div class="failure-tip">${esc(tips[reason]||tips.fuel)}</div><div class="result-summary">${timeText(d.time||0)} &nbsp; · &nbsp; ${scoreText(d.score)} &nbsp; · &nbsp; ◆ +${scoreText(d.scrap)}</div>`;
         primary='One more run';action='retry';secondary=this._button('Garage','garage')+this._button('Stage select','stages')+this._button('Title','title');
       }else{this.showScreen('title');return;}
       this.nodes.menuBody.innerHTML=html;this.nodes.secondaryActions.innerHTML=secondary;
       this.nodes.playButton.innerHTML=`${esc(primary)} <span aria-hidden="true">→</span>`;this._primary={name:action,args};
-      this.nodes.menuHint.textContent=name==='title'?'ARROWS / WASD DRIVE · X / J FIRE · C RECOVER · GAMEPAD READY':name==='garage'?'UPGRADES NEVER ADD AMMO OR CHANGE CAN VALUE / RECOVERY COST':'ARROWS TO NAVIGATE · ENTER TO CHOOSE · ESC TO GO BACK';
+      this.nodes.menuHint.textContent=name==='title'?'↑ / WASD · X / J · GAMEPAD':name==='garage'?'◆ SCRAP → UPGRADES':'↑ ↓ · ENTER · ESC';
       this.nodes.menuPanel.scrollTop=0;this.nodes.playButton.focus({preventScroll:true});
     }
     _setting(event){
@@ -180,7 +185,14 @@
     activate(){if(this.screen===null)return false;const active=this.document.activeElement;if(active&&this.nodes.screenLayer.contains(active)&&!active.disabled){if(active.tagName==='BUTTON')active.click();else if(active.tagName==='INPUT'){if(active.type==='checkbox'){active.checked=!active.checked;active.dispatchEvent(new global.Event('change',{bubbles:true}));}return true;}else if(active.tagName==='SELECT'){active.selectedIndex=(active.selectedIndex+1)%active.options.length;active.dispatchEvent(new global.Event('change',{bubbles:true}));return true;}}else this.nodes.playButton.click();return true;}
     back(){this.emit('back');return true;}
     clearFeedback(){
-      if(this._toastTimer)global.clearTimeout(this._toastTimer);if(this._bannerTimer)global.clearTimeout(this._bannerTimer);this._toastTimer=null;this._bannerTimer=null;this._text('hudToast','');this._text('hudBanner','');this.nodes.hudToast.className='hud-toast';this.nodes.hudBanner.className='hud-banner';
+      if(this._toastTimer)global.clearTimeout(this._toastTimer);if(this._bannerTimer)global.clearTimeout(this._bannerTimer);if(this._cueTimer)global.clearTimeout(this._cueTimer);this._toastTimer=null;this._bannerTimer=null;this._cueTimer=null;this._hidden('hudCue',true);this._text('cueValue','');this._text('cueLabel','');this.nodes.hudCue.className='hud-cue';this._text('hudToast','');this._text('hudBanner','');this.nodes.hudToast.className='hud-toast';this.nodes.hudBanner.className='hud-banner';
+    }
+    cue(kind,{value,seconds=1.05}={}){
+      const key=CUES[kind]?kind:'error',label=CUES[key];
+      if(this._cueTimer)global.clearTimeout(this._cueTimer);
+      this._cueReplay=!this._cueReplay;this.nodes.hudCue.className=`hud-cue cue-${key} visible replay-${this._cueReplay?'a':'b'}`;
+      this._attr('cueGlyph','href',`#cue-${key}`);this._text('cueValue',value===undefined?'':value);this._text('cueLabel',label);this._attr('hudCue','aria-label',value===undefined?label:`${label} ${value}`);this._hidden('hudCue',false);
+      this._cueTimer=global.setTimeout(()=>{this._hidden('hudCue',true);this.nodes.hudCue.className='hud-cue';this._cueTimer=null;},clamp(seconds,.12,6)*1000);
     }
     toast(text,seconds=2,style=''){
       if(this._toastTimer)global.clearTimeout(this._toastTimer);this._text('hudToast',text);this.nodes.hudToast.className=`hud-toast visible${style==='warn'?' warn':''}`;

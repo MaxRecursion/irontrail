@@ -37,14 +37,39 @@
     load(raw){this.replay=null;try{const v=typeof raw==='string'?JSON.parse(raw):raw;if(!v||v.version!==1||v.hz!==20||!Array.isArray(v.data)||v.data.length<18||v.data.length%9||v.data.length>4096*9||!v.data.every(Number.isFinite))return false;this.replay=Float64Array.from(v.data,(x,i)=>x/(i%3===2?10000:1000));return true;}catch(_){return false;}}
     at(time){const b=this.replay;if(!b)return null;const index=Math.floor(time*20),n=b.length/9;if(index>=n-1)return null;const f=time*20-index,a=index*9,c=a+9;for(let j=0;j<9;j++){let d=b[c+j]-b[a+j];if(j%3===2)d=Math.atan2(Math.sin(d),Math.cos(d));this.pose[j]=b[a+j]+d*f;}return this.frame;}
   }
-  if(typeof document==='undefined'){if(typeof module!=='undefined')module.exports={FramePacer,GhostTape,QUALITY};return;}
+  // Real-time presentation envelope; the entire physics world shares its scale.
+  class ShotDirector {
+    constructor(){this.state={phase:'idle',intensity:0,timeScale:1,progress:0};this.reset();}
+    reset(){this.elapsed=0;this.aimUsed=false;Object.assign(this.state,{phase:'idle',intensity:0,timeScale:1,progress:0});}
+    start(phase){this.elapsed=0;this.state.phase=phase;this.state.progress=0;}
+    shoot(){this.aimUsed=true;this.start('shot');}
+    hit(){this.start('impact');}
+    update(dt,state,reduced=false){
+      const v=this.state;dt=Math.max(0,Math.min(.1,dt));
+      if(v.phase==='idle'&&!this.aimUsed&&state.ammo>0&&state.weapon.canHit&&state.weapon.distance<33){this.aimUsed=true;this.start('aim');}
+      this.elapsed+=dt;
+      if(v.phase==='shot'&&!state.projectile&&this.elapsed>.1)this.start(state.monster.alive?'miss':'impact');
+      const duration={aim:1.35,shot:3.2,impact:.64,miss:.38}[v.phase]||1;
+      v.progress=Math.min(1,this.elapsed/duration);
+      const smooth=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
+      if(v.phase==='aim'){v.intensity=smooth(this.elapsed/.18)*(1-smooth((this.elapsed-.95)/.4));v.timeScale=1-.55*v.intensity;}
+      else if(v.phase==='shot'){v.intensity=1;v.timeScale=1-.78*smooth(this.elapsed/.1);}
+      else if(v.phase==='impact'){v.intensity=1-smooth(this.elapsed/.64);v.timeScale=.14+.86*smooth((this.elapsed-.08)/.56);}
+      else if(v.phase==='miss'){v.intensity=.5*(1-v.progress);v.timeScale=.4+.6*smooth(v.progress);}
+      else{v.intensity=0;v.timeScale=1;}
+      if(v.progress>=1&&v.phase!=='idle'){v.phase='idle';v.intensity=0;v.timeScale=1;}
+      if(reduced){v.timeScale=1;v.intensity=0;}
+      return v;
+    }
+  }
+  if(typeof document==='undefined'){if(typeof module!=='undefined')module.exports={FramePacer,GhostTape,ShotDirector,QUALITY};return;}
   const Rules=global.IronRules,stages=global.TruckPhysics.STAGES,biomes=global.IRON_BIOMES;
   const canvas=document.getElementById('gameCanvas'),app=document.getElementById('app');
   const ui=new global.IronUI(document),audio=new global.TruckAudio(),pacer=new FramePacer(),ghost=new GhostTape();
   let storage;try{storage=global.localStorage;}catch(_){storage=null;}
   const save=Rules.Save.load(storage);let stageIndex=clamp(save.selected|0,0,save.unlocked-1);
   let physics=new global.TruckPhysics(stageIndex,{tuning:save.upgrades}),state=physics.getState(),pose=new Float64Array(physics.poseLength);
-  const renderer=new global.IronRenderer(canvas,{biomes});
+  const renderer=new global.IronRenderer(canvas,{biomes}),shotDirector=new ShotDirector();
   let mode='title',screen='title',pausedFrom='playing';const navigation=[];let primePending=false;
   let run=Rules.createRun(stageIndex),runTime=0,recoveries=0,accumulator=0,last=performance.now();
   let countdownLeft=0,countdownNumber=0,hitStop=0,slowLeft=0,flippedTime=0,fallenTime=0;
@@ -90,7 +115,7 @@
     index=clamp(index|0,0,9);if(!bypass&&index>=save.unlocked)return false;
     ui.clearFeedback();
     stageIndex=index;save.selected=index;persist();physics=new global.TruckPhysics(index,{tuning:save.upgrades});state=physics.getState();pose=new Float64Array(physics.poseLength);
-    frame.state=state;frame.pose=pose;physics.getPose(pose);renderer.setStage(physics,index);renderer.snapCamera();
+    shotDirector.reset();frame.state=state;frame.pose=pose;physics.getPose(pose);renderer.setStage(physics,index);renderer.snapCamera();
     view.checkpointProgress=physics.track.checkpoints.slice(1).map(p=>(p.x-physics.track.startX)/physics.track.length);
     run=Rules.createRun(index);run.previousStars=save.stars[index]||[false,false,false];runTime=0;recoveries=0;accumulator=0;countdownLeft=0;hitStop=0;slowLeft=0;flippedTime=0;fallenTime=0;stageResult=null;lowFuelWarned=false;monsterWarned=false;lockWarned=false;ghost.reset();
     try{ghost.load(storage?.getItem(`irontrail-ghost-v1-${index}`));}catch(_){ghost.replay=null;}
@@ -134,12 +159,12 @@
   function recover(){
     if(mode!=='playing')return;const ok=physics.reset(physics.checkpointIndex);state=physics.getState();
     if(!ok){if(physics.failed)finishRun(false,physics.failed);return;}
-    recoveries++;accumulator=0;flippedTime=0;fallenTime=0;physics.getPose(pose);renderer.snapCamera();ui.toast('RECOVERED · −12 FUEL',1.8,'warn');audio.ui('back');ui.setRecoverVisible(false);
+    recoveries++;accumulator=0;flippedTime=0;fallenTime=0;physics.getPose(pose);renderer.snapCamera();ui.cue('recover',{value:'−12'});audio.ui('back');ui.setRecoverVisible(false);
   }
-  function fire(){if(mode!=='playing')return;if(physics.fire()){state=physics.getState();}else audio.ui('error');}
+  function fire(){if(mode!=='playing')return;if(physics.fire()){state=physics.getState();shotDirector.shoot();ui.cue('shot');}else audio.ui('error');}
   function toggleSound(){audio.setMuted(!audio.muted);view.muted=audio.muted;ui.hud.update(view);audio.ui('confirm');}
   async function fullscreen(){try{ignoreBlurUntil=performance.now()+800;if(document.fullscreenElement)await document.exitFullscreen();else await app.requestFullscreen();}catch(_){ui.toast('Fullscreen is not available here',2,'warn');}}
-  function buy(track){const result=Rules.buyUpgrade(save,track);if(result.ok){persist();refreshCampaign();ui.showScreen('garage');audio.ui('buy');ui.toast(`${Rules.UPGRADE_META[track].label.toUpperCase()} UPGRADED`,1.7,'score');}else{audio.ui('error');ui.toast(result.reason==='max'?'ALREADY FULLY UPGRADED':'MORE SCRAP NEEDED',1.5,'warn');}}
+  function buy(track){const result=Rules.buyUpgrade(save,track);if(result.ok){persist();refreshCampaign();ui.showScreen('garage');audio.ui('buy');ui.cue('upgrade');}else{audio.ui('error');ui.cue('error',{value:result.reason==='max'?'✓':'◆'});}}
   function setting(key,value){
     if(!(key in save.settings))return;
     if(['master','music','sfx'].includes(key))value=clamp(Number(value)||0,0,1);
@@ -204,18 +229,18 @@
     switch(event.type){
       case 'takeoff':audio.takeoff(event.strength);break;
       case 'land':audio.landing(event.strength);break;
-      case 'landing':if(event.perfect){audio.perfect();ui.banner('PERFECT LANDING','perfect',1);}if(event.flips>0)ui.banner(`${event.flips>1?event.flips+'× ':''}${event.dir==='front'?'FRONTFLIP':'BACKFLIP'}`,'trick',1.3);break;
+      case 'landing':if(event.perfect){audio.perfect();ui.cue('trick',{value:'★'});}if(event.flips>0)ui.cue('trick',{value:'↻ ×'+event.flips});break;
       case 'flip':audio.flip(event.count);if(!save.settings.reducedMotion)slowLeft=.10;break;
       case 'fuel':audio.pickup();lowFuelWarned=false;break;
       case 'zombie':audio.zombieHit(event.strength);break;
       case 'collision':audio.collision(event.strength);break;
       case 'shot':audio.gunshot();break;
-      case 'monsterHit':audio.monsterHit();ui.banner('GIANT DOWN','big',1.3);if(!save.settings.reducedMotion)hitStop=.035;break;
+      case 'monsterHit':audio.monsterHit();shotDirector.hit();ui.cue('hit',{value:'+1000'});break;
       case 'monsterCrash':audio.monsterCrash();break;
-      case 'checkpoint':audio.checkpoint();ui.toast('CHECKPOINT SAVED',1.3,'score');break;
+      case 'checkpoint':audio.checkpoint();ui.cue('checkpoint');break;
     }
     const reward=Rules.onEvent(run,event,{state,time:runTime,recoveries});
-    if(reward){renderer.popup(`+${reward.points} ${reward.label}`,event.x??state.x,event.y??state.y+1,reward.kind);if(reward.combo>1)audio.combo(reward.combo);}
+    if(reward){renderer.popup(`+${reward.points}`,event.x??state.x,event.y??state.y+1,reward.kind);if(reward.combo>1)audio.combo(reward.combo);}
   }
   function finishRun(won,reason){
     if(mode!=='playing')return;clearInput();ui.setRecoverVisible(false);
@@ -231,9 +256,9 @@
     physics.step(STEP,input);state=physics.getState();runTime+=STEP;Rules.tick(run,STEP);
     for(const event of physics.drainEvents())physicsEvent(event);
     ghost.record(runTime,physics.poseCurr);
-    if(state.fuel<22&&!lowFuelWarned){lowFuelWarned=true;audio.lowFuel();ui.toast('LOW FUEL · FIND AN AMBER CAN',2,'warn');}
-    if(state.monster.alive&&state.weapon.distance<70&&!monsterWarned){monsterWarned=true;ui.toast('GIANT AHEAD · ONE SHOT',2,'warn');}
-    if(state.weapon.canHit&&state.ammo>0&&!lockWarned){lockWarned=true;ui.banner('LOCKED · X / J / FIRE','locked',1.3);}
+    if(state.fuel<22&&!lowFuelWarned){lowFuelWarned=true;audio.lowFuel();ui.cue('fuel');}
+    if(state.monster.alive&&state.weapon.distance<70&&!monsterWarned){monsterWarned=true;ui.cue('target',{value:'1'});}
+    if(state.weapon.canHit&&state.ammo>0&&!lockWarned){lockWarned=true;ui.cue('target',{value:'X / J'});}
     const angle=Math.abs(Math.atan2(Math.sin(state.angle),Math.cos(state.angle)));
     flippedTime=angle>1.7&&Math.abs(state.speed)<2?flippedTime+STEP:0;fallenTime=state.y<-9?fallenTime+STEP:0;
     const needRecover=state.inverted||flippedTime>1.2||state.y<-3||state.stalledTime>2.5;ui.setRecoverVisible(needRecover);
@@ -243,7 +268,7 @@
   function updateHud(ghostFrame){
     const track=physics.track;view.stageIndex=stageIndex;view.stageName=stages[stageIndex].name;view.progress=clamp((state.x-track.startX)/track.length,0,1);
     view.distance=clamp(state.x-track.startX,0,track.length);view.length=track.length;
-    view.time=runTime;view.score=stageResult?stageResult.score:run.score;view.ghostDelta=ghostFrame?(ghostFrame.pose[0]-state.x)/Math.max(8,Math.abs(state.speed)):null;
+    view.shootingPhase=shotDirector.state.phase;view.time=runTime;view.score=stageResult?stageResult.score:run.score;view.ghostDelta=ghostFrame?(ghostFrame.pose[0]-state.x)/Math.max(8,Math.abs(state.speed)):null;
     view.fuel=state.fuel;view.cleared=state.cleared;view.totalZombies=state.totalZombies;view.speed=state.speed;view.gear=audio.gear;view.rpm=audio.rpm;view.ammo=state.ammo;view.locked=state.weapon.canHit;view.monsterDistance=state.weapon.distance;view.monsterAlive=state.monster.alive;
     view.monsterProgress=state.monster.alive?clamp((state.monster.x-track.startX)/track.length,0,1):null;view.rivalProgress=state.rival?clamp((state.rival.x-track.startX)/track.length,0,1):null;view.racePosition=state.racePosition;view.combo=run.combo;view.comboLeft=run.comboLeft;view.comboMax=run.comboMax;view.paused=mode==='paused';view.muted=audio.muted;ui.hud.update(view);
   }
@@ -256,13 +281,14 @@
       if(countdownLeft<=0){mode='playing';accumulator=0;ui.hud.setVisible(true);ui.banner('GO!','go',.7);audio.go();}
     }
     if(mode==='playing'){
-      let simulationDt=dt;if(hitStop>0){hitStop=Math.max(0,hitStop-dt);simulationDt=0;}else if(slowLeft>0){slowLeft=Math.max(0,slowLeft-dt);simulationDt*=.75;}
+      const oldPhase=shotDirector.state.phase,encounter=shotDirector.update(dt,state,save.settings.reducedMotion);if(encounter.phase==='miss'&&oldPhase!=='miss')ui.cue('miss');
+      let simulationDt=dt*encounter.timeScale;if(hitStop>0){hitStop=Math.max(0,hitStop-dt);simulationDt=0;}else if(slowLeft>0){slowLeft=Math.max(0,slowLeft-dt);simulationDt*=.75;}
       accumulator+=simulationDt;while(accumulator>=STEP&&steps<8&&mode==='playing'){tick();accumulator-=STEP;steps++;}if(accumulator<0)accumulator=0;if(steps>=8&&accumulator>=STEP)accumulator%=STEP;
-      if(mode==='playing')audio.update(state,dt,input);
+      if(mode==='playing'){input.timeScale=shotDirector.state.timeScale;audio.update(state,dt,input);}
     }else accumulator=0;
     const alpha=mode==='playing'?clamp(accumulator/STEP,0,1):1;physics.interpolatePose(alpha,pose);
     const ghostFrame=mode==='playing'?ghost.at(runTime):null;
-    frame.state=state;frame.pose=pose;frame.alpha=alpha;frame.dt=mode==='paused'?0:dt;frame.time=runTime;frame.mode=mode;frame.ghost=ghostFrame;renderer.render(frame);
+    frame.state=state;frame.pose=pose;frame.alpha=alpha;frame.dt=mode==='paused'?0:dt;frame.worldDt=mode==='playing'?dt*shotDirector.state.timeScale:0;frame.encounter=shotDirector.state;frame.time=runTime;frame.mode=mode;frame.ghost=ghostFrame;renderer.render(frame);
     hudClock+=dt;if(hudClock>=1/30){hudClock%=1/30;updateHud(ghostFrame);}
     musicClock+=dt;if(musicClock>=.1){musicClock%=.1;updateMusic();}
     if(ui.tick)ui.tick(dt);
@@ -272,7 +298,7 @@
     pacer.push(now,pose[0],alpha,steps,cpu);requestAnimationFrame(animation);
   }
   const qa=Object.freeze({start(index=0){loadStage(index,{brief:false,bypass:true});countdown(true);return true;},get warm(){return warmReady;}});
-  global.irontrail=Object.freeze({get mode(){return mode;},get telemetry(){return {...state,time:runTime,bestAir:state.stats.maxAir,checkpoint:physics.checkpointIndex,recoveries,score:run.score};},get physics(){return physics;},get audio(){return audio;},get campaign(){return Rules.Save.migrate(save);},get stage(){return stageIndex+1;},get perf(){return perf;},qa});
+  global.irontrail=Object.freeze({get mode(){return mode;},get telemetry(){return {...state,time:runTime,bestAir:state.stats.maxAir,checkpoint:physics.checkpointIndex,recoveries,score:run.score};},get encounter(){return {...shotDirector.state};},get physics(){return physics;},get audio(){return audio;},get campaign(){return Rules.Save.migrate(save);},get stage(){return stageIndex+1;},get perf(){return perf;},qa});
   refreshCampaign();applySettings();resize();renderer.setStage(physics,stageIndex);physics.getPose(pose);view.checkpointProgress=physics.track.checkpoints.slice(1).map(p=>(p.x-physics.track.startX)/physics.track.length);show('title');updateHud(null);requestAnimationFrame(animation);
   const warm=()=>{global.TruckPhysics.warmUp(65);warmReady=true;};if(global.requestIdleCallback)requestIdleCallback(warm,{timeout:350});else setTimeout(warm,30);
 })(globalThis);

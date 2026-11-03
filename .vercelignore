@@ -1,0 +1,6 @@
+.git
+.openai
+tests
+preview*.jpg
+*.tar.gz
+.env*
