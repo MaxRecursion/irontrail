@@ -242,4 +242,4 @@ supported Sites publication workflow; historical release identifiers above refer
 - Verify hit/miss/one-charge/pause/retry and desktop/phone layout; preserve existing campaign.
 - Create MaxRecursion/irontrail, deploy static dist to Vercel and connect irontrail.maxrecursion.dev. Add the exact Vercel DNS target in Namecheap through browser once signed in.
 
-Shooting implementation and functional validation complete. GitHub repo and Vercel project created and connected; custom domain assigned. Remaining: production deployment verification, then Namecheap CNAME/save and DNS/TLS verification once user signs in.
+Shooting implementation and functional validation complete. GitHub repo and Vercel project created and connected; custom domain assigned. Production deployment verified at https://irontrail-iota.vercel.app (HTTP200 and live browser gameplay; GitHub Vercel status success). Remaining: Namecheap CNAME/save and DNS/TLS verification once user signs in.
