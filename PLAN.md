@@ -259,4 +259,4 @@ Shooting implementation and functional validation complete. GitHub repo and Verc
 - [x] Compare old and repaired click activation; measure real running output rather than only offline rendering/scheduler counts.
 - [x] Retry suspended/interrupted audio from click/touchend; provide Settings sound test and output meter.
 - [x] Verify actual music/V8/cannon output, mute/pause silence, resume, bundle and responsive UI.
-- [ ] Verify the published custom-domain build through its sound test and measured output.
+- [x] Verify the published custom-domain build through its sound test and measured output. Release18ad317: live music RMS.00779, engine RMS.05687, fired cannon RMS.02859, isolated sound test RMS.01807; live mute and pause both exactly0. Original volumes restored.
