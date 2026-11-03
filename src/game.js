@@ -81,7 +81,7 @@
   let padMenuDirection='',padRepeat=0,lastPadTime=0;
   const view={stageIndex,stageName:'',progress:0,time:0,score:0,ghostDelta:null,fuel:100,cleared:0,totalZombies:0,speed:0,gear:1,rpm:820,ammo:1,locked:false,monsterDistance:0,monsterAlive:true,monsterProgress:null,rivalProgress:null,racePosition:1,combo:0,comboLeft:0,comboMax:3,checkpointProgress:[],paused:false,muted:false};
   const frame={state,pose,alpha:1,dt:0,time:0,mode,input,ghost:null,layout,settings:save.settings};
-  const musicState={biome:stageIndex,intensity:.2,mood:'menu',playing:true};
+  const musicState={biome:stageIndex,intensity:.2,mood:'menu',playing:true,timeScale:1};
   const perf={fps:60,refreshHz:60,renderScale:1,quality:'high',cpuMs:0,drawOps:0,trace:()=>pacer.trace()};
   const NO_PADS=[];let activePad=null;const gamepadProvider=()=>navigator.getGamepads?navigator.getGamepads():NO_PADS;
   const pressed=i=>!!activePad?.buttons[i]?.pressed,value=i=>activePad?.buttons[i]?.value||0,edge=i=>pressed(i)&&!padPrevious[i];
@@ -225,7 +225,7 @@
   window.addEventListener('blur',()=>{clearInput();if(performance.now()>ignoreBlurUntil)pause();});
   document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();pause();}});
   function physicsEvent(event){
-    renderer.onEvent(event,state);
+    renderer.onEvent(event,state);audio.setScene(state,event);
     switch(event.type){
       case 'takeoff':audio.takeoff(event.strength);break;
       case 'land':audio.landing(event.strength);break;
@@ -239,6 +239,7 @@
       case 'monsterCrash':audio.monsterCrash();break;
       case 'checkpoint':audio.checkpoint();ui.cue('checkpoint');break;
     }
+    audio.setScene();
     const reward=Rules.onEvent(run,event,{state,time:runTime,recoveries});
     if(reward){if(event.type!=='monsterHit')renderer.popup(`+${reward.points}`,event.x??state.x,event.y??state.y+1,reward.kind);if(reward.combo>1)audio.combo(reward.combo);}
   }
@@ -272,7 +273,7 @@
     view.fuel=state.fuel;view.cleared=state.cleared;view.totalZombies=state.totalZombies;view.speed=state.speed;view.gear=audio.gear;view.rpm=audio.rpm;view.ammo=state.ammo;view.locked=state.weapon.canHit;view.monsterDistance=state.weapon.distance;view.monsterAlive=state.monster.alive;
     view.monsterProgress=state.monster.alive?clamp((state.monster.x-track.startX)/track.length,0,1):null;view.rivalProgress=state.rival?clamp((state.rival.x-track.startX)/track.length,0,1):null;view.racePosition=state.racePosition;view.combo=run.combo;view.comboLeft=run.comboLeft;view.comboMax=run.comboMax;view.paused=mode==='paused';view.muted=audio.muted;ui.hud.update(view);
   }
-  function updateMusic(){musicState.biome=stageIndex;musicState.intensity=mode==='playing'?clamp(Math.abs(state.speed)/30+(run.combo>2?.18:0),0,1):.18;musicState.mood=mode==='playing'?(state.fuel<20?'danger':stages[stageIndex].boss?'boss':'drive'):screen==='results'?'results':'menu';musicState.playing=mode!=='paused'&&!document.hidden;audio.setMusicState(musicState);}
+  function updateMusic(){musicState.timeScale=mode==='playing'?shotDirector.state.timeScale:1;musicState.biome=stageIndex;musicState.intensity=mode==='playing'?clamp(Math.abs(state.speed)/30+(run.combo>2?.18:0),0,1):.18;musicState.mood=mode==='playing'?(state.fuel<20?'danger':stages[stageIndex].boss?'boss':'drive'):screen==='results'?'results':'menu';musicState.playing=mode!=='paused'&&!document.hidden;audio.setMusicState(musicState);}
   function animation(now){
     const begin=performance.now(),dt=clamp((now-last)/1000,0,.1);last=now;pollPad(dt);readInput();let steps=0;
     if(mode==='countdown'){

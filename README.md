@@ -73,10 +73,14 @@ Browser checks on localhost:
 
 `tests/make-browser-fixture.py` creates isolated developer previews from the current build. Test pages and fixtures are excluded from the deployed `dist/` directory. Claude's optional `page-check.mjs` and `perf-bench.mjs` remain available for a developer-controlled Chrome session; they were not used for this release's browser checks.
 
-Edit `src/`, then rebuild. Generated `index.html` and `dist/index.html` must be identical. Preserve Planck.js 1.5.0 and its inline MIT license. `PLAN.md`, `SPEC.md` and `HANDOFF.md` contain module contracts, exact verification results and continuation instructions. Hosting retains the existing private Site identity in `.openai/hosting.json`.
+Edit `src/`, then rebuild. Generated `index.html` and `dist/index.html` must be identical. Preserve Planck.js 1.5.0 and its inline MIT license. `PLAN.md`, `SPEC.md` and `HANDOFF.md` contain module contracts, exact verification results and continuation instructions. The historical Sites identity remains in `.openai/hosting.json`; production uses the existing GitHub/Vercel project.
 
 ## Shooting update
 
 A short automatic aim window eases into slow motion. Firing slows the complete world to22% speed, tracks the shot, adds an impact ring, and smoothly restores pace. The rival, fuel and run/ghost clock share the same simulation time. The one-charge rule and actual projectile raycast still apply. Reduced motion keeps normal speed and removes camera emphasis. Crosshair pulses, one ammo pip, animated icon cues and numeric rewards replace long gameplay prompts.
 
 Vercel builds the portable file with `python3 build.py`, serves `dist/`, and is connected to the public GitHub repository. The custom domain uses a Namecheap CNAME host `irontrail` → `1c83a48bcee72fc4.vercel-dns-017.com.`. Keep other DNS records unchanged.
+
+## Sound update
+
+“Deadland Run” is an original eight-bar synth-rock score with a repeating hook, answering melody, syncopated bass, drums and a stronger boss arrangement. Jump release, suspension, rising flight wind, weight-sensitive landings, steel collisions, cannon recoil/echo and directional monster impacts are synthesized inside the HTML. Slow motion filters the score and lowers engine pitch; cannon and impact cues briefly lower the backing mix. Settings keep separate music, effects and master controls. No audio downloads or licensed recordings are required.

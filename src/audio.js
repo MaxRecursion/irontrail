@@ -28,7 +28,7 @@ class TruckAudio {
     this._noise = null;
     this._ratios = [24, 18, 14, 11, 9];
     this.volumes={master:.9,music:.55,sfx:.9};this._targets=new Map();this._cueTimes=Object.create(null);
-    this._automationClock=0;this._lastThrottle=0;this._lastCompression=0;this._lastBackfire=-10;
+    this._eventPan=0;this._slow=false;this._automationClock=0;this._lastThrottle=0;this._lastCompression=0;this._lastBackfire=-10;
     this._musicState={biome:0,intensity:.2,mood:'menu',playing:false};this.music=null;this._driveBus=true;
   }
 
@@ -72,7 +72,8 @@ class TruckAudio {
 
     this.engineBus=ctx.createGain();this.sfxBus=ctx.createGain();this.musicBus=ctx.createGain();
     this.engineBus.gain.value=this.volumes.sfx;this.sfxBus.gain.value=this.volumes.sfx;this.musicBus.gain.value=this.volumes.music;
-    this.engineBus.connect(this.master);this.sfxBus.connect(this.master);this.musicBus.connect(this.master);
+    this.engineFocus=ctx.createGain();this.engineFocus.gain.value=1;this._focusUntil=0;
+    this.engineBus.connect(this.engineFocus);this.engineFocus.connect(this.master);this.sfxBus.connect(this.master);this.musicBus.connect(this.master);
     for(const bus of [this.engineBus,this.sfxBus,this.musicBus])try{bus.gain.automationRate='k-rate';}catch(_){}
     const exhaust = ctx.createBiquadFilter();
     exhaust.type = 'lowpass';
@@ -188,12 +189,12 @@ class TruckAudio {
     for(const key of ['master','music','sfx'])if(values[key]!==undefined)this.volumes[key]=TruckAudio.clamp(Number(values[key]),0,1);
     if(this._ready&&this.context.state!=='running'){this.engineBus.gain.value=this._driveBus?this.volumes.sfx:0;this.sfxBus.gain.value=this.volumes.sfx;this.musicBus.gain.value=this.volumes.music;}
     if(this._ready){this._set(this.engineBus.gain,this._driveBus?this.volumes.sfx:0,.05);this._set(this.sfxBus.gain,this.volumes.sfx,.03);this._set(this.musicBus.gain,this.volumes.music,.08);this._gate();}
-    if(this.music)this.music.setVolume(this.volumes.master>0&&!this.muted&&!this.paused?this.volumes.music:0);
+    if(this.music)this.music.setVolume(this.volumes.master>0&&this.volumes.music>0&&!this.muted&&!this.paused?1:0);
   }
   setMusicState(state={}){
     Object.assign(this._musicState,state);this._driveBus=['drive','boss','danger'].includes(this._musicState.mood);
     if(this._ready)this._set(this.engineBus.gain,this._driveBus?this.volumes.sfx:0,.10);
-    if(this.music){this.music.setVolume(this.volumes.master>0&&!this.muted&&!this.paused?this.volumes.music:0);this.music.setState({...this._musicState,playing:this._musicState.playing&&!this.paused&&!this.muted&&this.volumes.master>0});}
+    if(this.music){this.music.setVolume(this.volumes.master>0&&this.volumes.music>0&&!this.muted&&!this.paused?1:0);this.music.setState({...this._musicState,playing:this._musicState.playing&&!this.paused&&!this.muted&&this.volumes.master>0});}
   }
   _gate() {
     if (!this._ready) return;
@@ -262,7 +263,9 @@ class TruckAudio {
     if (!this._ready) return;
     this._automationClock+=dt;if(this._automationClock<1/60)return;this._automationClock%=1/60;
     const rev = (this.rpm - 780) / 4420;
-    const pitch=.58+.42*Math.sqrt(TruckAudio.clamp(input?.timeScale??1,0,1));
+    const scale=TruckAudio.clamp(input?.timeScale??1,0,1);
+    this.slowMotion(scale);
+    const pitch=.58+.42*Math.sqrt(scale);
     this._set(this.engine.frequency, pitch*this.rpm / 120, 0.045);
     this._set(this.sub.frequency, pitch*this.rpm / 60, 0.06);
     this._set(this.intake.frequency, pitch*this.rpm / 30, 0.055);
@@ -277,9 +280,10 @@ class TruckAudio {
     const roadAmount = grounded ? Math.min(1, absSpeed / 22) : 0;
     this._set(this.gravel.gain.gain, roadAmount * (0.018 + slip * 0.035), 0.08);
     this._set(this.gravel.filter.frequency, 750 + absSpeed * 35);
-    const air = !grounded ? Math.min(1, TruckAudio.clamp(state.airtime, 0, 5) / 0.5) : 0;
-    this._set(this.wind.gain.gain, Math.min(0.055, absSpeed * 0.0011) * (0.22 + air * 0.78), 0.16);
-    this._set(this.wind.filter.frequency, 380 + absSpeed * 24, 0.18);
+    const air = !grounded ? Math.min(1, TruckAudio.clamp(state.airtime, 0, 5) / .38) : 0;
+    const rush=Math.hypot(absSpeed,TruckAudio.clamp(state.vy,-35,35)*1.2);
+    this._set(this.wind.gain.gain, Math.min(.085,rush*.002)*(0.12+air*.88), .12);
+    this._set(this.wind.filter.frequency, (500+Math.min(2600,rush*60))*(.65+.35*Math.sqrt(scale)), .14);
     this._set(this.skid.gain.gain,grounded?Math.min(.055,slip*.06+(input?.brake?absSpeed*.001:0)):0,.07);
     const compression=state.suspension?Math.abs(state.suspension[0])+Math.abs(state.suspension[1]):0;
     this._set(this.creak.gain.gain,grounded?Math.min(.025,Math.abs(compression-this._lastCompression)*.18):0,.05);this._lastCompression=compression;
@@ -302,7 +306,7 @@ class TruckAudio {
   }
 
   _noiseBurst(strength, frequency, duration, delay = 0, type = 'lowpass') {
-    if (!(strength > 0)) return;
+    if (!(strength > 0)||this._voices.size>=96) return;
     const ctx = this.context;
     const now = ctx.currentTime + delay;
     const source = ctx.createBufferSource();
@@ -317,14 +321,14 @@ class TruckAudio {
     gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
     source.connect(filter);
     filter.connect(gain);
-    gain.connect(this.sfxBus);
+    const nodes=[filter,gain];this._routeSfx(gain,nodes);
     source.start(now, Math.random());
     source.stop(now + duration + 0.03);
-    this._trackVoice(source, [filter, gain]);
+    this._trackVoice(source, nodes);
   }
 
   _thump(strength, fromHz, toHz, duration, delay = 0) {
-    if (!(strength > 0)) return;
+    if (!(strength > 0)||this._voices.size>=96) return;
     const ctx = this.context;
     const now = ctx.currentTime + delay;
     const oscillator = ctx.createOscillator();
@@ -336,10 +340,45 @@ class TruckAudio {
     gain.gain.linearRampToValueAtTime(strength, now + 0.006);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
     oscillator.connect(gain);
-    gain.connect(this.sfxBus);
+    const nodes=[gain];this._routeSfx(gain,nodes);
     oscillator.start(now);
     oscillator.stop(now + duration + 0.02);
-    this._trackVoice(oscillator, [gain]);
+    this._trackVoice(oscillator, nodes);
+  }
+
+  // One position per physics callback; all layers share the same stereo image.
+  setScene(state={},event={}) {
+    this._eventPan=Number.isFinite(event.x)&&Number.isFinite(state.x)?TruckAudio.clamp((event.x-state.x)/22,-.75,.75):0;
+  }
+  _routeSfx(node,nodes) {
+    if(this.context.createStereoPanner&&Math.abs(this._eventPan)>.01){
+      const pan=this.context.createStereoPanner();pan.pan.value=this._eventPan;node.connect(pan);pan.connect(this.sfxBus);nodes.push(pan);
+    }else node.connect(this.sfxBus);
+  }
+  _noiseSweep(strength,fromHz,toHz,duration,delay=0) {
+    if(!(strength>0)||this._voices.size>=96)return;
+    const ctx=this.context,now=ctx.currentTime+delay,source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();
+    source.buffer=this._noise;filter.type='bandpass';filter.Q.value=.65;
+    filter.frequency.setValueAtTime(fromHz,now);filter.frequency.exponentialRampToValueAtTime(toHz,now+duration);
+    gain.gain.setValueAtTime(0,now);gain.gain.linearRampToValueAtTime(strength,now+duration*.18);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+    source.connect(filter);filter.connect(gain);const nodes=[filter,gain];this._routeSfx(gain,nodes);
+    source.start(now,Math.random());source.stop(now+duration+.025);this._trackVoice(source,nodes);
+  }
+  _focus(seconds=.3,depth=.5) {
+    if(this.context.state!=='running')return;
+    const t=this.context.currentTime,p=this.engineFocus.gain;this._focusUntil=Math.max(this._focusUntil,t+seconds);
+    if(p.cancelAndHoldAtTime)p.cancelAndHoldAtTime(t);else{const value=p.value;p.cancelScheduledValues(t);p.setValueAtTime(value,t);}
+    p.linearRampToValueAtTime(depth,t+.008);p.linearRampToValueAtTime(1,this._focusUntil);
+  }
+  _metal(strength,frequency=490,duration=.15,delay=0) {
+    // Inharmonic body modes distinguish a steel chassis from the tyre thud.
+    for(let i=0;i<3;i++)this._thump(strength*[1,.45,.24][i],frequency*[1,1.37,2.07][i],frequency*[.88,1.3,1.96][i],duration/(1+i*.45),delay+i*.003);
+  }
+  slowMotion(scale=1) {
+    const was=this._slow;if(scale<.6)this._slow=true;else if(scale>.9)this._slow=false;
+    if(was===this._slow||!this._cue('slow',.35))return;
+    this._noiseSweep(.035,this._slow?2100:380,this._slow?220:1700,this._slow?.4:.22);
+    if(this._slow)this._thump(.035,75,34,.35);
   }
 
   takeoff(strength = 0.5) {
@@ -348,9 +387,11 @@ class TruckAudio {
     if (now - this._lastTakeoff < 0.35) return;
     this._lastTakeoff = now;
     const s = TruckAudio.clamp(strength, 0, 1);
-    // A short hydraulic release and tire scrabble; the wind layer supplies air.
-    this._noiseBurst(0.018 + s * 0.026, 850, 0.13, 0, 'bandpass');
-    this._thump(0.016 + s * 0.02, 125, 76, 0.11);
+    // Tyres release grit, suspension unloads, then a rising air sweep opens up.
+    this._noiseBurst(.025+s*.035,1100,.14,0,'bandpass');
+    this._thump(.025+s*.025,155,70,.13);
+    this._metal(s*.009,310,.11,.012);
+    this._noiseSweep(.018+s*.03,450,2400,.32,.035);
   }
 
   landing(strength = 0.5, options={}) {
@@ -359,11 +400,14 @@ class TruckAudio {
     if (now - this._lastLanding < 0.2) return;
     this._lastLanding = now;if(options.perfect)this.perfect();
     const s = TruckAudio.clamp(strength, 0, 1);
-    // Rubber impact, displaced dirt and a small second-axle/chassis response.
-    this._thump(0.07 + s * 0.18, 92 + s * 20, 32, 0.17 + s * 0.1);
-    this._noiseBurst(0.035 + s * 0.11, 600 + s * 1500, 0.16 + s * 0.18);
-    this._thump(s * 0.034, 340, 165, 0.085, 0.028);
-    this._noiseBurst(s * 0.035, 1150, 0.1, 0.055, 'bandpass');
+    if(this.music&&s>.3)this.music.duck(.18+s*.18,.6-s*.2);
+    // Front tyre/body slam, compressed air, second axle, then scattered gravel.
+    this._thump(.075+s*.2,110+s*18,30,.2+s*.13);
+    this._noiseBurst(.04+s*.13,700+s*1800,.18+s*.19);
+    this._metal(s*.032,290,.15,.018);
+    this._thump(s*.065,86,38,.14,.045);
+    this._noiseSweep(s*.045,1700,380,.24,.065);
+    this._noiseBurst(s*.022,3200,.07,.12,'highpass');
   }
 
   pickup() {
@@ -391,32 +435,34 @@ class TruckAudio {
 
   collision(strength = 0.5) {
     if (!this._canPlay()) return;
-    const s = TruckAudio.clamp(strength, 0, 1);
-    const now = this.context.currentTime;
+    const s = TruckAudio.clamp(strength, 0, 1),now=this.context.currentTime;
     if (!s || now - this._lastCollision < 0.09) return;
-    this._lastCollision = now;if(this.music)this.music.duck(.16);
-    // Rubber/body impact with a brief, restrained metallic chassis resonance.
-    this._thump(0.04 + s * 0.13, 96, 36, 0.14 + s * 0.06);
-    this._noiseBurst(0.018 + s * 0.075, 1350, 0.075 + s * 0.1, 0, 'bandpass');
-    this._thump(s * 0.027, 730, 420, 0.06, 0.012);
+    this._lastCollision = now;if(this.music)this.music.duck(.18+s*.2,.5);
+    this._thump(.045+s*.17,105,34,.17+s*.09);
+    this._noiseBurst(.025+s*.105,1600,.09+s*.14,0,'bandpass');
+    this._metal(s*.055,460,.22);
+    this._noiseSweep(s*.028,2800,600,.19,.045);
+    this._thump(s*.028,73,33,.16,.075);
   }
 
   gunshot() {
     if (!this._canPlay()) return;
     const now = this.context.currentTime;
     if (now - this._lastGunshot < 0.15) return;
-    this._lastGunshot = now;if(this.music)this.music.duck(.22);
-    // A short powder crack, low recoil and a quiet mechanical action. This is
-    // synthesized game audio; the gain stays comfortable alongside the V8.
-    this._noiseBurst(0.15, 1250, 0.075, 0, 'highpass');
-    this._noiseBurst(0.055, 1700, 0.12);
-    this._thump(0.17, 118, 40, 0.15);
-    this._thump(0.032, 690, 310, 0.045, 0.025);
-    this._noiseBurst(0.028, 2100, 0.05, 0.07, 'bandpass');
+    this._lastGunshot = now;this._focus(.6,.35);if(this.music)this.music.duck(.65,.2);
+    // Sharp muzzle crack, chesty blast, barrel ring, bolt, outdoor reflections.
+    this._noiseBurst(.2,1800,.055,0,'highpass');
+    this._noiseBurst(.095,1200,.18);
+    this._thump(.25,136,33,.27);
+    this._metal(.028,720,.13,.012);
+    this._thump(.045,440,160,.07,.045);
+    this._noiseBurst(.035,2400,.065,.085,'bandpass');
+    this._noiseBurst(.028,850,.18,.115);
+    this._noiseBurst(.013,650,.22,.23);
   }
 
   _monsterGrowl(strength, duration, delay = 0) {
-    if (!(strength > 0)) return;
+    if (!(strength > 0)||this._voices.size>=96) return;
     const ctx = this.context, now = ctx.currentTime + delay;
     const source = ctx.createOscillator(), filter = ctx.createBiquadFilter(), gain = ctx.createGain();
     source.type = 'sawtooth';
@@ -429,9 +475,9 @@ class TruckAudio {
     gain.gain.setValueAtTime(0, now);
     gain.gain.linearRampToValueAtTime(strength, now + 0.018);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-    source.connect(filter); filter.connect(gain); gain.connect(this.sfxBus);
+    source.connect(filter); filter.connect(gain);const nodes=[filter,gain];this._routeSfx(gain,nodes);
     source.start(now); source.stop(now + duration + 0.025);
-    this._trackVoice(source, [filter, gain]);
+    this._trackVoice(source, nodes);
   }
 
   monsterHit() {
@@ -439,25 +485,26 @@ class TruckAudio {
     const now = this.context.currentTime;
     if (now - this._lastMonsterHit < 0.12) return;
     this._lastMonsterHit = now;
-    // Stylized shell shatter and a low cartoon growl, with no gore/vocal sample.
-    this._thump(0.12, 145, 48, 0.18);
-    this._noiseBurst(0.065, 2200, 0.14, 0, 'bandpass');
-    this._noiseBurst(0.027, 3600, 0.08, 0.04, 'highpass');
-    this._monsterGrowl(0.065, 0.19, 0.012);
+    this._focus(.35,.55);if(this.music)this.music.duck(.4,.35);
+    this._thump(.19,155,38,.29);
+    this._noiseBurst(.105,2300,.18,0,'bandpass');
+    this._noiseBurst(.04,3700,.11,.045,'highpass');
+    this._monsterGrowl(.085,.34,.018);
+    this._noiseSweep(.04,1400,300,.35,.09);
+    this._thump(.05,74,32,.2,.14);
   }
 
   monsterCrash() {
     if (!this._canPlay()) return;
     const now = this.context.currentTime;
     if (now - this._lastMonsterCrash < 0.22) return;
-    this._lastMonsterCrash = now;
-    // Heavy body/chassis contact, tumbling debris and one brief low roar.
-    this._thump(0.2, 93, 29, 0.2);
-    this._thump(0.065, 69, 33, 0.13, 0.045);
-    this._noiseBurst(0.12, 1250, 0.17);
-    this._noiseBurst(0.045, 2750, 0.1, 0.035, 'bandpass');
-    this._thump(0.026, 510, 190, 0.075, 0.025);
-    this._monsterGrowl(0.06, 0.17, 0.015);
+    this._lastMonsterCrash = now;if(this.music)this.music.duck(.5,.25);
+    this._thump(.25,103,27,.32);
+    this._thump(.085,72,30,.21,.055);
+    this._noiseBurst(.15,1450,.23);
+    this._metal(.07,390,.27,.018);
+    this._noiseSweep(.06,2400,410,.33,.065);
+    this._monsterGrowl(.085,.28,.025);
   }
 
   result(won = true) {

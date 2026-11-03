@@ -243,3 +243,12 @@ supported Sites publication workflow; historical release identifiers above refer
 - Create MaxRecursion/irontrail, deploy static dist to Vercel and connect irontrail.maxrecursion.dev. Add the exact Vercel DNS target in Namecheap through browser once signed in.
 
 Shooting implementation and functional validation complete. GitHub repo and Vercel project created and connected; custom domain assigned. Production deployment verified at https://irontrail-iota.vercel.app (HTTP200 and live browser gameplay; GitHub Vercel status success). Complete: Namecheap CNAME saved through Chrome, public DNS and Vercel verification pass, HTTPS certificate issued and custom-host TLS request returns HTTP200. Local resolver negative caching may temporarily delay browser access.
+
+
+## Sound pass — 3 November 2026
+
+- [x] Replace sparse background score with original eight-bar “Deadland Run” hook/answer, bass, pads, arpeggio and filtered drums; adapt intensity, stage tempo, boss and slow motion.
+- [x] Layer takeoff, flight wind, axle landings, metal/rubber collisions, cannon blast/bolt/echo and monster impact; position physics cues in stereo and duck backing music/engine for the shot.
+- [x] Preserve single-file/offline output, one-shot physics, saves, volume/mute/pause guards and suspended-context limits; cap and clean up event sources.
+- [x] Browser signal checks and live flow pass: complete theme, proportional music volume, worst mix, wind response, stereo, cleanup, exact silence; live run schedules275notes/81drums without warnings.
+- [ ] Commit/push and verify the existing Vercel production deployment.

@@ -749,7 +749,7 @@ class TruckAudio {
     this._noise = null;
     this._ratios = [24, 18, 14, 11, 9];
     this.volumes={master:.9,music:.55,sfx:.9};this._targets=new Map();this._cueTimes=Object.create(null);
-    this._automationClock=0;this._lastThrottle=0;this._lastCompression=0;this._lastBackfire=-10;
+    this._eventPan=0;this._slow=false;this._automationClock=0;this._lastThrottle=0;this._lastCompression=0;this._lastBackfire=-10;
     this._musicState={biome:0,intensity:.2,mood:'menu',playing:false};this.music=null;this._driveBus=true;
   }
 
@@ -793,7 +793,8 @@ class TruckAudio {
 
     this.engineBus=ctx.createGain();this.sfxBus=ctx.createGain();this.musicBus=ctx.createGain();
     this.engineBus.gain.value=this.volumes.sfx;this.sfxBus.gain.value=this.volumes.sfx;this.musicBus.gain.value=this.volumes.music;
-    this.engineBus.connect(this.master);this.sfxBus.connect(this.master);this.musicBus.connect(this.master);
+    this.engineFocus=ctx.createGain();this.engineFocus.gain.value=1;this._focusUntil=0;
+    this.engineBus.connect(this.engineFocus);this.engineFocus.connect(this.master);this.sfxBus.connect(this.master);this.musicBus.connect(this.master);
     for(const bus of [this.engineBus,this.sfxBus,this.musicBus])try{bus.gain.automationRate='k-rate';}catch(_){}
     const exhaust = ctx.createBiquadFilter();
     exhaust.type = 'lowpass';
@@ -909,12 +910,12 @@ class TruckAudio {
     for(const key of ['master','music','sfx'])if(values[key]!==undefined)this.volumes[key]=TruckAudio.clamp(Number(values[key]),0,1);
     if(this._ready&&this.context.state!=='running'){this.engineBus.gain.value=this._driveBus?this.volumes.sfx:0;this.sfxBus.gain.value=this.volumes.sfx;this.musicBus.gain.value=this.volumes.music;}
     if(this._ready){this._set(this.engineBus.gain,this._driveBus?this.volumes.sfx:0,.05);this._set(this.sfxBus.gain,this.volumes.sfx,.03);this._set(this.musicBus.gain,this.volumes.music,.08);this._gate();}
-    if(this.music)this.music.setVolume(this.volumes.master>0&&!this.muted&&!this.paused?this.volumes.music:0);
+    if(this.music)this.music.setVolume(this.volumes.master>0&&this.volumes.music>0&&!this.muted&&!this.paused?1:0);
   }
   setMusicState(state={}){
     Object.assign(this._musicState,state);this._driveBus=['drive','boss','danger'].includes(this._musicState.mood);
     if(this._ready)this._set(this.engineBus.gain,this._driveBus?this.volumes.sfx:0,.10);
-    if(this.music){this.music.setVolume(this.volumes.master>0&&!this.muted&&!this.paused?this.volumes.music:0);this.music.setState({...this._musicState,playing:this._musicState.playing&&!this.paused&&!this.muted&&this.volumes.master>0});}
+    if(this.music){this.music.setVolume(this.volumes.master>0&&this.volumes.music>0&&!this.muted&&!this.paused?1:0);this.music.setState({...this._musicState,playing:this._musicState.playing&&!this.paused&&!this.muted&&this.volumes.master>0});}
   }
   _gate() {
     if (!this._ready) return;
@@ -983,7 +984,9 @@ class TruckAudio {
     if (!this._ready) return;
     this._automationClock+=dt;if(this._automationClock<1/60)return;this._automationClock%=1/60;
     const rev = (this.rpm - 780) / 4420;
-    const pitch=.58+.42*Math.sqrt(TruckAudio.clamp(input?.timeScale??1,0,1));
+    const scale=TruckAudio.clamp(input?.timeScale??1,0,1);
+    this.slowMotion(scale);
+    const pitch=.58+.42*Math.sqrt(scale);
     this._set(this.engine.frequency, pitch*this.rpm / 120, 0.045);
     this._set(this.sub.frequency, pitch*this.rpm / 60, 0.06);
     this._set(this.intake.frequency, pitch*this.rpm / 30, 0.055);
@@ -998,9 +1001,10 @@ class TruckAudio {
     const roadAmount = grounded ? Math.min(1, absSpeed / 22) : 0;
     this._set(this.gravel.gain.gain, roadAmount * (0.018 + slip * 0.035), 0.08);
     this._set(this.gravel.filter.frequency, 750 + absSpeed * 35);
-    const air = !grounded ? Math.min(1, TruckAudio.clamp(state.airtime, 0, 5) / 0.5) : 0;
-    this._set(this.wind.gain.gain, Math.min(0.055, absSpeed * 0.0011) * (0.22 + air * 0.78), 0.16);
-    this._set(this.wind.filter.frequency, 380 + absSpeed * 24, 0.18);
+    const air = !grounded ? Math.min(1, TruckAudio.clamp(state.airtime, 0, 5) / .38) : 0;
+    const rush=Math.hypot(absSpeed,TruckAudio.clamp(state.vy,-35,35)*1.2);
+    this._set(this.wind.gain.gain, Math.min(.085,rush*.002)*(0.12+air*.88), .12);
+    this._set(this.wind.filter.frequency, (500+Math.min(2600,rush*60))*(.65+.35*Math.sqrt(scale)), .14);
     this._set(this.skid.gain.gain,grounded?Math.min(.055,slip*.06+(input?.brake?absSpeed*.001:0)):0,.07);
     const compression=state.suspension?Math.abs(state.suspension[0])+Math.abs(state.suspension[1]):0;
     this._set(this.creak.gain.gain,grounded?Math.min(.025,Math.abs(compression-this._lastCompression)*.18):0,.05);this._lastCompression=compression;
@@ -1023,7 +1027,7 @@ class TruckAudio {
   }
 
   _noiseBurst(strength, frequency, duration, delay = 0, type = 'lowpass') {
-    if (!(strength > 0)) return;
+    if (!(strength > 0)||this._voices.size>=96) return;
     const ctx = this.context;
     const now = ctx.currentTime + delay;
     const source = ctx.createBufferSource();
@@ -1038,14 +1042,14 @@ class TruckAudio {
     gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
     source.connect(filter);
     filter.connect(gain);
-    gain.connect(this.sfxBus);
+    const nodes=[filter,gain];this._routeSfx(gain,nodes);
     source.start(now, Math.random());
     source.stop(now + duration + 0.03);
-    this._trackVoice(source, [filter, gain]);
+    this._trackVoice(source, nodes);
   }
 
   _thump(strength, fromHz, toHz, duration, delay = 0) {
-    if (!(strength > 0)) return;
+    if (!(strength > 0)||this._voices.size>=96) return;
     const ctx = this.context;
     const now = ctx.currentTime + delay;
     const oscillator = ctx.createOscillator();
@@ -1057,10 +1061,45 @@ class TruckAudio {
     gain.gain.linearRampToValueAtTime(strength, now + 0.006);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
     oscillator.connect(gain);
-    gain.connect(this.sfxBus);
+    const nodes=[gain];this._routeSfx(gain,nodes);
     oscillator.start(now);
     oscillator.stop(now + duration + 0.02);
-    this._trackVoice(oscillator, [gain]);
+    this._trackVoice(oscillator, nodes);
+  }
+
+  // One position per physics callback; all layers share the same stereo image.
+  setScene(state={},event={}) {
+    this._eventPan=Number.isFinite(event.x)&&Number.isFinite(state.x)?TruckAudio.clamp((event.x-state.x)/22,-.75,.75):0;
+  }
+  _routeSfx(node,nodes) {
+    if(this.context.createStereoPanner&&Math.abs(this._eventPan)>.01){
+      const pan=this.context.createStereoPanner();pan.pan.value=this._eventPan;node.connect(pan);pan.connect(this.sfxBus);nodes.push(pan);
+    }else node.connect(this.sfxBus);
+  }
+  _noiseSweep(strength,fromHz,toHz,duration,delay=0) {
+    if(!(strength>0)||this._voices.size>=96)return;
+    const ctx=this.context,now=ctx.currentTime+delay,source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();
+    source.buffer=this._noise;filter.type='bandpass';filter.Q.value=.65;
+    filter.frequency.setValueAtTime(fromHz,now);filter.frequency.exponentialRampToValueAtTime(toHz,now+duration);
+    gain.gain.setValueAtTime(0,now);gain.gain.linearRampToValueAtTime(strength,now+duration*.18);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+    source.connect(filter);filter.connect(gain);const nodes=[filter,gain];this._routeSfx(gain,nodes);
+    source.start(now,Math.random());source.stop(now+duration+.025);this._trackVoice(source,nodes);
+  }
+  _focus(seconds=.3,depth=.5) {
+    if(this.context.state!=='running')return;
+    const t=this.context.currentTime,p=this.engineFocus.gain;this._focusUntil=Math.max(this._focusUntil,t+seconds);
+    if(p.cancelAndHoldAtTime)p.cancelAndHoldAtTime(t);else{const value=p.value;p.cancelScheduledValues(t);p.setValueAtTime(value,t);}
+    p.linearRampToValueAtTime(depth,t+.008);p.linearRampToValueAtTime(1,this._focusUntil);
+  }
+  _metal(strength,frequency=490,duration=.15,delay=0) {
+    // Inharmonic body modes distinguish a steel chassis from the tyre thud.
+    for(let i=0;i<3;i++)this._thump(strength*[1,.45,.24][i],frequency*[1,1.37,2.07][i],frequency*[.88,1.3,1.96][i],duration/(1+i*.45),delay+i*.003);
+  }
+  slowMotion(scale=1) {
+    const was=this._slow;if(scale<.6)this._slow=true;else if(scale>.9)this._slow=false;
+    if(was===this._slow||!this._cue('slow',.35))return;
+    this._noiseSweep(.035,this._slow?2100:380,this._slow?220:1700,this._slow?.4:.22);
+    if(this._slow)this._thump(.035,75,34,.35);
   }
 
   takeoff(strength = 0.5) {
@@ -1069,9 +1108,11 @@ class TruckAudio {
     if (now - this._lastTakeoff < 0.35) return;
     this._lastTakeoff = now;
     const s = TruckAudio.clamp(strength, 0, 1);
-    // A short hydraulic release and tire scrabble; the wind layer supplies air.
-    this._noiseBurst(0.018 + s * 0.026, 850, 0.13, 0, 'bandpass');
-    this._thump(0.016 + s * 0.02, 125, 76, 0.11);
+    // Tyres release grit, suspension unloads, then a rising air sweep opens up.
+    this._noiseBurst(.025+s*.035,1100,.14,0,'bandpass');
+    this._thump(.025+s*.025,155,70,.13);
+    this._metal(s*.009,310,.11,.012);
+    this._noiseSweep(.018+s*.03,450,2400,.32,.035);
   }
 
   landing(strength = 0.5, options={}) {
@@ -1080,11 +1121,14 @@ class TruckAudio {
     if (now - this._lastLanding < 0.2) return;
     this._lastLanding = now;if(options.perfect)this.perfect();
     const s = TruckAudio.clamp(strength, 0, 1);
-    // Rubber impact, displaced dirt and a small second-axle/chassis response.
-    this._thump(0.07 + s * 0.18, 92 + s * 20, 32, 0.17 + s * 0.1);
-    this._noiseBurst(0.035 + s * 0.11, 600 + s * 1500, 0.16 + s * 0.18);
-    this._thump(s * 0.034, 340, 165, 0.085, 0.028);
-    this._noiseBurst(s * 0.035, 1150, 0.1, 0.055, 'bandpass');
+    if(this.music&&s>.3)this.music.duck(.18+s*.18,.6-s*.2);
+    // Front tyre/body slam, compressed air, second axle, then scattered gravel.
+    this._thump(.075+s*.2,110+s*18,30,.2+s*.13);
+    this._noiseBurst(.04+s*.13,700+s*1800,.18+s*.19);
+    this._metal(s*.032,290,.15,.018);
+    this._thump(s*.065,86,38,.14,.045);
+    this._noiseSweep(s*.045,1700,380,.24,.065);
+    this._noiseBurst(s*.022,3200,.07,.12,'highpass');
   }
 
   pickup() {
@@ -1112,32 +1156,34 @@ class TruckAudio {
 
   collision(strength = 0.5) {
     if (!this._canPlay()) return;
-    const s = TruckAudio.clamp(strength, 0, 1);
-    const now = this.context.currentTime;
+    const s = TruckAudio.clamp(strength, 0, 1),now=this.context.currentTime;
     if (!s || now - this._lastCollision < 0.09) return;
-    this._lastCollision = now;if(this.music)this.music.duck(.16);
-    // Rubber/body impact with a brief, restrained metallic chassis resonance.
-    this._thump(0.04 + s * 0.13, 96, 36, 0.14 + s * 0.06);
-    this._noiseBurst(0.018 + s * 0.075, 1350, 0.075 + s * 0.1, 0, 'bandpass');
-    this._thump(s * 0.027, 730, 420, 0.06, 0.012);
+    this._lastCollision = now;if(this.music)this.music.duck(.18+s*.2,.5);
+    this._thump(.045+s*.17,105,34,.17+s*.09);
+    this._noiseBurst(.025+s*.105,1600,.09+s*.14,0,'bandpass');
+    this._metal(s*.055,460,.22);
+    this._noiseSweep(s*.028,2800,600,.19,.045);
+    this._thump(s*.028,73,33,.16,.075);
   }
 
   gunshot() {
     if (!this._canPlay()) return;
     const now = this.context.currentTime;
     if (now - this._lastGunshot < 0.15) return;
-    this._lastGunshot = now;if(this.music)this.music.duck(.22);
-    // A short powder crack, low recoil and a quiet mechanical action. This is
-    // synthesized game audio; the gain stays comfortable alongside the V8.
-    this._noiseBurst(0.15, 1250, 0.075, 0, 'highpass');
-    this._noiseBurst(0.055, 1700, 0.12);
-    this._thump(0.17, 118, 40, 0.15);
-    this._thump(0.032, 690, 310, 0.045, 0.025);
-    this._noiseBurst(0.028, 2100, 0.05, 0.07, 'bandpass');
+    this._lastGunshot = now;this._focus(.6,.35);if(this.music)this.music.duck(.65,.2);
+    // Sharp muzzle crack, chesty blast, barrel ring, bolt, outdoor reflections.
+    this._noiseBurst(.2,1800,.055,0,'highpass');
+    this._noiseBurst(.095,1200,.18);
+    this._thump(.25,136,33,.27);
+    this._metal(.028,720,.13,.012);
+    this._thump(.045,440,160,.07,.045);
+    this._noiseBurst(.035,2400,.065,.085,'bandpass');
+    this._noiseBurst(.028,850,.18,.115);
+    this._noiseBurst(.013,650,.22,.23);
   }
 
   _monsterGrowl(strength, duration, delay = 0) {
-    if (!(strength > 0)) return;
+    if (!(strength > 0)||this._voices.size>=96) return;
     const ctx = this.context, now = ctx.currentTime + delay;
     const source = ctx.createOscillator(), filter = ctx.createBiquadFilter(), gain = ctx.createGain();
     source.type = 'sawtooth';
@@ -1150,9 +1196,9 @@ class TruckAudio {
     gain.gain.setValueAtTime(0, now);
     gain.gain.linearRampToValueAtTime(strength, now + 0.018);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-    source.connect(filter); filter.connect(gain); gain.connect(this.sfxBus);
+    source.connect(filter); filter.connect(gain);const nodes=[filter,gain];this._routeSfx(gain,nodes);
     source.start(now); source.stop(now + duration + 0.025);
-    this._trackVoice(source, [filter, gain]);
+    this._trackVoice(source, nodes);
   }
 
   monsterHit() {
@@ -1160,25 +1206,26 @@ class TruckAudio {
     const now = this.context.currentTime;
     if (now - this._lastMonsterHit < 0.12) return;
     this._lastMonsterHit = now;
-    // Stylized shell shatter and a low cartoon growl, with no gore/vocal sample.
-    this._thump(0.12, 145, 48, 0.18);
-    this._noiseBurst(0.065, 2200, 0.14, 0, 'bandpass');
-    this._noiseBurst(0.027, 3600, 0.08, 0.04, 'highpass');
-    this._monsterGrowl(0.065, 0.19, 0.012);
+    this._focus(.35,.55);if(this.music)this.music.duck(.4,.35);
+    this._thump(.19,155,38,.29);
+    this._noiseBurst(.105,2300,.18,0,'bandpass');
+    this._noiseBurst(.04,3700,.11,.045,'highpass');
+    this._monsterGrowl(.085,.34,.018);
+    this._noiseSweep(.04,1400,300,.35,.09);
+    this._thump(.05,74,32,.2,.14);
   }
 
   monsterCrash() {
     if (!this._canPlay()) return;
     const now = this.context.currentTime;
     if (now - this._lastMonsterCrash < 0.22) return;
-    this._lastMonsterCrash = now;
-    // Heavy body/chassis contact, tumbling debris and one brief low roar.
-    this._thump(0.2, 93, 29, 0.2);
-    this._thump(0.065, 69, 33, 0.13, 0.045);
-    this._noiseBurst(0.12, 1250, 0.17);
-    this._noiseBurst(0.045, 2750, 0.1, 0.035, 'bandpass');
-    this._thump(0.026, 510, 190, 0.075, 0.025);
-    this._monsterGrowl(0.06, 0.17, 0.015);
+    this._lastMonsterCrash = now;if(this.music)this.music.duck(.5,.25);
+    this._thump(.25,103,27,.32);
+    this._thump(.085,72,30,.21,.055);
+    this._noiseBurst(.15,1450,.23);
+    this._metal(.07,390,.27,.018);
+    this._noiseSweep(.06,2400,410,.33,.065);
+    this._monsterGrowl(.085,.28,.025);
   }
 
   result(won = true) {
@@ -1216,64 +1263,75 @@ globalThis.TruckAudio = TruckAudio;
 
 </script>
 <script>
-/* IRONTRAIL adaptive score. Persistent synthesizer voices; no network assets. */
+/* "Deadland Run" — original eight-bar synth-rock theme for IRONTRAIL.
+ * Persistent melodic voices, filtered drum buffers and a bounded lookahead clock.
+ * Entirely synthesized; no downloads, samples or external music dependencies.
+ */
 (function(global){
   'use strict';
   const MOODS=Object.freeze(['menu','drive','boss','danger','results']);
-  const SCALES=[0,3,5,7,10], TEMPOS=[94,98,102,96,106,108,112,100,116,122];
-  const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0));
+  const TEMPOS=[116,118,119,117,120,121,122,120,124,126];
+  const HOOK=Object.freeze([12,-1,12,15,19,-1,17,15,12,-1,10,12,7,-1,10,7,8,-1,12,15,17,-1,15,12,10,-1,7,10,12,-1,10,7]);
+  const ANSWER=Object.freeze([12,15,19,-1,22,19,17,15,12,-1,15,17,19,-1,15,12,8,12,15,-1,17,15,12,10,7,10,12,15,12,-1,12,-1]);
+  const ROOTS=[0,8,3,10],THIRDS=[3,4,4,4],BASS=[0,-1,0,7,0,-1,12,7,0,-1,0,7,12,7,0,-1];
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0)),LEVEL=.68;
   class TruckMusic{
     constructor(context,destination){
-      this.context=context;this.destination=destination;this.state={biome:0,intensity:.2,mood:'menu',playing:false};
-      this.volume=1;this.active=false;this._stopped=false;this.timer=null;this.nextTime=0;this.step=0;this._drums=new Set();this._gainParams=[];
-      this.output=context.createGain();this.output.gain.value=.30;this.output.connect(destination);
-      this.bass=this._voice('triangle',270,.065);this.lead=this._voice('triangle',1800,.024);
-      this.pads=[this._voice('sine',740,.012),this._voice('sine',740,.012),this._voice('sine',740,.012)];
-      this.kick=this._voice('sine',180,.09);this.kick.osc.frequency.value=55;
-      this.noise=context.createBuffer(1,Math.floor(context.sampleRate*.22),context.sampleRate);
+      this.context=context;this.destination=destination;this.state={biome:0,intensity:.2,mood:'menu',playing:false,timeScale:1};
+      this.volume=1;this.active=false;this._stopped=false;this.timer=null;this.nextTime=0;this.step=0;this._drums=new Set();this._gainParams=[];this._color=-1;this._duckUntil=0;
+      this.output=context.createGain();this.output.gain.value=LEVEL;
+      this.tone=context.createBiquadFilter();this.tone.type='lowpass';this.tone.frequency.value=6800;this.tone.Q.value=.5;
+      this.output.connect(this.tone);this.tone.connect(destination);
+      this.bass=this._voice('sawtooth',420,.18);this.lead=this._voice('triangle',2800,.11);
+      this.leadTop=this._voice('square',1900,.025);this.arp=this._voice('triangle',2400,.032);
+      this.pads=[this._voice('triangle',850,.018),this._voice('sine',1050,.022),this._voice('sine',1300,.018)];
+      this.kick=this._voice('sine',200,.22);this.snareBody=this._voice('triangle',650,.07);
+      this.noise=context.createBuffer(1,Math.floor(context.sampleRate*.25),context.sampleRate);
       const samples=this.noise.getChannelData(0);let seed=137;
       for(let i=0;i<samples.length;i++){seed=(seed*16807)%2147483647;samples[i]=(seed/1073741824-1)*(1-i/samples.length);}
-      this.stats={notes:0,drums:0,scheduledUntil:0,voices:6};
+      this.stats={notes:0,drums:0,scheduledUntil:0,voices:9};
     }
     _voice(type,cutoff,level){
       const c=this.context,osc=c.createOscillator(),filter=c.createBiquadFilter(),gain=c.createGain();
       osc.type=type;filter.type='lowpass';filter.frequency.value=cutoff;gain.gain.value=0;
       for(const p of [filter.frequency,filter.Q,gain.gain])try{p.automationRate='k-rate';}catch(_){}
       osc.connect(filter);filter.connect(gain);gain.connect(this.output);osc.start();this._gainParams.push(gain.gain);
-      return {osc,filter,gain,level};
+      return{osc,filter,gain,level};
     }
     _note(voice,hz,t,duration,amount=1){
-      const p=voice.gain.gain;
-      voice.osc.frequency.setValueAtTime(hz,t);p.setValueAtTime(.00001,t);
-      p.linearRampToValueAtTime(voice.level*amount,t+.012);
-      p.exponentialRampToValueAtTime(.00001,t+Math.max(.025,duration));this.stats.notes++;
+      const p=voice.gain.gain;voice.osc.frequency.setValueAtTime(hz,t);p.setValueAtTime(.00001,t);
+      p.linearRampToValueAtTime(voice.level*amount,t+.006);p.exponentialRampToValueAtTime(.00001,t+Math.max(.02,duration));this.stats.notes++;
     }
     _drum(t,kind,amount){
-      if(amount<=0)return;const c=this.context,source=c.createBufferSource(),gain=c.createGain();
-      source.buffer=this.noise;gain.gain.setValueAtTime(amount,t);gain.gain.exponentialRampToValueAtTime(.00001,t+(kind==='hat'?.045:.16));
-      // Noise buffer is already shaped. One buffer-source + gain per drum hit;
-      // all melodic parts keep their graph alive and only change parameters.
-      source.playbackRate.value=kind==='hat'?2.3:1;source.connect(gain);gain.connect(this.output);source.start(t);source.stop(t+.19);
-      this._drums.add(source);source.onended=()=>{this._drums.delete(source);source.disconnect();gain.disconnect();};this.stats.drums++;
+      if(amount<=0||(!this._offline&&this._drums.size>=32))return;
+      const c=this.context,source=c.createBufferSource(),filter=c.createBiquadFilter(),gain=c.createGain();
+      const hat=kind==='hat'||kind==='open',duration=kind==='open'?.16:hat?.045:.17;
+      source.buffer=this.noise;source.playbackRate.value=hat?1.5:1;
+      filter.type=hat?'highpass':'bandpass';filter.frequency.value=hat?6500:1800;filter.Q.value=hat?.5:.7;
+      gain.gain.setValueAtTime(.00001,t);gain.gain.linearRampToValueAtTime(amount,t+.002);gain.gain.exponentialRampToValueAtTime(.00001,t+duration);
+      source.connect(filter);filter.connect(gain);gain.connect(this.output);source.start(t);source.stop(t+duration+.02);
+      this._drums.add(source);source.onended=()=>{this._drums.delete(source);source.disconnect();filter.disconnect();gain.disconnect();};this.stats.drums++;
     }
     _schedule(t){
-      const s=this.state,biome=s.biome,mood=s.mood,intensity=s.intensity;
-      const bpm=TEMPOS[biome]+(mood==='boss'?6:0),eighth=30/bpm,n=this.step%16;
-      const root=55*Math.pow(2,(biome%5-2)/12),menu=mood==='menu',danger=mood==='danger';
-      const energy=menu?.30:.55+intensity*.45,degree=SCALES[[0,0,3,0,2,0,4,3][Math.floor(n/2)%8]];
-      if(n%2===0)this._note(this.bass,root*Math.pow(2,degree/12),t,eighth*1.7,energy);
-      if(n===0||(!menu&&n===8)){
-        this._note(this.kick,55,t,.17,energy);this.kick.osc.frequency.setValueAtTime(105,t);this.kick.osc.frequency.exponentialRampToValueAtTime(40,t+.17);
+      const s=this.state,mood=s.mood,menu=mood==='menu',boss=mood==='boss',danger=mood==='danger';
+      const bpm=menu?104:TEMPOS[s.biome]+(boss?6:0),sixteenth=15/bpm*(1+(1-s.timeScale)*.25),n=this.step%16,bar=Math.floor(this.step/16)%8,chord=bar%4;
+      const root=55*Math.pow(2,((s.biome%3)-1)/12),chordRoot=root*Math.pow(2,ROOTS[chord]/12),energy=menu?.46:.72+s.intensity*.28;
+      const groove=menu?[0,8].includes(n):n===0||n===8||n===6||boss&&n===10;
+      if(groove){this._note(this.kick,55,t,.17,energy*(menu?.7:1));this.kick.osc.frequency.setValueAtTime(140,t);this.kick.osc.frequency.exponentialRampToValueAtTime(42,t+.17);}
+      if(!menu&&(n===4||n===12)){
+        this._drum(t,'snare',.12*energy);this._note(this.snareBody,185,t,.11,energy);
       }
-      if(!menu&&(n===4||n===12))this._drum(t,'snare',.018*energy);
-      if(!menu&&(intensity>.36||n%4===2))this._drum(t,'hat',.006+intensity*.006);
-      if(n===0){
-        const chord=[0,danger?1:3,7];for(let i=0;i<3;i++)this._note(this.pads[i],root*2*Math.pow(2,chord[i]/12),t,eighth*14,menu?.65:.85);
+      if(n%2===0&&(!menu||n%4===2))this._drum(t,n===14&&!menu?'open':'hat',(n%4===0?.026:.018)*energy);
+      if(!menu&&(boss||s.intensity>.75)&&n%4===3)this._drum(t,'hat',.012*energy);
+      if(!menu&&bar===7&&n>=14)this._drum(t,'snare',n===14?.07:.1);
+      const bass=BASS[n];if(bass>=0&&(!menu||n%4===0))this._note(this.bass,chordRoot*Math.pow(2,bass/12),t,sixteenth*(n%4===0?1.65:.78),energy);
+      if(n===0){for(let i=0;i<3;i++){const semitone=[0,THIRDS[chord],7][i];this._note(this.pads[i],chordRoot*4*Math.pow(2,semitone/12),t,sixteenth*14,menu?.65:danger?.7:1);}}
+      if(n%2===0){
+        const hook=(bar<4?HOOK:ANSWER)[Math.floor(this.step/2)%32];
+        if(hook>=0){const hz=root*4*Math.pow(2,hook/12),amount=energy*(menu?.75:1);this._note(this.lead,hz,t,sixteenth*1.65,amount);if(!menu)this._note(this.leadTop,hz/2,t,sixteenth*1.45,amount);}
       }
-      if((menu&&n===10)||(!menu&&intensity>.45&&n%4===2)||mood==='results'&&n%4===0){
-        const melody=SCALES[(Math.floor(this.step/4)+biome)%5];this._note(this.lead,root*8*Math.pow(2,melody/12),t,eighth*1.9,menu?.5:energy);
-      }
-      this.step++;this.nextTime=t+eighth;this.stats.scheduledUntil=this.nextTime;
+      if(!menu&&n%2===1){const degrees=[0,7,12,THIRDS[chord]+12],note=degrees[Math.floor(n/2)%4];this._note(this.arp,chordRoot*4*Math.pow(2,note/12),t,sixteenth*.7,energy*(danger?.5:.8));}
+      this.step++;this.nextTime=t+sixteenth;this.stats.scheduledUntil=this.nextTime;
     }
     _pump(){
       if(!this.active||this.context.state!=='running'||this.volume<=0)return;
@@ -1285,13 +1343,19 @@ globalThis.TruckAudio = TruckAudio;
       if(next.biome!==undefined)old.biome=clamp(Math.floor(next.biome),0,9);
       if(next.intensity!==undefined)old.intensity=clamp(next.intensity,0,1);
       if(MOODS.includes(next.mood))old.mood=next.mood;
+      if(next.timeScale!==undefined)old.timeScale=clamp(next.timeScale,.1,1);
       if(next.playing!==undefined)old.playing=!!next.playing;
+      if(this.context.state==='running'&&Math.abs(this._color-old.timeScale)>.015){this._color=old.timeScale;this.tone.frequency.setTargetAtTime(850+5950*Math.sqrt(old.timeScale),this.context.currentTime,.09);}
       if(old.playing&&this.volume>0&&this.context.state==='running')this.start();else this.stop();
     }
-    setVolume(value){this.volume=clamp(value,0,1);if(this.volume<=0)this.stop();else if(this.state.playing)this.start();}
+    setVolume(value){
+      const next=clamp(value,0,1);if(next===this.volume)return;this.volume=next;
+      if(this.context.state==='running'){const t=this.context.currentTime;this.output.gain.cancelScheduledValues(t);this.output.gain.setTargetAtTime(LEVEL*next,t,.04);}else this.output.gain.value=LEVEL*next;
+      if(next<=0)this.stop();else if(this.state.playing)this.start();
+    }
     start(){
       if(this.active||this.volume<=0||this.context.state!=='running')return;
-      this.active=true;this._stopped=false;this.nextTime=this.context.currentTime+.025;this._pump();this.timer=setInterval(()=>this._pump(),25);
+      this.active=true;this._stopped=false;this.nextTime=this.context.currentTime+.025;this._color=-1;this._pump();this.timer=setInterval(()=>this._pump(),25);
     }
     stop(){
       if(this._stopped&&!this.active&&this.timer===null)return;this._stopped=true;
@@ -1300,23 +1364,24 @@ globalThis.TruckAudio = TruckAudio;
       for(const p of this._gainParams){p.cancelScheduledValues(now);if(this.context.state==='running')p.setValueAtTime(0,now);else p.value=0;}
       for(const source of this._drums)try{source.stop(now);}catch(_){}
     }
-    duck(seconds=.18){
-      if(this.context.state!=='running')return;const t=this.context.currentTime,p=this.output.gain;
-      p.cancelScheduledValues(t);p.setValueAtTime(.13,t);p.linearRampToValueAtTime(.30,t+seconds);
+    duck(seconds=.24,depth=.3){
+      if(this.context.state!=='running'||this.volume<=0)return;const t=this.context.currentTime,p=this.output.gain;
+      this._duckUntil=Math.max(this._duckUntil,t+seconds);
+      if(p.cancelAndHoldAtTime)p.cancelAndHoldAtTime(t);else{const value=p.value;p.cancelScheduledValues(t);p.setValueAtTime(value,t);}
+      p.linearRampToValueAtTime(LEVEL*this.volume*depth,t+.008);p.linearRampToValueAtTime(LEVEL*this.volume,this._duckUntil);
     }
     stinger(won=true){
-      if(!this.active||this.volume<=0)return;const t=this.context.currentTime,root=won?220:146.83;
-      this._note(this.lead,root,t,.16,1);this._note(this.lead,root*(won?1.5:.75),t+.18,.22,.9);
+      if(!this.active||this.volume<=0)return;const t=this.context.currentTime,root=won?440:293.66;
+      this._note(this.lead,root,t,.16,.8);this._note(this.lead,root*(won?1.5:.75),t+.18,.28,.8);
     }
-    // Deterministic test-only scheduling into OfflineAudioContext. It uses the
-    // exact production voices/patterns without a timer or running-state bypass.
+    // Test-only full-score rendering; live scheduling retains its 32-source cap.
     scheduleOffline(seconds,state={}){
       Object.assign(this.state,state);if(this.volume<=0||!this.state.playing)return;
-      this.step=0;this.nextTime=.025;while(this.nextTime<seconds-.2)this._schedule(this.nextTime);
+      this._offline=true;this.step=0;this.nextTime=.025;while(this.nextTime<seconds-.2)this._schedule(this.nextTime);this._offline=false;
     }
-    dispose(){this.stop();for(const v of [this.bass,this.lead,this.kick,...this.pads]){try{v.osc.stop();}catch(_){}v.osc.disconnect();v.filter.disconnect();v.gain.disconnect();}this.output.disconnect();}
+    dispose(){this.stop();for(const v of [this.bass,this.lead,this.leadTop,this.arp,this.kick,this.snareBody,...this.pads]){try{v.osc.stop();}catch(_){}v.osc.disconnect();v.filter.disconnect();v.gain.disconnect();}this.output.disconnect();this.tone.disconnect();}
   }
-  TruckMusic.MOODS=MOODS;global.TruckMusic=TruckMusic;
+  TruckMusic.MOODS=MOODS;TruckMusic.THEME='Deadland Run';global.TruckMusic=TruckMusic;
 })(globalThis);
 
 </script>
@@ -2464,7 +2529,7 @@ globalThis.TruckAudio = TruckAudio;
   let padMenuDirection='',padRepeat=0,lastPadTime=0;
   const view={stageIndex,stageName:'',progress:0,time:0,score:0,ghostDelta:null,fuel:100,cleared:0,totalZombies:0,speed:0,gear:1,rpm:820,ammo:1,locked:false,monsterDistance:0,monsterAlive:true,monsterProgress:null,rivalProgress:null,racePosition:1,combo:0,comboLeft:0,comboMax:3,checkpointProgress:[],paused:false,muted:false};
   const frame={state,pose,alpha:1,dt:0,time:0,mode,input,ghost:null,layout,settings:save.settings};
-  const musicState={biome:stageIndex,intensity:.2,mood:'menu',playing:true};
+  const musicState={biome:stageIndex,intensity:.2,mood:'menu',playing:true,timeScale:1};
   const perf={fps:60,refreshHz:60,renderScale:1,quality:'high',cpuMs:0,drawOps:0,trace:()=>pacer.trace()};
   const NO_PADS=[];let activePad=null;const gamepadProvider=()=>navigator.getGamepads?navigator.getGamepads():NO_PADS;
   const pressed=i=>!!activePad?.buttons[i]?.pressed,value=i=>activePad?.buttons[i]?.value||0,edge=i=>pressed(i)&&!padPrevious[i];
@@ -2608,7 +2673,7 @@ globalThis.TruckAudio = TruckAudio;
   window.addEventListener('blur',()=>{clearInput();if(performance.now()>ignoreBlurUntil)pause();});
   document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();pause();}});
   function physicsEvent(event){
-    renderer.onEvent(event,state);
+    renderer.onEvent(event,state);audio.setScene(state,event);
     switch(event.type){
       case 'takeoff':audio.takeoff(event.strength);break;
       case 'land':audio.landing(event.strength);break;
@@ -2622,6 +2687,7 @@ globalThis.TruckAudio = TruckAudio;
       case 'monsterCrash':audio.monsterCrash();break;
       case 'checkpoint':audio.checkpoint();ui.cue('checkpoint');break;
     }
+    audio.setScene();
     const reward=Rules.onEvent(run,event,{state,time:runTime,recoveries});
     if(reward){if(event.type!=='monsterHit')renderer.popup(`+${reward.points}`,event.x??state.x,event.y??state.y+1,reward.kind);if(reward.combo>1)audio.combo(reward.combo);}
   }
@@ -2655,7 +2721,7 @@ globalThis.TruckAudio = TruckAudio;
     view.fuel=state.fuel;view.cleared=state.cleared;view.totalZombies=state.totalZombies;view.speed=state.speed;view.gear=audio.gear;view.rpm=audio.rpm;view.ammo=state.ammo;view.locked=state.weapon.canHit;view.monsterDistance=state.weapon.distance;view.monsterAlive=state.monster.alive;
     view.monsterProgress=state.monster.alive?clamp((state.monster.x-track.startX)/track.length,0,1):null;view.rivalProgress=state.rival?clamp((state.rival.x-track.startX)/track.length,0,1):null;view.racePosition=state.racePosition;view.combo=run.combo;view.comboLeft=run.comboLeft;view.comboMax=run.comboMax;view.paused=mode==='paused';view.muted=audio.muted;ui.hud.update(view);
   }
-  function updateMusic(){musicState.biome=stageIndex;musicState.intensity=mode==='playing'?clamp(Math.abs(state.speed)/30+(run.combo>2?.18:0),0,1):.18;musicState.mood=mode==='playing'?(state.fuel<20?'danger':stages[stageIndex].boss?'boss':'drive'):screen==='results'?'results':'menu';musicState.playing=mode!=='paused'&&!document.hidden;audio.setMusicState(musicState);}
+  function updateMusic(){musicState.timeScale=mode==='playing'?shotDirector.state.timeScale:1;musicState.biome=stageIndex;musicState.intensity=mode==='playing'?clamp(Math.abs(state.speed)/30+(run.combo>2?.18:0),0,1):.18;musicState.mood=mode==='playing'?(state.fuel<20?'danger':stages[stageIndex].boss?'boss':'drive'):screen==='results'?'results':'menu';musicState.playing=mode!=='paused'&&!document.hidden;audio.setMusicState(musicState);}
   function animation(now){
     const begin=performance.now(),dt=clamp((now-last)/1000,0,.1);last=now;pollPad(dt);readInput();let steps=0;
     if(mode==='countdown'){

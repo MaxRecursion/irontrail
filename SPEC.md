@@ -239,7 +239,7 @@ Rendering contract:
   drums/bass/pad/lead, per-biome tempo/key/pattern variants, intensity layers 0..1, moods
   `'menu'|'drive'|'boss'|'danger'|'results'`, short stingers for clear/fail. Engine stays the hero: music
   ducks under big SFX and sits low in the mix.
-  `audio.setMusicState({biome, intensity, mood, playing})` (cheap; game calls it ≤ 10 Hz).
+  `audio.setMusicState({biome, intensity, mood, playing, timeScale})` (cheap; game calls it ≤ 10 Hz).
   Music volume 0 or mute → the scheduler stops creating nodes. Pause → menu mood (quiet) or silence per
   the pause gate. No vocals.
 - `tests/audio-check.html`: extend for every new cue (audible, finite, < 0.95 peak), stacked worst case,
@@ -399,3 +399,8 @@ The amber truck uses a dark outline and was visually checked in the biomes. A li
 stop of every sky gradient is not satisfied; this visual check concerns the outlined composite object. No blanket
 claim of all-stop fill contrast or universal120FPS is made. Hardware refresh/controller/mobile/audio listening and
 full trace budgets remain documented verification limits.
+
+
+## 12. Sound pass (3 November 2026)
+
+Original eight-bar “Deadland Run” replaces the sparse score; nine persistent melodic/percussive voices and32bounded live drum sources. Music volume is applied once by musicBus. Slow motion eases the music lowpass/tempo and engine pitch. Engine focus gain supplies brief cannon ducking before master/limiter. Event sound sources cap96 and disconnect onended, including stereo panners. Physics callbacks call setScene(state,event), dispatch the cue, then reset the event position so UI cues stay centered. Flight wind includes vertical velocity; landings/collisions retain strength scaling. All new layers preserve existing mute/pause/zero-volume, cooldown and pre-unlock guards. Expanded browser checks cover the complete score, integrated mix, proportional volume, wind, stereo and voice disposal.

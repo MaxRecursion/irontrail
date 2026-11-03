@@ -5,15 +5,15 @@
 <style>body{background:#19221b;color:#d6efb1;font:16px monospace;padding:30px}pre{white-space:pre-wrap}</style>
 <h1>Audio signal validation</h1>
 <pre id="result">Rendering…</pre>
-<script src="../src/music.js?v=3"></script>
-<script src="../src/audio.js?v=4"></script>
+<script src="../src/music.js?v=5"></script>
+<script src="../src/audio.js?v=6"></script>
 <script>
 (async () => {
   const result = document.getElementById('result');
   const reports = {}, passes = [];
   const assert = (condition, message) => { if (!condition) throw Error(message); };
   const eventCalls = [
-    ['takeoff',a=>a.takeoff(1)], ['landing',a=>a.landing(1)],
+    ['slowEntry',a=>a.slowMotion(.25)], ['slowExit',a=>{a._slow=true;a.slowMotion(1);}], ['takeoff',a=>a.takeoff(1)], ['landing',a=>a.landing(1)],
     ['flip',a=>a.flip(1)], ['perfect',a=>a.perfect()], ['combo',a=>a.combo(3)], ['scoreTick',a=>a.scoreTick()], ['star',a=>a.star(1)], ['checkpoint',a=>a.checkpoint()], ['lowFuel',a=>a.lowFuel()], ['countdown',a=>a.countdown(3)], ['go',a=>a.go()], ['uiMove',a=>a.ui('move')], ['uiBuy',a=>a.ui('buy')], ['celebrate',a=>a.celebrate()],
     ['pickup', audio => audio.pickup()],
     ['zombieHit', audio => audio.zombieHit(1)],
@@ -127,6 +127,29 @@
       finiteAndComfortable(reports['music-'+mood],'Music '+mood);music.dispose();
     }
     passes.push('PASS · Persistent-voice music renders finite audible output in every mood.');
+    const longContext=new OfflineAudioContext(1,19*48000,48000),theme=new TruckMusic(longContext,longContext.destination);
+    theme.scheduleOffline(19,{biome:0,intensity:1,mood:'drive',playing:true});
+    reports.fullTheme=stats((await longContext.startRendering()).getChannelData(0));
+    finiteAndComfortable(reports.fullTheme,'Eight-bar theme');assert(theme.step>128&&theme.stats.drums>100,'Full call/answer arrangement or drum progression missing');theme.dispose();
+    async function musicAtVolume(volume){const c=new OfflineAudioContext(1,96000,48000),m=new TruckMusic(c,c.destination);m.setVolume(volume);m.scheduleOffline(2,{mood:'drive',playing:true,intensity:1});const signal=stats((await c.startRendering()).getChannelData(0));m.dispose();return signal;}
+    const fullMusic=await musicAtVolume(1),halfMusic=await musicAtVolume(.5);
+    assert(Math.abs(halfMusic.rms/fullMusic.rms-.5)<.005,'Music volume is not proportional');
+    passes.push('PASS · Complete eight-bar call/answer theme and proportional music volume.');
+    const fullMix=createAudio();fullMix.music.scheduleOffline(1,{mood:'boss',biome:9,playing:true,intensity:1});
+    fullMix.landing(1);fullMix.gunshot();fullMix.monsterHit();fullMix.collision(1);
+    reports.fullMix=stats(await render(fullMix));finiteAndComfortable(reports.fullMix,'Music + V8 + heavy impacts');
+    passes.push('PASS · Theme, V8 and simultaneous cannon/landing/collision/monster layers stay below clipping.');
+    // Air wind must respond to flight, not merely forward wheel speed.
+    class MotionAudio extends OfflineTruckAudio{_set(param,value,smoothing=.055){param.setTargetAtTime(value,this.context.currentTime,smoothing);}}
+    async function airSignal(airborne){const a=new MotionAudio();a.context=new OfflineAudioContext(1,48000,48000);a._buildGraph();a.setPaused(false);a.setMusicState({mood:'drive',playing:false});a.update({speed:20,wheelSpeed:27,grounded:!airborne,airtime:airborne?1:0,vy:airborne?-12:0},1/60,{throttle:0,timeScale:1});for(const gain of [a.engineGain,a.subGain,a.intakeGain,a.gravel.gain,a.exhaustNoise.gain,a.skid.gain,a.creak.gain]){gain.gain.cancelScheduledValues(0);gain.gain.value=0;}return stats(await render(a));}
+    reports.groundWind=await airSignal(false);reports.airWind=await airSignal(true);
+    assert(reports.airWind.rms>reports.groundWind.rms*3,'Air-time wind does not open up in flight');finiteAndComfortable(reports.airWind,'Air-time wind');
+    const stereo=new OfflineTruckAudio();stereo.context=new OfflineAudioContext(2,48000,48000);stereo._buildGraph();stereo.setPaused(false);stereo.engineGain.gain.value=0;stereo.subGain.gain.value=0;stereo.setScene({x:0},{x:15});stereo.monsterHit();
+    const stereoBuffer=await stereo.context.startRendering();reports.stereoLeft=stats(stereoBuffer.getChannelData(0));reports.stereoRight=stats(stereoBuffer.getChannelData(1));
+    assert(reports.stereoRight.rms>reports.stereoLeft.rms*1.6,'Monster impact is not spatially directed');
+    const bounded=createAudio({effectsOnly:true});for(let i=0;i<500;i++)bounded._noiseSweep(.01,300,1500,.1);assert(bounded._voices.size===96,'Effect voice limit is not bounded');await render(bounded);assert(bounded._voices.size===0,'Effect nodes were not released after playback');
+    passes.push('PASS · Flight wind rises, monster impacts pan toward the target, and all event voices are capped/released.');
+
     const mutedMusicContext=new OfflineAudioContext(1,48000,48000),mutedMusic=new TruckMusic(mutedMusicContext,mutedMusicContext.destination);
     mutedMusic.setVolume(0);mutedMusic.scheduleOffline(1,{mood:'boss',playing:true,intensity:1});
     const musicZero=stats((await mutedMusicContext.startRendering()).getChannelData(0));assert(musicZero.peak===0,'Music volume0 is not silent');mutedMusic.dispose();
