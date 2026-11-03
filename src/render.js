@@ -395,7 +395,7 @@
       let targetScale=this._baseScale*zoom*(1+(settings.reducedMotion?0:this._zoomPunch*.035));
       if(focus>.001&&m){
         const span=Math.max(8,Math.abs(m.x-px)+7),fit=(this.width-Math.max(34,this.width*.13)*2)/span;
-        targetScale+=(Math.min(targetScale,fit)-targetScale)*focus;
+        targetScale+=(Math.min(targetScale,layout.touch&&encounter.phase!=='aim'?Math.max(fit,this._baseScale*.78):fit)-targetScale)*focus;
       }
       if(this._snap)this._cameraScale=targetScale;else this._cameraScale+=(targetScale-this._cameraScale)*(1-Math.exp(-dt*(focus>.01?9:3.7)));
       const s=this._cameraScale,view=this.width/s,look=clamp(finite(state.vx,finite(state.speed))*.35,-3,7);
@@ -404,7 +404,7 @@
       const desired=clamp(this.height*(layout.touch?.64:.67),safeTop+s*1.7,Math.max(safeTop+s*1.7,this.height-safeBottom-s*1.4));
       let ty=py+(desired-this.height*.73)/s;
       if(focus>.001&&m){
-        tx+=((px+m.x)*.5-tx)*focus;
+        const shotCenter=layout.touch&&encounter.phase!=='aim'?(state.projectile?(state.projectile.x+m.x)*.5:m.x-2):(px+m.x)*.5;tx+=(shotCenter-tx)*focus;
         const centerY=(Math.min(py-1.1,m.y)+Math.max(py+2,m.y+5.4))*.5;
         const safeCenter=(safeTop+this.height-safeBottom)*.5;
         ty+=(centerY+(safeCenter-this.height*.73)/s-ty)*focus;

@@ -42,7 +42,7 @@
     constructor(){this.state={phase:'idle',intensity:0,timeScale:1,progress:0};this.reset();}
     reset(){this.elapsed=0;this.aimUsed=false;Object.assign(this.state,{phase:'idle',intensity:0,timeScale:1,progress:0});}
     start(phase){this.elapsed=0;this.state.phase=phase;this.state.progress=0;}
-    shoot(){this.aimUsed=true;this.start('shot');}
+    shoot(){this.entryScale=this.state.timeScale;this.aimUsed=true;this.start('shot');}
     hit(){this.start('impact');}
     update(dt,state,reduced=false){
       const v=this.state;dt=Math.max(0,Math.min(.1,dt));
@@ -53,7 +53,7 @@
       v.progress=Math.min(1,this.elapsed/duration);
       const smooth=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
       if(v.phase==='aim'){v.intensity=smooth(this.elapsed/.18)*(1-smooth((this.elapsed-.95)/.4));v.timeScale=1-.55*v.intensity;}
-      else if(v.phase==='shot'){v.intensity=1;v.timeScale=1-.78*smooth(this.elapsed/.1);}
+      else if(v.phase==='shot'){v.intensity=1;v.timeScale=this.entryScale-(this.entryScale-.22)*smooth(this.elapsed/.1);}
       else if(v.phase==='impact'){v.intensity=1-smooth(this.elapsed/.64);v.timeScale=.14+.86*smooth((this.elapsed-.08)/.56);}
       else if(v.phase==='miss'){v.intensity=.5*(1-v.progress);v.timeScale=.4+.6*smooth(v.progress);}
       else{v.intensity=0;v.timeScale=1;}
@@ -161,7 +161,7 @@
     if(!ok){if(physics.failed)finishRun(false,physics.failed);return;}
     recoveries++;accumulator=0;flippedTime=0;fallenTime=0;physics.getPose(pose);renderer.snapCamera();ui.cue('recover',{value:'−12'});audio.ui('back');ui.setRecoverVisible(false);
   }
-  function fire(){if(mode!=='playing')return;if(physics.fire()){state=physics.getState();shotDirector.shoot();ui.cue('shot');}else audio.ui('error');}
+  function fire(){if(mode!=='playing')return;if(physics.fire()){state=physics.getState();shotDirector.shoot();ui.clearFeedback();ui.cue('shot');}else audio.ui('error');}
   function toggleSound(){audio.setMuted(!audio.muted);view.muted=audio.muted;ui.hud.update(view);audio.ui('confirm');}
   async function fullscreen(){try{ignoreBlurUntil=performance.now()+800;if(document.fullscreenElement)await document.exitFullscreen();else await app.requestFullscreen();}catch(_){ui.toast('Fullscreen is not available here',2,'warn');}}
   function buy(track){const result=Rules.buyUpgrade(save,track);if(result.ok){persist();refreshCampaign();ui.showScreen('garage');audio.ui('buy');ui.cue('upgrade');}else{audio.ui('error');ui.cue('error',{value:result.reason==='max'?'✓':'◆'});}}
@@ -240,7 +240,7 @@
       case 'checkpoint':audio.checkpoint();ui.cue('checkpoint');break;
     }
     const reward=Rules.onEvent(run,event,{state,time:runTime,recoveries});
-    if(reward){renderer.popup(`+${reward.points}`,event.x??state.x,event.y??state.y+1,reward.kind);if(reward.combo>1)audio.combo(reward.combo);}
+    if(reward){if(event.type!=='monsterHit')renderer.popup(`+${reward.points}`,event.x??state.x,event.y??state.y+1,reward.kind);if(reward.combo>1)audio.combo(reward.combo);}
   }
   function finishRun(won,reason){
     if(mode!=='playing')return;clearInput();ui.setRecoverVisible(false);

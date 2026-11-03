@@ -2139,7 +2139,7 @@ globalThis.TruckAudio = TruckAudio;
       let targetScale=this._baseScale*zoom*(1+(settings.reducedMotion?0:this._zoomPunch*.035));
       if(focus>.001&&m){
         const span=Math.max(8,Math.abs(m.x-px)+7),fit=(this.width-Math.max(34,this.width*.13)*2)/span;
-        targetScale+=(Math.min(targetScale,fit)-targetScale)*focus;
+        targetScale+=(Math.min(targetScale,layout.touch&&encounter.phase!=='aim'?Math.max(fit,this._baseScale*.78):fit)-targetScale)*focus;
       }
       if(this._snap)this._cameraScale=targetScale;else this._cameraScale+=(targetScale-this._cameraScale)*(1-Math.exp(-dt*(focus>.01?9:3.7)));
       const s=this._cameraScale,view=this.width/s,look=clamp(finite(state.vx,finite(state.speed))*.35,-3,7);
@@ -2148,7 +2148,7 @@ globalThis.TruckAudio = TruckAudio;
       const desired=clamp(this.height*(layout.touch?.64:.67),safeTop+s*1.7,Math.max(safeTop+s*1.7,this.height-safeBottom-s*1.4));
       let ty=py+(desired-this.height*.73)/s;
       if(focus>.001&&m){
-        tx+=((px+m.x)*.5-tx)*focus;
+        const shotCenter=layout.touch&&encounter.phase!=='aim'?(state.projectile?(state.projectile.x+m.x)*.5:m.x-2):(px+m.x)*.5;tx+=(shotCenter-tx)*focus;
         const centerY=(Math.min(py-1.1,m.y)+Math.max(py+2,m.y+5.4))*.5;
         const safeCenter=(safeTop+this.height-safeBottom)*.5;
         ty+=(centerY+(safeCenter-this.height*.73)/s-ty)*focus;
@@ -2425,7 +2425,7 @@ globalThis.TruckAudio = TruckAudio;
     constructor(){this.state={phase:'idle',intensity:0,timeScale:1,progress:0};this.reset();}
     reset(){this.elapsed=0;this.aimUsed=false;Object.assign(this.state,{phase:'idle',intensity:0,timeScale:1,progress:0});}
     start(phase){this.elapsed=0;this.state.phase=phase;this.state.progress=0;}
-    shoot(){this.aimUsed=true;this.start('shot');}
+    shoot(){this.entryScale=this.state.timeScale;this.aimUsed=true;this.start('shot');}
     hit(){this.start('impact');}
     update(dt,state,reduced=false){
       const v=this.state;dt=Math.max(0,Math.min(.1,dt));
@@ -2436,7 +2436,7 @@ globalThis.TruckAudio = TruckAudio;
       v.progress=Math.min(1,this.elapsed/duration);
       const smooth=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
       if(v.phase==='aim'){v.intensity=smooth(this.elapsed/.18)*(1-smooth((this.elapsed-.95)/.4));v.timeScale=1-.55*v.intensity;}
-      else if(v.phase==='shot'){v.intensity=1;v.timeScale=1-.78*smooth(this.elapsed/.1);}
+      else if(v.phase==='shot'){v.intensity=1;v.timeScale=this.entryScale-(this.entryScale-.22)*smooth(this.elapsed/.1);}
       else if(v.phase==='impact'){v.intensity=1-smooth(this.elapsed/.64);v.timeScale=.14+.86*smooth((this.elapsed-.08)/.56);}
       else if(v.phase==='miss'){v.intensity=.5*(1-v.progress);v.timeScale=.4+.6*smooth(v.progress);}
       else{v.intensity=0;v.timeScale=1;}
@@ -2544,7 +2544,7 @@ globalThis.TruckAudio = TruckAudio;
     if(!ok){if(physics.failed)finishRun(false,physics.failed);return;}
     recoveries++;accumulator=0;flippedTime=0;fallenTime=0;physics.getPose(pose);renderer.snapCamera();ui.cue('recover',{value:'−12'});audio.ui('back');ui.setRecoverVisible(false);
   }
-  function fire(){if(mode!=='playing')return;if(physics.fire()){state=physics.getState();shotDirector.shoot();ui.cue('shot');}else audio.ui('error');}
+  function fire(){if(mode!=='playing')return;if(physics.fire()){state=physics.getState();shotDirector.shoot();ui.clearFeedback();ui.cue('shot');}else audio.ui('error');}
   function toggleSound(){audio.setMuted(!audio.muted);view.muted=audio.muted;ui.hud.update(view);audio.ui('confirm');}
   async function fullscreen(){try{ignoreBlurUntil=performance.now()+800;if(document.fullscreenElement)await document.exitFullscreen();else await app.requestFullscreen();}catch(_){ui.toast('Fullscreen is not available here',2,'warn');}}
   function buy(track){const result=Rules.buyUpgrade(save,track);if(result.ok){persist();refreshCampaign();ui.showScreen('garage');audio.ui('buy');ui.cue('upgrade');}else{audio.ui('error');ui.cue('error',{value:result.reason==='max'?'✓':'◆'});}}
@@ -2623,7 +2623,7 @@ globalThis.TruckAudio = TruckAudio;
       case 'checkpoint':audio.checkpoint();ui.cue('checkpoint');break;
     }
     const reward=Rules.onEvent(run,event,{state,time:runTime,recoveries});
-    if(reward){renderer.popup(`+${reward.points}`,event.x??state.x,event.y??state.y+1,reward.kind);if(reward.combo>1)audio.combo(reward.combo);}
+    if(reward){if(event.type!=='monsterHit')renderer.popup(`+${reward.points}`,event.x??state.x,event.y??state.y+1,reward.kind);if(reward.combo>1)audio.combo(reward.combo);}
   }
   function finishRun(won,reason){
     if(mode!=='playing')return;clearInput();ui.setRecoverVisible(false);

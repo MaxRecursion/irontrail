@@ -2,7 +2,7 @@
 
 A self-contained 2D monster truck game: ten increasingly demanding routes, physical zombies, depleting fuel, a single-charge cannon, and a final race against Iron Maw.
 
-Vercel domain: https://irontrail.maxrecursion.dev (DNS setup in progress). Source: https://github.com/MaxRecursion/irontrail. Open `index.html` in a modern browser. All physics, graphics, music and effects are inside that one file. No installation or network assets are needed.
+Live Vercel preview: https://irontrail-iota.vercel.app . Custom domain: https://irontrail.maxrecursion.dev (DNS setup in progress). Source: https://github.com/MaxRecursion/irontrail. Open `index.html` in a modern browser. All physics, graphics, music and effects are inside that one file. No installation or network assets are needed.
 
 ## Play
 
