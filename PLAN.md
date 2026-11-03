@@ -252,3 +252,11 @@ Shooting implementation and functional validation complete. GitHub repo and Verc
 - [x] Preserve single-file/offline output, one-shot physics, saves, volume/mute/pause guards and suspended-context limits; cap and clean up event sources.
 - [x] Browser signal checks and live flow pass: complete theme, proportional music volume, worst mix, wind response, stereo, cleanup, exact silence; live run schedules275notes/81drums without warnings.
 - [x] Commit/push and verify the existing Vercel production deployment. Sound release06ea6ea deployed automatically; both production URLs returnHTTP200 and the exact547,738byte tested bundle. Custom domain opens in the browser.
+
+
+## Reported silence follow-up
+
+- [x] Compare old and repaired click activation; measure real running output rather than only offline rendering/scheduler counts.
+- [x] Retry suspended/interrupted audio from click/touchend; provide Settings sound test and output meter.
+- [x] Verify actual music/V8/cannon output, mute/pause silence, resume, bundle and responsive UI.
+- [ ] Verify the published custom-domain build through its sound test and measured output.

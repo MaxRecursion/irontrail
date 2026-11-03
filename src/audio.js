@@ -6,7 +6,7 @@
  */
 class TruckAudio {
   constructor() {
-    this.context = null;
+    this.context = null;this.lastError='';this._meter=null;this._meterSamples=null;
     this.muted = false;
     this.paused = false;
     this.rpm = 820;
@@ -41,15 +41,24 @@ class TruckAudio {
     try {
       if (!this.context) {
         const AudioContextType = globalThis.AudioContext || globalThis.webkitAudioContext;
-        if (!AudioContextType) return false;
+        if (!AudioContextType){this.lastError='Audio unavailable';return false;}
         this.context = new AudioContextType();
         this._buildGraph();
       }
-      if (this.context.state === 'suspended') await this.context.resume();
+      // Touch-down is not an activation event in every browser. A later click
+      // must be able to retry resume, even if an earlier promise is pending.
+      if (this.context.state !== 'running') {
+        await new Promise((resolve,reject)=>{
+          const timeout=setTimeout(resolve,1200);
+          this.context.resume().then(()=>{clearTimeout(timeout);resolve();},error=>{clearTimeout(timeout);reject(error);});
+        });
+      }
+      this.lastError=this.context.state==='running'?'':'Tap to enable sound';
       this._gate();this._flushTargets();this.setMusicState(this._musicState);
       return this.context.state === 'running';
     } catch (error) {
       // Driving remains available when the browser/OS cannot start audio.
+      this.lastError=error.message||'Audio unavailable';
       console.warn('Truck audio could not start:', error.message);
       return false;
     }
@@ -61,7 +70,7 @@ class TruckAudio {
     const ctx = this.context;
     this.master = ctx.createGain();
     this.master.gain.value = 0;
-    const limiter = ctx.createDynamicsCompressor();
+    const limiter = ctx.createDynamicsCompressor();this.limiter=limiter;
     limiter.threshold.value = -13;
     limiter.knee.value = 12;
     limiter.ratio.value = 5;
@@ -134,6 +143,30 @@ class TruckAudio {
     for(const param of [this.engineGain.gain,this.subGain.gain,this.intakeGain.gain,this.exhaustFilter.frequency,this.exhaustFilter.Q])try{param.automationRate='k-rate';}catch(_){}
     if(globalThis.TruckMusic)this.music=new globalThis.TruckMusic(ctx,this.musicBus);
     if(ctx.addEventListener)ctx.addEventListener('statechange',()=>{if(ctx.state==='running'){this._gate();this._flushTargets();if(this.music)this.music.setState(this._musicState);}else if(this.music)this.music.stop();});
+  }
+
+  enableMeter() {
+    if(!this._ready||this._meter)return;
+    this._meter=this.context.createAnalyser();this._meter.fftSize=2048;
+    this._meterSamples=new Float32Array(this._meter.fftSize);
+    // Passive post-limiter tap: measures the actual mix without routing it twice.
+    this.limiter.connect(this._meter);
+  }
+  status() {
+    let peak=0,rms=0;
+    if(this._meter&&this.context.state==='running'){
+      this._meter.getFloatTimeDomainData(this._meterSamples);let sum=0;
+      for(const sample of this._meterSamples){peak=Math.max(peak,Math.abs(sample));sum+=sample*sample;}
+      rms=Math.sqrt(sum/this._meterSamples.length);
+    }
+    return {context:this.context?.state||'locked',ready:this._ready,muted:this.muted,paused:this.paused,
+      master:this.volumes.master,music:this.volumes.music,sfx:this.volumes.sfx,peak,rms,
+      notes:this.music?.stats.notes||0,drums:this.music?.stats.drums||0,error:this.lastError};
+  }
+  testSound() {
+    if(!this._cue('soundtest',1))return false;
+    this._thump(.18,440,440,.32);this._thump(.16,660,660,.34,.27);
+    if(this.music)this.music.duck(.7,.35);return true;
   }
 
   _combustionWave() {

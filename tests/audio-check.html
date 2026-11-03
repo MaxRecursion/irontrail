@@ -6,14 +6,14 @@
 <h1>Audio signal validation</h1>
 <pre id="result">Rendering…</pre>
 <script src="../src/music.js?v=5"></script>
-<script src="../src/audio.js?v=6"></script>
+<script src="../src/audio.js?v=7"></script>
 <script>
 (async () => {
   const result = document.getElementById('result');
   const reports = {}, passes = [];
   const assert = (condition, message) => { if (!condition) throw Error(message); };
   const eventCalls = [
-    ['slowEntry',a=>a.slowMotion(.25)], ['slowExit',a=>{a._slow=true;a.slowMotion(1);}], ['takeoff',a=>a.takeoff(1)], ['landing',a=>a.landing(1)],
+    ['testSound',a=>a.testSound()], ['slowEntry',a=>a.slowMotion(.25)], ['slowExit',a=>{a._slow=true;a.slowMotion(1);}], ['takeoff',a=>a.takeoff(1)], ['landing',a=>a.landing(1)],
     ['flip',a=>a.flip(1)], ['perfect',a=>a.perfect()], ['combo',a=>a.combo(3)], ['scoreTick',a=>a.scoreTick()], ['star',a=>a.star(1)], ['checkpoint',a=>a.checkpoint()], ['lowFuel',a=>a.lowFuel()], ['countdown',a=>a.countdown(3)], ['go',a=>a.go()], ['uiMove',a=>a.ui('move')], ['uiBuy',a=>a.ui('buy')], ['celebrate',a=>a.celebrate()],
     ['pickup', audio => audio.pickup()],
     ['zombieHit', audio => audio.zombieHit(1)],
@@ -63,6 +63,12 @@
     return buffer.getChannelData(0);
   }
   try {
+    const pending=new TruckAudio();let resumeCalls=0,finishFirst;
+    pending.context={state:'suspended',resume(){resumeCalls++;if(resumeCalls===1)return new Promise(resolve=>finishFirst=resolve);this.state='running';finishFirst();return Promise.resolve();}};
+    assert((await Promise.all([pending.unlock(),pending.unlock()])).every(Boolean)&&resumeCalls===2,'Pending resume prevented a new gesture retry');
+    const interruptedContext=new TruckAudio();interruptedContext.context={state:'interrupted',resume(){this.state='running';return Promise.resolve();}};
+    assert(await interruptedContext.unlock(),'Interrupted audio did not resume');
+    passes.push('PASS · A later gesture can retry pending resume; interrupted contexts recover.');
     const locked = new TruckAudio();
     locked.update({ speed: 0, wheelSpeed: 0, throttle: 0, grounded: true }, 0.016);
     locked.takeoff(1); locked.landing(1);

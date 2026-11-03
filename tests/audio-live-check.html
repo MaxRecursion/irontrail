@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>READY — live audio activation</title><style>body{margin:0;background:#10241d;color:#d6efb1;font:13px monospace}header{padding:14px;display:flex;align-items:center;gap:15px}button{padding:12px;border:0;border-radius:6px;background:#e4b15a;color:#152821;font-weight:bold}iframe{width:100%;height:65vh;border:0}pre{white-space:pre-wrap;padding:16px}</style></head><body><header><button id="run" disabled>Loading…</button><span>Actual running AudioContext. Isolated campaign. Output measured after the limiter.</span></header><iframe id="game" title="Audio activation fixture"></iframe><pre id="report">READY</pre><script>
+const frame=document.getElementById('game'),run=document.getElementById('run'),report=document.getElementById('report'),delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));let game,win,doc;const lines=[];
+const assert=(value,message)=>{if(!value)throw Error(message);},log=value=>{lines.push(value);report.textContent=lines.join('\n');};
+async function signal(audio,seconds=.8){let peak=0,rms=0;const end=performance.now()+seconds*1000;while(performance.now()<end){const s=audio.status();peak=Math.max(peak,s.peak);rms=Math.max(rms,s.rms);await delay(20);}return{peak,rms};}
+run.onclick=async()=>{run.disabled=true;try{
+  // AT and programmatic activation can dispatch click without pointerdown/key.
+  doc.querySelector('[data-ui="settings"]').click();await delay(350);
+  const audio=game.audio;audio.enableMeter();assert(audio.context?.state==='running','Click-only Settings activation left AudioContext '+(audio.context?.state||'not created'));
+  const menu=await signal(audio,1);assert(menu.peak>.001&&menu.rms>.0001,'Menu output is silent '+JSON.stringify(menu));log('PASS click-only unlock + live music '+JSON.stringify(menu));
+  audio.testSound();const chime=await signal(audio,.8);assert(chime.peak>.01,'Sound test did not reach the output '+JSON.stringify(chime));log('PASS sound-test output '+JSON.stringify(chime));
+  game.qa.start(0);audio.setVolumes({music:0});win.dispatchEvent(new win.KeyboardEvent('keydown',{code:'KeyW',key:'w',bubbles:true}));await delay(300);
+  const engine=await signal(audio,1);assert(engine.peak>.003&&engine.rms>.0005,'Engine output silent '+JSON.stringify(engine));log('PASS driving V8 output '+JSON.stringify(engine));
+  audio.gunshot();const gun=await signal(audio,.5);assert(gun.peak>.02,'Cannon output silent '+JSON.stringify(gun));log('PASS cannon output '+JSON.stringify(gun));
+  audio.setMuted(true);await delay(140);const mute=await signal(audio,.2);assert(mute.peak<.00001,'Mute leaked '+JSON.stringify(mute));log('PASS exact muted output');
+  audio.setMuted(false);await delay(140);assert((await signal(audio,.3)).peak>.003,'Unmute failed');audio.setPaused(true);await delay(140);assert((await signal(audio,.2)).peak<.00001,'Pause leaked');audio.setPaused(false);await delay(140);assert((await signal(audio,.3)).peak>.003,'Resume failed');log('PASS unmute and pause/resume output');
+  win.dispatchEvent(new win.KeyboardEvent('keyup',{code:'KeyW',key:'w',bubbles:true}));win.dispatchEvent(new win.KeyboardEvent('keydown',{code:'KeyP',key:'p',bubbles:true}));
+  document.title='PASS — live audio activation';log('PASS running audio verification; context '+audio.context.state);run.textContent='Passed';
+}catch(error){document.title='FAIL — live audio activation';log('FAIL '+error.stack);run.textContent='Failed';}};
+(async()=>{let html=await(await fetch('../index.html',{cache:'no-store'})).text();html=html.replaceAll('irontrail-campaign-v1','irontrail-audio-qa-'+Date.now()).replaceAll('irontrail-ghost-v1-','irontrail-audio-qa-ghost-');
+if(new URLSearchParams(location.search).has('legacy'))html=html.replace("for(const type of ['pointerdown','touchend','click','keydown'])window.addEventListener(type,firstGesture,{capture:true,passive:true});","window.addEventListener('pointerdown',firstGesture,{capture:true});window.addEventListener('keydown',firstGesture,{capture:true});");
+frame.onload=()=>{win=frame.contentWindow;doc=frame.contentDocument;game=win.irontrail;run.disabled=false;run.textContent='Run click-only audio checks';};frame.srcdoc=html;})();
+</script></body></html>

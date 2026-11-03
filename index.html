@@ -13,6 +13,8 @@
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.result-stars .earned{animation:none}.menu-button,.stage-card,.hud-toast,.hud-banner{transition:none}}
 
 .hud-cue{position:absolute;left:50%;top:24%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:12px 18px;background:#102c27e8;border:1px solid #e4b15a66;border-radius:40px;color:#f2d68b;pointer-events:none}.hud-cue svg{width:34px;height:34px;stroke-width:2}.hud-cue strong{font:700 17px var(--mono)}.cue-hit,.cue-success,.cue-upgrade{color:#d6ef9c}.cue-miss,.cue-error,.cue-fuel{color:#efa477}.replay-a{animation:cueA .7s both}.replay-b{animation:cueB .7s both}@keyframes cueA{0%{opacity:0;transform:translate(-50%,12px) scale(.7)}35%{opacity:1;transform:translate(-50%,0) scale(1.08)}100%{transform:translate(-50%,0) scale(1)}}@keyframes cueB{0%{opacity:0;transform:translate(-50%,12px) scale(.7)}35%{opacity:1;transform:translate(-50%,0) scale(1.08)}100%{transform:translate(-50%,0) scale(1)}}.fire-button svg{width:30px;height:30px;margin:auto;display:block}.ammo-pip{display:inline-block;width:9px;height:20px;border-radius:5px 5px 2px 2px;background:#f6dc91;box-shadow:0 0 10px #e4b15a55}.spent .ammo-pip{background:transparent;border:1px solid #83977f}.locked .fire-button{animation:lockPulse 1s infinite}.cleared .fire-button{animation:none}.failure-icon svg{height:55px;width:55px}.reduced-motion *{animation:none!important;transition:none!important}@keyframes lockPulse{50%{box-shadow:0 0 0 7px #d5ed9b22}}@media(prefers-reduced-motion:reduce){.hud-cue,.locked .fire-button{animation:none}}@media(max-width:600px){.hud-cue{top:23%;padding:9px 14px}.hud-cue svg{width:27px;height:27px}}
+
+.sound-check{display:flex;align-items:center;gap:18px}.sound-test{display:flex;align-items:center;gap:9px;min-height:44px;padding:9px 13px;white-space:nowrap}.sound-test svg{width:20px;height:20px}.sound-test-feedback{flex:1;min-width:80px}.sound-meter{height:5px;background:#edf2d425;overflow:hidden;border-radius:3px;margin:7px 0}.sound-meter i{display:block;width:100%;height:100%;background:#a8cf83;transform:scaleX(0);transform-origin:left;transition:transform .08s linear}#soundTestStatus{font:10px var(--mono);color:var(--soft)}#audioDiagnostics{position:absolute;z-index:200;right:8px;bottom:8px;padding:10px;max-width:310px;pointer-events:none;color:#c7f7c1;background:#081913eF;font:10px/1.35 var(--mono);border:1px solid #648d71;border-radius:7px}
 </style><!-- Planck.js 1.5.0 license:
 The MIT License
 Copyright (c) Erin Catto, Ali Shakiba
@@ -727,7 +729,7 @@ SOFTWARE.
  */
 class TruckAudio {
   constructor() {
-    this.context = null;
+    this.context = null;this.lastError='';this._meter=null;this._meterSamples=null;
     this.muted = false;
     this.paused = false;
     this.rpm = 820;
@@ -762,15 +764,24 @@ class TruckAudio {
     try {
       if (!this.context) {
         const AudioContextType = globalThis.AudioContext || globalThis.webkitAudioContext;
-        if (!AudioContextType) return false;
+        if (!AudioContextType){this.lastError='Audio unavailable';return false;}
         this.context = new AudioContextType();
         this._buildGraph();
       }
-      if (this.context.state === 'suspended') await this.context.resume();
+      // Touch-down is not an activation event in every browser. A later click
+      // must be able to retry resume, even if an earlier promise is pending.
+      if (this.context.state !== 'running') {
+        await new Promise((resolve,reject)=>{
+          const timeout=setTimeout(resolve,1200);
+          this.context.resume().then(()=>{clearTimeout(timeout);resolve();},error=>{clearTimeout(timeout);reject(error);});
+        });
+      }
+      this.lastError=this.context.state==='running'?'':'Tap to enable sound';
       this._gate();this._flushTargets();this.setMusicState(this._musicState);
       return this.context.state === 'running';
     } catch (error) {
       // Driving remains available when the browser/OS cannot start audio.
+      this.lastError=error.message||'Audio unavailable';
       console.warn('Truck audio could not start:', error.message);
       return false;
     }
@@ -782,7 +793,7 @@ class TruckAudio {
     const ctx = this.context;
     this.master = ctx.createGain();
     this.master.gain.value = 0;
-    const limiter = ctx.createDynamicsCompressor();
+    const limiter = ctx.createDynamicsCompressor();this.limiter=limiter;
     limiter.threshold.value = -13;
     limiter.knee.value = 12;
     limiter.ratio.value = 5;
@@ -855,6 +866,30 @@ class TruckAudio {
     for(const param of [this.engineGain.gain,this.subGain.gain,this.intakeGain.gain,this.exhaustFilter.frequency,this.exhaustFilter.Q])try{param.automationRate='k-rate';}catch(_){}
     if(globalThis.TruckMusic)this.music=new globalThis.TruckMusic(ctx,this.musicBus);
     if(ctx.addEventListener)ctx.addEventListener('statechange',()=>{if(ctx.state==='running'){this._gate();this._flushTargets();if(this.music)this.music.setState(this._musicState);}else if(this.music)this.music.stop();});
+  }
+
+  enableMeter() {
+    if(!this._ready||this._meter)return;
+    this._meter=this.context.createAnalyser();this._meter.fftSize=2048;
+    this._meterSamples=new Float32Array(this._meter.fftSize);
+    // Passive post-limiter tap: measures the actual mix without routing it twice.
+    this.limiter.connect(this._meter);
+  }
+  status() {
+    let peak=0,rms=0;
+    if(this._meter&&this.context.state==='running'){
+      this._meter.getFloatTimeDomainData(this._meterSamples);let sum=0;
+      for(const sample of this._meterSamples){peak=Math.max(peak,Math.abs(sample));sum+=sample*sample;}
+      rms=Math.sqrt(sum/this._meterSamples.length);
+    }
+    return {context:this.context?.state||'locked',ready:this._ready,muted:this.muted,paused:this.paused,
+      master:this.volumes.master,music:this.volumes.music,sfx:this.volumes.sfx,peak,rms,
+      notes:this.music?.stats.notes||0,drums:this.music?.stats.drums||0,error:this.lastError};
+  }
+  testSound() {
+    if(!this._cue('soundtest',1))return false;
+    this._thump(.18,440,440,.32);this._thump(.16,660,660,.34,.27);
+    if(this.music)this.music.duck(.7,.35);return true;
   }
 
   _combustionWave() {
@@ -1687,6 +1722,16 @@ globalThis.TruckAudio = TruckAudio;
       if(v.paused!==undefined){this._attr('pauseButton','aria-label',v.paused?'Resume game':'Pause game');this._class('pauseButton','active',v.paused);}
       if(v.muted!==undefined){this._attr('soundButton','aria-label',v.muted?'Enable sound':'Mute sound');this._attr('soundButton','aria-pressed',v.muted);}
     }
+    setAudioStatus(status){
+      if(this.screen!=='settings')return;
+      const output=this.document.getElementById('soundTestStatus'),bar=this.document.getElementById('soundTestLevel'),meter=this.document.getElementById('soundTestMeter');
+      const silent=status.muted||status.master===0||(status.music===0&&status.sfx===0);
+      const label=status.error&&status.context!=='running'?'Tap to enable sound':silent?'Volume off':status.context!=='running'?'Tap to enable sound':'Sound on';
+      if(output&&output.textContent!==label)output.textContent=label;
+      const level=Math.round(clamp(status.rms*30,0,1)*100);
+      if(bar)bar.style.transform=`scaleX(${level/100})`;
+      if(meter)meter.setAttribute('aria-valuenow',level);
+    }
     setCampaign(save,stages,biomes,rulesInfo){this.save=save||this.save;this.stages=stages||this.stages;this.biomes=biomes||this.biomes;this.rulesInfo=rulesInfo||this.rulesInfo;this.app.classList.toggle('reduced-motion',!!this.save.settings?.reducedMotion);}
     _par(i){return (this.rulesInfo.PAR_TIMES||this.rulesInfo.parTimes||global.IronRules?.PAR_TIMES||[])[i]||0;}
     _challenge(i){return (this.rulesInfo.CHALLENGES||this.rulesInfo.challenges||global.IronRules?.CHALLENGES||[])[i]?.label||'Complete the stage objective';}
@@ -1726,6 +1771,7 @@ globalThis.TruckAudio = TruckAudio;
         for(const [key,label,def]of ranges){const value=Math.round(clamp(settings[key]??def,0,1)*100);html+=`<div class="setting-item"><label for="setting-${key}">${label}<output id="setting-value-${key}">${value}%</output></label><input id="setting-${key}" type="range" min="0" max="100" step="1" value="${value}" data-setting="${key}" aria-label="${label}"></div>`;}
         html+=`<div class="setting-item"><label for="setting-quality">Graphics quality<select id="setting-quality" data-setting="quality" aria-label="Graphics quality">${[['auto','Auto · adaptive'],['high','High'],['balanced','Balanced'],['performance','Performance']].map(([value,label])=>`<option value="${value}" ${settings.quality===value?'selected':''}>${label}</option>`).join('')}</select></label><small>Auto adjusts resolution and effects to keep motion smooth.</small></div>`;
         for(const [key,label,help]of [['shake','Camera shake','Physical impacts with a little extra punch.'],['showFps','Performance display','Show FPS, CPU time and rendering detail.'],['reducedMotion','Reduced motion','Quiet menu animation and camera effects.']])html+=`<div class="setting-item"><label for="setting-${key}">${label}<input id="setting-${key}" type="checkbox" data-setting="${key}" ${settings[key]?'checked':''}></label><small>${help}</small></div>`;
+        html+='<div class="setting-item sound-check"><button type="button" class="secondary-button sound-test" data-ui="testSound" aria-label="Test sound"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM17 8q4 4 0 8M20 5q7 7 0 14"/></svg>Test sound</button><div class="sound-test-feedback"><div id="soundTestMeter" class="sound-meter" role="meter" aria-label="Audio output level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="soundTestLevel"></i></div><output id="soundTestStatus" role="status">Tap to enable sound</output></div></div>';
         html+='</div>';primary='Save & return';action='back';secondary=this._button('Stage select','stages')+this._button('Title','title');
       }else if(name==='brief'){
         const par=d.par??this._par(i),challenge=typeof d.challenge==='string'?d.challenge:d.challenge?.label||this._challenge(i),best=d.best??this.save.best?.[i];
@@ -2518,7 +2564,7 @@ globalThis.TruckAudio = TruckAudio;
   const save=Rules.Save.load(storage);let stageIndex=clamp(save.selected|0,0,save.unlocked-1);
   let physics=new global.TruckPhysics(stageIndex,{tuning:save.upgrades}),state=physics.getState(),pose=new Float64Array(physics.poseLength);
   const renderer=new global.IronRenderer(canvas,{biomes}),shotDirector=new ShotDirector();
-  let mode='title',screen='title',pausedFrom='playing';const navigation=[];let primePending=false;
+  let mode='title',screen='title',pausedFrom='playing';const navigation=[];
   let run=Rules.createRun(stageIndex),runTime=0,recoveries=0,accumulator=0,last=performance.now();
   let countdownLeft=0,countdownNumber=0,hitStop=0,slowLeft=0,flippedTime=0,fallenTime=0;
   let hudClock=0,musicClock=0,lowFuelWarned=false,monsterWarned=false,lockWarned=false,stageResult=null;
@@ -2533,7 +2579,7 @@ globalThis.TruckAudio = TruckAudio;
   const perf={fps:60,refreshHz:60,renderScale:1,quality:'high',cpuMs:0,drawOps:0,trace:()=>pacer.trace()};
   const NO_PADS=[];let activePad=null;const gamepadProvider=()=>navigator.getGamepads?navigator.getGamepads():NO_PADS;
   const pressed=i=>!!activePad?.buttons[i]?.pressed,value=i=>activePad?.buttons[i]?.value||0,edge=i=>pressed(i)&&!padPrevious[i];
-  function primeAudio(){if(audio.context?.state==='running'||primePending)return;primePending=true;audio.prime().finally(()=>{primePending=false;});}
+  function primeAudio(){return audio.context?.state==='running'?Promise.resolve(true):audio.prime();}
   function persist(){Rules.Save.save(storage,save);}
   function refreshCampaign(){ui.setCampaign(save,stages,biomes,Rules);}
   function clearInput(){keys.clear();pointerMap.clear();for(const key of Object.keys(pedal))pedal[key]=0;for(const button of ui.pedals)button.classList.remove('pressed');input.throttle=0;input.brake=false;input.lean=0;padState.gas=0;padState.reverse=0;padState.brake=false;padState.lean=0;}
@@ -2610,7 +2656,25 @@ globalThis.TruckAudio = TruckAudio;
     recoveries++;accumulator=0;flippedTime=0;fallenTime=0;physics.getPose(pose);renderer.snapCamera();ui.cue('recover',{value:'−12'});audio.ui('back');ui.setRecoverVisible(false);
   }
   function fire(){if(mode!=='playing')return;if(physics.fire()){state=physics.getState();shotDirector.shoot();ui.clearFeedback();ui.cue('shot');}else audio.ui('error');}
-  function toggleSound(){audio.setMuted(!audio.muted);view.muted=audio.muted;ui.hud.update(view);audio.ui('confirm');}
+  function toggleSound(){
+    if(audio.muted||audio.context?.state!=='running'){audio.setMuted(false);primeAudio().then(ok=>{if(ok)audio.ui('confirm');});}
+    else audio.setMuted(true);
+    view.muted=audio.muted;ui.hud.update(view);
+  }
+  async function testSound(){
+    audio.setMuted(false);view.muted=false;ui.hud.update(view);
+    if(await primeAudio()){audio.enableMeter();audio.testSound();}
+    updateAudioStatus();
+  }
+  const audioDebug=new URLSearchParams(location.search).has('audioDebug');
+  let audioReadout=null,audioStatusClock=0,audioPeak=0;
+  if(audioDebug){audioReadout=document.createElement('pre');audioReadout.id='audioDiagnostics';audioReadout.setAttribute('aria-label','Live audio diagnostics');app.appendChild(audioReadout);}
+  function updateAudioStatus(){
+    if(screen!=='settings'&&!audioDebug)return;
+    audio.enableMeter();const status=audio.status();audioPeak=Math.max(audioPeak,status.peak);
+    ui.setAudioStatus(status);
+    if(audioReadout)audioReadout.textContent=JSON.stringify({mode, ...status,peakMax:audioPeak},null,2);
+  }
   async function fullscreen(){try{ignoreBlurUntil=performance.now()+800;if(document.fullscreenElement)await document.exitFullscreen();else await app.requestFullscreen();}catch(_){ui.toast('Fullscreen is not available here',2,'warn');}}
   function buy(track){const result=Rules.buyUpgrade(save,track);if(result.ok){persist();refreshCampaign();ui.showScreen('garage');audio.ui('buy');ui.cue('upgrade');}else{audio.ui('error');ui.cue('error',{value:result.reason==='max'?'✓':'◆'});}}
   function setting(key,value){
@@ -2622,9 +2686,9 @@ globalThis.TruckAudio = TruckAudio;
     if(key==='quality'&&renderScale>previousScale)renderer.resize(width,height);
     audio.ui('move');
   }
-  ui.on('play',play);ui.on('selectStage',i=>{navigation.length=0;navigation.push('stages');if(loadStage(i))audio.ui('confirm');});ui.on('retry',retry);ui.on('next',next);ui.on('resume',resume);ui.on('pause',pause);ui.on('title',title);ui.on('stages',()=>openScreen('stages'));ui.on('garage',()=>openScreen('garage'));ui.on('settings',()=>openScreen('settings'));ui.on('back',back);ui.on('buy',buy);ui.on('setting',setting);ui.on('fire',fire);ui.on('recover',recover);ui.on('restart',retry);ui.on('sound',toggleSound);ui.on('fullscreen',fullscreen);
+  ui.on('play',play);ui.on('selectStage',i=>{navigation.length=0;navigation.push('stages');if(loadStage(i))audio.ui('confirm');});ui.on('retry',retry);ui.on('next',next);ui.on('resume',resume);ui.on('pause',pause);ui.on('title',title);ui.on('stages',()=>openScreen('stages'));ui.on('garage',()=>openScreen('garage'));ui.on('settings',()=>openScreen('settings'));ui.on('back',back);ui.on('buy',buy);ui.on('setting',setting);ui.on('fire',fire);ui.on('recover',recover);ui.on('restart',retry);ui.on('sound',toggleSound);ui.on('testSound',testSound);ui.on('fullscreen',fullscreen);
   function firstGesture(){primeAudio();}
-  window.addEventListener('pointerdown',firstGesture,{capture:true});window.addEventListener('keydown',firstGesture,{capture:true});
+  for(const type of ['pointerdown','touchend','click','keydown'])window.addEventListener(type,firstGesture,{capture:true,passive:true});
   function menuMove(direction){if(ui.navigate){ui.navigate(direction);audio.ui('move');return;}const buttons=Array.from(document.querySelectorAll('button,input,select')).filter(e=>!e.disabled&&e.getClientRects().length);if(!buttons.length)return;let i=buttons.indexOf(document.activeElement);i=(i+(direction==='up'||direction==='left'?-1:1)+buttons.length)%buttons.length;buttons[i].focus();audio.ui('move');}
   function menuActivate(){if(ui.activate){ui.activate();return;}const el=document.activeElement;if(el instanceof HTMLButtonElement&&!el.disabled)el.click();else document.getElementById('playButton')?.click();}
   const CODES=new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD','Space','KeyR','KeyC','KeyP','KeyM','KeyF','KeyX','KeyJ','Escape','Enter']);
@@ -2740,6 +2804,7 @@ globalThis.TruckAudio = TruckAudio;
     frame.state=state;frame.pose=pose;frame.alpha=alpha;frame.dt=mode==='paused'?0:dt;frame.worldDt=mode==='playing'?dt*shotDirector.state.timeScale:0;frame.encounter=shotDirector.state;frame.time=runTime;frame.mode=mode;frame.ghost=ghostFrame;renderer.render(frame);
     hudClock+=dt;if(hudClock>=1/30){hudClock%=1/30;updateHud(ghostFrame);}
     musicClock+=dt;if(musicClock>=.1){musicClock%=.1;updateMusic();}
+    audioStatusClock+=dt;if(audioStatusClock>=.1){audioStatusClock%=.1;updateAudioStatus();}
     if(ui.tick)ui.tick(dt);
     const cpu=performance.now()-begin;const change=pacer.sample(dt,cpu,mode==='playing');if(change&&save.settings.quality==='auto')applyQuality();
     perf.fps=pacer.fps;perf.refreshHz=pacer.refreshHz;perf.renderScale=renderScale;perf.quality=qualityName;perf.cpuMs=pacer.cpuMs;perf.drawOps=renderer.stats.drawOps;

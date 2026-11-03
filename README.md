@@ -66,7 +66,8 @@ python3 -m http.server 4173 --bind 127.0.0.1
 
 Browser checks on localhost:
 
-- `/tests/audio-check.html`: real OfflineAudioContext signal, silence and scheduler checks.
+- `/tests/audio-check.html`: real OfflineAudioContext signal, silence, resume and scheduler checks.
+- `/tests/audio-live-check.html`: click-only activation and actual running output, engine, cannon, mute/pause checks.
 - `/tests/ui-harness.html`: real shell/UI at desktop, phone and landscape dimensions.
 - `/tests/render-harness.html?stage=10`: scripted real physics and instrumented Canvas rendering; `?cycle=1` tours the biomes.
 - `/tests/integration-harness.html`: isolated gameplay, progression and frame timing checks.
@@ -84,3 +85,5 @@ Vercel builds the portable file with `python3 build.py`, serves `dist/`, and is 
 ## Sound update
 
 “Deadland Run” is an original eight-bar synth-rock score with a repeating hook, answering melody, syncopated bass, drums and a stronger boss arrangement. Jump release, suspension, rising flight wind, weight-sensitive landings, steel collisions, cannon recoil/echo and directional monster impacts are synthesized inside the HTML. Slow motion filters the score and lowers engine pitch; cannon and impact cues briefly lower the backing mix. Settings keep separate music, effects and master controls. No audio downloads or licensed recordings are required.
+
+Audio troubleshooting: Settings → Test sound plays two tones and shows a post-limiter output meter. Click/touch/keyboard activation can retry a suspended or interrupted context. The optional `?audioDebug=1` URL displays local output measurements for live-site QA; it requests no microphone access and sends no recordings.

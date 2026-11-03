@@ -155,3 +155,10 @@ Verification: browser audio harness passes all24cue cases, full19stheme, all5moo
 Production target remains irontrail.maxrecursion.dev with irontrail-iota.vercel.app fallback. Do not change DNS or create a new hosting project for this update.
 
 Sound release06ea6ea pushed to public main and automatically deployed by the existing Vercel Git integration (deployment dpl_FM6C2xj5u8mpfvydgZ7X19XGjb5c, Ready/Production). Both https://irontrail.maxrecursion.dev/ and https://irontrail-iota.vercel.app/ returnHTTP200 with the exact547,738byte tested bundle. Custom-domain browser navigation now succeeds; the prior local DNS cache delay has cleared.
+
+
+## Reported silence — activation and actual-output verification
+
+The previous normal Start path produced output in the available browser. The confirmed gap is click-only Settings activation, which previously left the context uncreated. Global click/touchend activation now complements pointerdown/keydown. Pending resume no longer blocks a later gesture; unlock times out after1.2s and retries interrupted contexts. The speaker button enables a blocked context, and Settings has Test sound with a passive post-limiter meter. Volumes are preserved; Test sound unmutes but does not raise zero volume settings. Query `?audioDebug=1` exposes DOM diagnostics only for requested live QA. No microphone/recording/upload.
+
+Regression harness `tests/audio-live-check.html?legacy=1` restores the old event bindings and correctly fails click-only Settings activation with context not created. Current harness passes running music peak.0485/RMS.0125, test tones peak.118, driving engine peak.303/RMS.0760, cannon peak.300/RMS.0845, exact mute and pause silence, unmute/resume. Offline audio/resume, bundle, shot and UI harnesses pass; UI includes390×844/844×390. These are browser signal measurements, not physical speaker listening. Production verification follows this commit.

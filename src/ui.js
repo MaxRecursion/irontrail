@@ -96,6 +96,16 @@
       if(v.paused!==undefined){this._attr('pauseButton','aria-label',v.paused?'Resume game':'Pause game');this._class('pauseButton','active',v.paused);}
       if(v.muted!==undefined){this._attr('soundButton','aria-label',v.muted?'Enable sound':'Mute sound');this._attr('soundButton','aria-pressed',v.muted);}
     }
+    setAudioStatus(status){
+      if(this.screen!=='settings')return;
+      const output=this.document.getElementById('soundTestStatus'),bar=this.document.getElementById('soundTestLevel'),meter=this.document.getElementById('soundTestMeter');
+      const silent=status.muted||status.master===0||(status.music===0&&status.sfx===0);
+      const label=status.error&&status.context!=='running'?'Tap to enable sound':silent?'Volume off':status.context!=='running'?'Tap to enable sound':'Sound on';
+      if(output&&output.textContent!==label)output.textContent=label;
+      const level=Math.round(clamp(status.rms*30,0,1)*100);
+      if(bar)bar.style.transform=`scaleX(${level/100})`;
+      if(meter)meter.setAttribute('aria-valuenow',level);
+    }
     setCampaign(save,stages,biomes,rulesInfo){this.save=save||this.save;this.stages=stages||this.stages;this.biomes=biomes||this.biomes;this.rulesInfo=rulesInfo||this.rulesInfo;this.app.classList.toggle('reduced-motion',!!this.save.settings?.reducedMotion);}
     _par(i){return (this.rulesInfo.PAR_TIMES||this.rulesInfo.parTimes||global.IronRules?.PAR_TIMES||[])[i]||0;}
     _challenge(i){return (this.rulesInfo.CHALLENGES||this.rulesInfo.challenges||global.IronRules?.CHALLENGES||[])[i]?.label||'Complete the stage objective';}
@@ -135,6 +145,7 @@
         for(const [key,label,def]of ranges){const value=Math.round(clamp(settings[key]??def,0,1)*100);html+=`<div class="setting-item"><label for="setting-${key}">${label}<output id="setting-value-${key}">${value}%</output></label><input id="setting-${key}" type="range" min="0" max="100" step="1" value="${value}" data-setting="${key}" aria-label="${label}"></div>`;}
         html+=`<div class="setting-item"><label for="setting-quality">Graphics quality<select id="setting-quality" data-setting="quality" aria-label="Graphics quality">${[['auto','Auto · adaptive'],['high','High'],['balanced','Balanced'],['performance','Performance']].map(([value,label])=>`<option value="${value}" ${settings.quality===value?'selected':''}>${label}</option>`).join('')}</select></label><small>Auto adjusts resolution and effects to keep motion smooth.</small></div>`;
         for(const [key,label,help]of [['shake','Camera shake','Physical impacts with a little extra punch.'],['showFps','Performance display','Show FPS, CPU time and rendering detail.'],['reducedMotion','Reduced motion','Quiet menu animation and camera effects.']])html+=`<div class="setting-item"><label for="setting-${key}">${label}<input id="setting-${key}" type="checkbox" data-setting="${key}" ${settings[key]?'checked':''}></label><small>${help}</small></div>`;
+        html+='<div class="setting-item sound-check"><button type="button" class="secondary-button sound-test" data-ui="testSound" aria-label="Test sound"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM17 8q4 4 0 8M20 5q7 7 0 14"/></svg>Test sound</button><div class="sound-test-feedback"><div id="soundTestMeter" class="sound-meter" role="meter" aria-label="Audio output level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="soundTestLevel"></i></div><output id="soundTestStatus" role="status">Tap to enable sound</output></div></div>';
         html+='</div>';primary='Save & return';action='back';secondary=this._button('Stage select','stages')+this._button('Title','title');
       }else if(name==='brief'){
         const par=d.par??this._par(i),challenge=typeof d.challenge==='string'?d.challenge:d.challenge?.label||this._challenge(i),best=d.best??this.save.best?.[i];

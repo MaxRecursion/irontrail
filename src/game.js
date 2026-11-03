@@ -70,7 +70,7 @@
   const save=Rules.Save.load(storage);let stageIndex=clamp(save.selected|0,0,save.unlocked-1);
   let physics=new global.TruckPhysics(stageIndex,{tuning:save.upgrades}),state=physics.getState(),pose=new Float64Array(physics.poseLength);
   const renderer=new global.IronRenderer(canvas,{biomes}),shotDirector=new ShotDirector();
-  let mode='title',screen='title',pausedFrom='playing';const navigation=[];let primePending=false;
+  let mode='title',screen='title',pausedFrom='playing';const navigation=[];
   let run=Rules.createRun(stageIndex),runTime=0,recoveries=0,accumulator=0,last=performance.now();
   let countdownLeft=0,countdownNumber=0,hitStop=0,slowLeft=0,flippedTime=0,fallenTime=0;
   let hudClock=0,musicClock=0,lowFuelWarned=false,monsterWarned=false,lockWarned=false,stageResult=null;
@@ -85,7 +85,7 @@
   const perf={fps:60,refreshHz:60,renderScale:1,quality:'high',cpuMs:0,drawOps:0,trace:()=>pacer.trace()};
   const NO_PADS=[];let activePad=null;const gamepadProvider=()=>navigator.getGamepads?navigator.getGamepads():NO_PADS;
   const pressed=i=>!!activePad?.buttons[i]?.pressed,value=i=>activePad?.buttons[i]?.value||0,edge=i=>pressed(i)&&!padPrevious[i];
-  function primeAudio(){if(audio.context?.state==='running'||primePending)return;primePending=true;audio.prime().finally(()=>{primePending=false;});}
+  function primeAudio(){return audio.context?.state==='running'?Promise.resolve(true):audio.prime();}
   function persist(){Rules.Save.save(storage,save);}
   function refreshCampaign(){ui.setCampaign(save,stages,biomes,Rules);}
   function clearInput(){keys.clear();pointerMap.clear();for(const key of Object.keys(pedal))pedal[key]=0;for(const button of ui.pedals)button.classList.remove('pressed');input.throttle=0;input.brake=false;input.lean=0;padState.gas=0;padState.reverse=0;padState.brake=false;padState.lean=0;}
@@ -162,7 +162,25 @@
     recoveries++;accumulator=0;flippedTime=0;fallenTime=0;physics.getPose(pose);renderer.snapCamera();ui.cue('recover',{value:'−12'});audio.ui('back');ui.setRecoverVisible(false);
   }
   function fire(){if(mode!=='playing')return;if(physics.fire()){state=physics.getState();shotDirector.shoot();ui.clearFeedback();ui.cue('shot');}else audio.ui('error');}
-  function toggleSound(){audio.setMuted(!audio.muted);view.muted=audio.muted;ui.hud.update(view);audio.ui('confirm');}
+  function toggleSound(){
+    if(audio.muted||audio.context?.state!=='running'){audio.setMuted(false);primeAudio().then(ok=>{if(ok)audio.ui('confirm');});}
+    else audio.setMuted(true);
+    view.muted=audio.muted;ui.hud.update(view);
+  }
+  async function testSound(){
+    audio.setMuted(false);view.muted=false;ui.hud.update(view);
+    if(await primeAudio()){audio.enableMeter();audio.testSound();}
+    updateAudioStatus();
+  }
+  const audioDebug=new URLSearchParams(location.search).has('audioDebug');
+  let audioReadout=null,audioStatusClock=0,audioPeak=0;
+  if(audioDebug){audioReadout=document.createElement('pre');audioReadout.id='audioDiagnostics';audioReadout.setAttribute('aria-label','Live audio diagnostics');app.appendChild(audioReadout);}
+  function updateAudioStatus(){
+    if(screen!=='settings'&&!audioDebug)return;
+    audio.enableMeter();const status=audio.status();audioPeak=Math.max(audioPeak,status.peak);
+    ui.setAudioStatus(status);
+    if(audioReadout)audioReadout.textContent=JSON.stringify({mode, ...status,peakMax:audioPeak},null,2);
+  }
   async function fullscreen(){try{ignoreBlurUntil=performance.now()+800;if(document.fullscreenElement)await document.exitFullscreen();else await app.requestFullscreen();}catch(_){ui.toast('Fullscreen is not available here',2,'warn');}}
   function buy(track){const result=Rules.buyUpgrade(save,track);if(result.ok){persist();refreshCampaign();ui.showScreen('garage');audio.ui('buy');ui.cue('upgrade');}else{audio.ui('error');ui.cue('error',{value:result.reason==='max'?'✓':'◆'});}}
   function setting(key,value){
@@ -174,9 +192,9 @@
     if(key==='quality'&&renderScale>previousScale)renderer.resize(width,height);
     audio.ui('move');
   }
-  ui.on('play',play);ui.on('selectStage',i=>{navigation.length=0;navigation.push('stages');if(loadStage(i))audio.ui('confirm');});ui.on('retry',retry);ui.on('next',next);ui.on('resume',resume);ui.on('pause',pause);ui.on('title',title);ui.on('stages',()=>openScreen('stages'));ui.on('garage',()=>openScreen('garage'));ui.on('settings',()=>openScreen('settings'));ui.on('back',back);ui.on('buy',buy);ui.on('setting',setting);ui.on('fire',fire);ui.on('recover',recover);ui.on('restart',retry);ui.on('sound',toggleSound);ui.on('fullscreen',fullscreen);
+  ui.on('play',play);ui.on('selectStage',i=>{navigation.length=0;navigation.push('stages');if(loadStage(i))audio.ui('confirm');});ui.on('retry',retry);ui.on('next',next);ui.on('resume',resume);ui.on('pause',pause);ui.on('title',title);ui.on('stages',()=>openScreen('stages'));ui.on('garage',()=>openScreen('garage'));ui.on('settings',()=>openScreen('settings'));ui.on('back',back);ui.on('buy',buy);ui.on('setting',setting);ui.on('fire',fire);ui.on('recover',recover);ui.on('restart',retry);ui.on('sound',toggleSound);ui.on('testSound',testSound);ui.on('fullscreen',fullscreen);
   function firstGesture(){primeAudio();}
-  window.addEventListener('pointerdown',firstGesture,{capture:true});window.addEventListener('keydown',firstGesture,{capture:true});
+  for(const type of ['pointerdown','touchend','click','keydown'])window.addEventListener(type,firstGesture,{capture:true,passive:true});
   function menuMove(direction){if(ui.navigate){ui.navigate(direction);audio.ui('move');return;}const buttons=Array.from(document.querySelectorAll('button,input,select')).filter(e=>!e.disabled&&e.getClientRects().length);if(!buttons.length)return;let i=buttons.indexOf(document.activeElement);i=(i+(direction==='up'||direction==='left'?-1:1)+buttons.length)%buttons.length;buttons[i].focus();audio.ui('move');}
   function menuActivate(){if(ui.activate){ui.activate();return;}const el=document.activeElement;if(el instanceof HTMLButtonElement&&!el.disabled)el.click();else document.getElementById('playButton')?.click();}
   const CODES=new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD','Space','KeyR','KeyC','KeyP','KeyM','KeyF','KeyX','KeyJ','Escape','Enter']);
@@ -292,6 +310,7 @@
     frame.state=state;frame.pose=pose;frame.alpha=alpha;frame.dt=mode==='paused'?0:dt;frame.worldDt=mode==='playing'?dt*shotDirector.state.timeScale:0;frame.encounter=shotDirector.state;frame.time=runTime;frame.mode=mode;frame.ghost=ghostFrame;renderer.render(frame);
     hudClock+=dt;if(hudClock>=1/30){hudClock%=1/30;updateHud(ghostFrame);}
     musicClock+=dt;if(musicClock>=.1){musicClock%=.1;updateMusic();}
+    audioStatusClock+=dt;if(audioStatusClock>=.1){audioStatusClock%=.1;updateAudioStatus();}
     if(ui.tick)ui.tick(dt);
     const cpu=performance.now()-begin;const change=pacer.sample(dt,cpu,mode==='playing');if(change&&save.settings.quality==='auto')applyQuality();
     perf.fps=pacer.fps;perf.refreshHz=pacer.refreshHz;perf.renderScale=renderScale;perf.quality=qualityName;perf.cpuMs=pacer.cpuMs;perf.drawOps=renderer.stats.drawOps;
