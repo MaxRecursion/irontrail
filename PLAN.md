@@ -251,4 +251,4 @@ Shooting implementation and functional validation complete. GitHub repo and Verc
 - [x] Layer takeoff, flight wind, axle landings, metal/rubber collisions, cannon blast/bolt/echo and monster impact; position physics cues in stereo and duck backing music/engine for the shot.
 - [x] Preserve single-file/offline output, one-shot physics, saves, volume/mute/pause guards and suspended-context limits; cap and clean up event sources.
 - [x] Browser signal checks and live flow pass: complete theme, proportional music volume, worst mix, wind response, stereo, cleanup, exact silence; live run schedules275notes/81drums without warnings.
-- [ ] Commit/push and verify the existing Vercel production deployment.
+- [x] Commit/push and verify the existing Vercel production deployment. Sound release06ea6ea deployed automatically; both production URLs returnHTTP200 and the exact547,738byte tested bundle. Custom domain opens in the browser.
