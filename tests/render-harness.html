@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>IRONTRAIL renderer harness</title>
+<style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#142a2e;color:#f3eccf;font:12px ui-monospace,monospace}canvas{position:absolute;inset:0;width:100%;height:100%}.tools{position:absolute;z-index:2;left:14px;right:14px;top:12px;display:flex;gap:7px;align-items:center;flex-wrap:wrap;pointer-events:none}.tools>*{pointer-events:auto}button,select{font:11px ui-monospace,monospace;color:#f3eccf;background:#18322de8;border:1px solid #a9b98a80;border-radius:5px;padding:8px 10px}button:focus-visible{outline:3px solid #ebc76d}#stats{position:absolute;left:14px;bottom:12px;margin:0;padding:10px 12px;border-radius:5px;background:#142b2ee6;white-space:pre;font-size:10px;line-height:1.5;pointer-events:none}#name{padding:7px;background:#142b2ead;border-radius:4px}.error{color:#ffad8d}@media(max-width:600px){#name{width:100%;order:2}button,select{padding:7px;font-size:10px}#stats{font-size:9px;max-width:94vw;white-space:pre-wrap}}</style></head>
+<body><canvas id="gameCanvas" aria-label="Scripted monster truck renderer validation"></canvas>
+<div class="tools"><button id="playButton">Start scripted run</button><button id="previous">← Biome</button><button id="next">Biome →</button><button id="burst">Effects burst</button><button id="pause">Pause</button><select id="quality" aria-label="Renderer quality"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select><span id="name">Warming renderer…</span></div>
+<pre id="stats">Building stage assets before play…</pre>
+<script>
+window.__renderMetrics={tracking:false,hotGradients:0,hotCanvases:0,actualOps:0,fonts:new Set(),maxOps:0,maxFonts:0,failures:[]};
+(() => {
+ const m=window.__renderMetrics,canvas=document.getElementById('gameCanvas');
+ const instrument=new URLSearchParams(location.search).get('instrument')!=='0';
+ if(!instrument)return;
+ for(const key of ['fill','stroke','fillRect','strokeRect','drawImage','fillText','strokeText']){const old=CanvasRenderingContext2D.prototype[key];CanvasRenderingContext2D.prototype[key]=function(){if(m.tracking&&this.canvas===canvas)m.actualOps++;return old.apply(this,arguments);};}
+ for(const key of ['createLinearGradient','createRadialGradient']){const old=CanvasRenderingContext2D.prototype[key];CanvasRenderingContext2D.prototype[key]=function(){if(m.tracking)m.hotGradients++;return old.apply(this,arguments);};}
+ const descriptor=Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype,'font');
+ if(descriptor&&descriptor.set)Object.defineProperty(CanvasRenderingContext2D.prototype,'font',{configurable:true,get:descriptor.get,set(value){if(m.tracking&&this.canvas===canvas)m.fonts.add(value);descriptor.set.call(this,value);}});
+ if(window.OffscreenCanvas){const Native=window.OffscreenCanvas;window.OffscreenCanvas=class extends Native{constructor(w,h){super(w,h);if(m.tracking)m.hotCanvases++;}};}
+})();
+</script>
+<script src="../vendor/planck.min.js"></script><script src="../src/physics.js"></script><script src="../src/biomes.js"></script><script src="../src/render.js"></script>
+<script>
+(() => {
+ 'use strict';
+ const $=id=>document.getElementById(id),params=new URLSearchParams(location.search),metrics=window.__renderMetrics;
+ let stage=Math.max(0,Math.min(9,(Number(params.get('stage'))||1)-1));
+ let physics,state,pose,mode='ready',time=0,last=performance.now(),accumulator=0,statsClock=0,cycleClock=0,frames=0;
+ let controls={throttle:1,brake:false,lean:0},trace=[],errors=[],maxRender=0,totalRender=0,autoCycle=params.get('cycle')==='1';
+ const renderer=new IronRenderer($('gameCanvas'),{biomes:IRON_BIOMES});
+ const frame={state:null,pose:null,alpha:0,dt:0,time:0,mode:'ready',input:controls,ghost:null,layout:{touch:false,safeTop:70,safeBottom:30},settings:{shake:true,reducedMotion:false}};
+ const screen={x:0,y:0},perf={fps:0,refreshHz:120,renderScale:1,quality:'high',cpuMs:0,drawOps:0,trace:()=>trace.slice()};
+ function resize(){frame.layout.touch=innerWidth<780;renderer.setQuality({renderScale:Math.min(devicePixelRatio||1,2),particleScale:1,detail:$('quality').value});renderer.resize(innerWidth,innerHeight);}
+ function load(index,start=false){
+   stage=Math.max(0,Math.min(9,index));physics=new TruckPhysics(stage,{random:()=>.5});state=physics.getState();pose=new Float64Array(physics.poseLength||3*(7+physics.zombies.length));
+   renderer.setStage(physics,stage);time=0;accumulator=0;cycleClock=0;mode=start?'playing':'ready';frame.state=state;frame.pose=pose;renderer.snapCamera();
+   $('name').textContent=String(stage+1).padStart(2,'0')+' / '+IRON_BIOMES[stage].title+' · '+IRON_BIOMES[stage].timeOfDay;
+   $('playButton').textContent=start?'Restart scripted run':'Start scripted run';last=performance.now();
+ }
+ function start(index=stage){load(index,true);}
+ function pause(){mode=mode==='playing'?'paused':'playing';$('pause').textContent=mode==='paused'?'Resume':'Pause';accumulator=0;last=performance.now();}
+ $('playButton').onclick=()=>start();$('next').onclick=()=>load((stage+1)%10,true);$('previous').onclick=()=>load((stage+9)%10,true);$('pause').onclick=pause;
+ $('burst').onclick=()=>{renderer.onEvent({type:'monsterHit',x:state.x+3,y:state.y+2,strength:1},state);renderer.celebrate('victory');renderer.popup('PERFECT BACKFLIP +500',state.x,state.y+3,'big');};
+ $('quality').onchange=()=>renderer.setQuality({renderScale:Math.min(devicePixelRatio||1,2),particleScale:$('quality').value==='low'?.45:$('quality').value==='medium'?.7:1,detail:$('quality').value});
+ addEventListener('resize',resize);addEventListener('keydown',event=>{if(event.code==='KeyX'||event.code==='KeyJ'){if(mode==='playing')physics.fire();}if(event.code==='KeyP')pause();});
+ addEventListener('error',event=>{errors.push(event.message);$('stats').className='error';document.title='FAIL — IRONTRAIL renderer harness';});
+ function capturePose(alpha){
+   if(physics.interpolatePose)physics.interpolatePose(alpha,pose);
+   else {pose.fill(NaN);pose[0]=state.x;pose[1]=state.y;pose[2]=state.angle;for(let i=0;i<2;i++){pose[3+i*3]=state.wheels[i].x;pose[4+i*3]=state.wheels[i].y;pose[5+i*3]=state.wheels[i].angle;}}
+ }
+ function loop(now){
+   const dt=Math.max(0,Math.min(.1,(now-last)/1000));last=now;let steps=0;
+   if(mode==='playing'){
+     accumulator+=dt;while(accumulator>=1/120&&steps<8){
+       if(state.weapon&&state.weapon.canHit&&state.ammo>0)physics.fire();
+       physics.step(1/120,controls);state=physics.getState();time+=1/120;for(const event of physics.drainEvents())renderer.onEvent(event,state);
+       accumulator-=1/120;steps++;
+       if(physics.failed||physics.finished){mode=physics.failed?'failed':'cleared';renderer.celebrate(physics.failed?'clear':'victory');break;}
+     }
+     if(accumulator>1/120*8)accumulator=0;
+   }else accumulator=0;
+   const alpha=accumulator/(1/120);capturePose(alpha);frame.state=state;frame.pose=pose;frame.alpha=alpha;frame.dt=mode==='paused'?0:dt;frame.time=time;frame.mode=mode;
+   metrics.actualOps=0;metrics.fonts.clear();metrics.tracking=true;renderer.render(frame);metrics.tracking=false;
+   metrics.maxOps=Math.max(metrics.maxOps,renderer.stats.drawOps);metrics.maxFonts=Math.max(metrics.maxFonts,metrics.fonts.size);
+   maxRender=Math.max(maxRender,renderer.stats.renderMs);totalRender+=renderer.stats.renderMs;frames++;
+   perf.fps=dt>0?1/dt:0;perf.renderScale=renderer.stats.renderScale;perf.cpuMs=renderer.stats.renderMs;perf.drawOps=renderer.stats.drawOps;perf.quality=$('quality').value;
+   trace.push([now,pose[0],alpha,steps,renderer.stats.renderMs]);if(trace.length>600)trace.shift();
+   if(renderer.stats.drawOps>220&&!errors.includes('drawOps'))errors.push('drawOps');
+   if(metrics.fonts.size>3&&!errors.includes('font budget'))errors.push('font budget');
+   if(metrics.hotGradients&&!errors.includes('hot gradient'))errors.push('hot gradient');
+   if(metrics.hotCanvases&&!errors.includes('hot canvas'))errors.push('hot canvas');
+   if(!Number.isFinite(renderer.camera.x)||!Number.isFinite(renderer.camera.y))errors.push('camera NaN');
+   statsClock+=dt;cycleClock+=dt;
+   if(statsClock>.25){statsClock=0;renderer.worldToScreen(state.x,state.y,screen);
+     $('stats').textContent=(errors.length?'FAIL · '+errors.join(', '):'PASS · filled paths / cached sprites / interpolated poses')+'\n'+
+       'Draw ops '+renderer.stats.drawOps+' (max '+metrics.maxOps+' / 220)  ·  fonts '+metrics.maxFonts+' / 3\n'+
+       'Render '+renderer.stats.renderMs.toFixed(3)+' ms  ·  mean '+(totalRender/frames).toFixed(3)+' ms  ·  max '+maxRender.toFixed(2)+' ms\n'+
+       'Particles '+renderer.stats.particles+' / 600  ·  sprites '+(renderer.stats.spriteBytes/1048576).toFixed(1)+' MiB  ·  scale '+renderer.stats.renderScale.toFixed(2)+'\n'+
+       'Hot gradients '+metrics.hotGradients+'  ·  hot canvases '+metrics.hotCanvases+'  ·  player '+screen.x.toFixed(1)+', '+screen.y.toFixed(1)+' px\n'+
+       'Stage '+(stage+1)+'  ·  '+mode+'  ·  '+time.toFixed(2)+' s  ·  cannon '+state.ammo+'  ·  ← / → biome buttons';
+     if(!errors.length&&frames>30)document.title='PASS — IRONTRAIL renderer harness';
+   }
+   if(autoCycle&&cycleClock>12)load((stage+1)%10,true);
+   requestAnimationFrame(loop);
+ }
+ window.irontrail={get mode(){return mode;},get telemetry(){return state;},get stage(){return stage+1;},get physics(){return physics;},get renderer(){return renderer;},perf,qa:{start:index=>start(index)}};
+ window.renderHarness={renderer,metrics,get errors(){return errors.slice();},get stage(){return stage;},load};
+ const frozen=Object.isFrozen(IRON_BIOMES)&&IRON_BIOMES.every(b=>Object.isFrozen(b)&&Object.isFrozen(b.ground)&&Object.isFrozen(b.ridges));
+ if(!frozen||new Set(IRON_BIOMES.map(b=>b.key)).size!==10)errors.push('biome contract');
+ if(TruckPhysics.warmUp)TruckPhysics.warmUp(30);resize();load(stage);capturePose(1);requestAnimationFrame(loop);
+ if(params.get('auto')!=='0')setTimeout(()=>start(),250);
+})();
+</script></body></html>

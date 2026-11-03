@@ -1,179 +1,130 @@
-# IRONTRAIL handoff — cannon and random-monster update
+# IRONTRAIL v3 handoff
 
-## Request and current status
+## Current state
 
-Original request: a single HTML 2D monster truck track game with realistic engine/jump sounds, correct physics/animation, and a plan first so Claude can continue development if needed.
+The v3 implementation is complete. Continue from the current sources, not the earlier cannon release. Claude's `ANALYSIS.md` and `SPEC.md` were used to finish the renderer, physics, audio, progression, menus and integration. Historical milestones remain in `PLAN.md`.
 
-Expansion request: add zombies, continuously dropping fuel with periodic fuel cans, ten stages of increasing difficulty, and a final boss race against another monster truck with designed collision physics.
-
-The original single-course game and subsequent ten-stage zombie/fuel campaign were completed and published on 2 November 2026. The next request adds a single-charge gun and one randomly placed large monster every round. This cannon/monster update is implemented and verified locally; republication is in progress. The zombie/fuel campaign results below describe the previous release and do not verify the new mechanic. The main agent will append final new results and deployment details.
-
-- Private playable URL: https://irontrail-monster-rally.mellowdew4.chatgpt.site
-- Project ID: `appgprj_6ae8bf943e7c8191be3fee438599f6a5`
-- Original published source commit: `075d7d9862c76828c11ce128195ce4d028f71162`
-- Original deployment ID: `appgdep_6ae8c2d238c48191b584529ad3c67b38`
 - Project: `/Users/akshaykulkarni/NewGame/irontrail`
-- Portable game: `/Users/akshaykulkarni/NewGame/irontrail/index.html`
-- Hosted output: identical `dist/index.html`
+- Portable game: `index.html`; identical hosted output: `dist/index.html`
+- Private URL: https://irontrail-monster-rally.mellowdew4.chatgpt.site
+- Existing Site ID: `appgprj_6ae8bf943e7c8191be3fee438599f6a5`
+- Previous v2 cannon source: `244102348680f75f112c660910bf530cb736a4de`
+- The completed v3 release is published through the existing owner-private Site and the supported source/packaging workflow. Keep its ID and audience.
 
-Preserve the existing Sites identity and private audience when publishing updates. Never create a replacement Site for this project. Read the expansion checklist in `PLAN.md` for remaining work.
+## Implemented scope
 
-## Single-file contract
+Ten routes now have distinct biomes, layered terrain and props, ravines, weather, lights and outlined truck/character artwork. Cached sprite banks and persistent filled Path2D chunks replace repeated drawing construction. The camera interpolates poses, looks ahead, changes zoom and applies optional impact shake. Effects use bounded pools.
 
-The portable HTML contains Planck.js, the page/CSS, Canvas graphics, gameplay and procedural Web Audio. It has no CDN, remote font, external image or audio dependencies. No build/runtime packages need installation. Edit sources in `src/`, then run `python3 build.py`; never edit generated HTML directly. Preserve the inline Planck MIT license.
+The full-screen interface includes title, ten-stage selection, briefing, garage, settings, pause, results and failure screens. The HUD writes only changed values, uses transform bars, displays target lock and race position, and reserves a recovery slot clear of touch pedals. Global feedback remains visible during countdown or garage purchases and clears across run/menu transitions. Keyboard, touch and Gamepad API controls are wired, including controller-adjustable settings.
 
-## Current campaign behavior
+The physics has mixed authored track features, velocity-target air control, landed flips, settled landing quality, grounded/inverted/stalled detection, and torque-only self-righting. Iron Maw uses physical wheels, joints and contact impulses. Its throttle/balance controller never teleports, sets velocity to catch up or rubber-bands.
 
-The following campaign features remain; see the cannon/monster update section for the current additional work.
+Score combos, flips, perfect landings, big air, monster kills, cans and checkpoints earn score. Three stars reward completion, par and a route-specific challenge. Scrap buys three levels each of engine, tyres, suspension and fuel economy. A best-time ghost records player chassis/wheels at 20 Hz and replays interpolated poses. Earlier campaign saves migrate without losing unlocks/best times.
 
-- Ten stage cards show the selected, locked and cleared stages. Completing a stage unlocks the next; previous stages can be replayed.
-- Stages increase course length, hill/gap severity, zombie density and fuel pressure. Stage 10 adds the Iron Maw race.
-- Fuel drains only while the simulation is playing. Idle still consumes fuel; throttle increases the rate. Pause freezes all simulation resources and the rival.
-- Amber fuel cans restore up to 32 percentage points, capped at 100. Their first nominal position is 35 m after the start; later cans use the stage interval and are moved onto safe terrain if needed. Pickup uses a 3.9 m player/can proximity check, accommodating the truck size and jumps.
-- Empty tank produces a failed/retry state. Retry restarts the selected stage with fuel 100, fresh cans and zombies.
-- Checkpoint recovery costs 12 percentage points. It preserves remaining fuel, collected cans, cleared zombies and rival progress. If the cost exhausts the tank, recovery fails the run. The run clock continues across recovery.
-- Zombies have actual lightweight Planck bodies and contact-driven impacts. They walk gently upright; truck contact knocks them into a short, fading cartoon tumble. There are no graphic effects. After the initial hit, fallen zombie fixtures collide with terrain only so they cannot wedge an axle. The cleared count includes zombies hit by either truck.
-- Iron Maw has its own chassis, wheels, wheel joints, motor drive and airborne balance AI. It starts 6 m behind the player and uses slightly slower gearing. First truck to cross the finish wins; same-step crossings use a crossing-fraction comparison. Rival win produces a race-loss/retry state.
-- Gameplay modes are `ready`, `playing`, `paused`, `cleared`, `failed`, `victory`. Stage clear offers the next stage; final victory offers a new campaign run.
+Procedural Web Audio includes combustion/engine-load layers, gears, intake, tyre/suspension/air sounds, gun/monster/landing cues, UI/reward cues and adaptive synthesized music. Music uses persistent melodic voices plus buffer-source drums. Suspended contexts retain bounded parameter targets instead of scheduling growing automation queues. Mute, pause and independent volumes work before/after unlock.
 
-## Cannon and random-monster update
+## Hard rules to preserve
 
-User follow-up: add a truck-mounted gun that has a single charge, and one large monster at a random position in each round. The ten stages, fuel system, zombies and final Iron Maw race remain.
+- One self-contained offline HTML with inline Planck.js 1.5.0 and its MIT license. No remote assets.
+- Exactly one cannon charge and one random mandatory giant per fresh attempt. X/J, FIRE or gamepad A shoots; an early/occluded shot may miss. Holding/repeating never reloads. Contact with, passing or finishing past a live giant fails.
+- Fuel drains during active play, including idle. Cans add up to 32 points, capped at 100. Recovery costs 12 points and preserves fuel/cans/zombies/ammo/monster/projectile/rival progress. Full retry resets the attempt and rerolls the giant.
+- Physical non-graphic zombie knockdowns; genuine chassis/tyre collisions between independently simulated player and rival. First finish wins, with fractional crossing order for same-step finishes.
+- Pause/hidden tabs freeze simulation; storage/audio/fullscreen failures must not prevent driving.
 
-### Implemented behavior
+## Architecture and APIs
 
-- Each fresh stage attempt starts with `ammo = 1` and one randomly selected monster location. Normal production uses `Math.random`; tests can pass `new TruckPhysics(stageIndex, {random: fn})` for repeatable placement.
-- Candidate positions are on safe, nearly flat ground, away from gap edges and checkpoints, between roughly 65 m after the start and 38 m before the finish. Exactly one monster is created per attempt.
-- The monster is a large track obstacle: width 3 m, height 4.8 m, with its target point 2.85 m above its ground position. Source state controls drawing; a Planck static body represents the live barrier.
-- The roof-mounted cannon has a 45 m range. It aims at the monster when the target is ahead, in range and visible along a clear terrain ray. The HUD then shows a green target lock. Otherwise a shot follows the chassis direction and can miss or hit terrain.
-- X / J or the visible FIRE button calls `.fire()`. A shot immediately consumes the only charge, including a miss. Holding or repeatedly clicking cannot generate another shot once ammunition is zero.
-- The projectile travels at 75 m/s, using a swept ray over each movement segment so it does not skip through the monster. A valid hit deactivates the monster's physical barrier and triggers a brief non-graphic defeat animation/effect.
-- Reaching a live monster fails the run with reason `'monster'`. Finish requires the monster to be defeated; jumping over it or using checkpoint recovery cannot bypass it.
-- Paid checkpoint recovery preserves ammunition, current monster state and collected cans. Recovery spawn/checkpoint progression is kept before a live monster. A full stage retry restores the charge and samples a new monster position.
-- Stage 10 still includes Iron Maw. The monster is a player-route obstacle; its category/mask is separate from the player/rival collision groups.
-- New state fields: `ammo`, `monster`, `projectile`, `weapon`. `monster` supplies transform/size/weakpoint/alive/hit state. `weapon` supplies mount, muzzle, target, angle, range, distance and `canHit`.
-- New physics events: `shot`, `monsterHit`, `monsterCrash`. New audio methods: `.gunshot()`, `.monsterHit()`, `.monsterCrash()`; all retain the existing mute/pause gate.
-- Shell IDs: `weaponHud`, `ammoValue`, `weaponStatus`, `monsterDistance`, `fireButton`. `.locked`, `.spent` and `.warning` control panel styling. The HUD is hidden outside active play; FIRE is disabled when empty. Phone layout keeps the panel below the stats/boss HUD, with a dedicated touch button separate from throttle.
+| File | Responsibility |
+| --- | --- |
+| `src/physics.js` | Track generation, Planck world, vehicles, zombies, fuel, cannon/giant, rival AI, events, pose buffers, upgrade tuning |
+| `src/audio.js` | TruckAudio graph, engine/SFX, gating, volumes, safe automation |
+| `src/music.js` | TruckMusic persistent synth and lookahead scheduler |
+| `src/biomes.js` | Ten frozen art-direction definitions |
+| `src/render.js` | IronRenderer cached assets, terrain, entities, effects and camera |
+| `src/rules.js` | DOM-free IronRules scoring, stars, scrap, upgrades and save migration |
+| `src/ui.js` | IronUI screens, changed-value HUD, navigation, feedback and cached layout metrics |
+| `src/shell.html` | Responsive semantic markup/CSS and module placeholders |
+| `src/game.js` | Fixed-step loop/interpolation, input, state machine, events, pacing, ghost and module integration |
+| `build.py` | Python standard-library bundler; emits nine inline scripts and both identical HTML copies |
 
-### Current weapon verification
+Read `SPEC.md` for exact payloads. `TruckPhysics(stageIndex,{tuning,random})` supplies `step`, `fire`, `reset`, `restart`, `getState`, `drainEvents`, `getPose(out)` and `interpolatePose(alpha,out)`. Indices are zero-based; UI stages are 1–10. Metres, seconds, radians and Y-up are used.
 
-- Physics smoke passes all ten stages at both 60 and 120 Hz with one well-timed shot. A separate 100-run placement sweep covers ten stages × five RNG positions × both rates; all runs finish. Worst first clear aim window: 37.9 m.
-- Focused tests verify one varied safe monster, early miss/charge consumption, repeated/held firing rejection, 1000 m/s stress raycasts at both rates, terrain obstruction, contact death, terminal freeze, jump/finish/checkpoint bypass prevention, recovery preserving ammo/projectile/monster state, and fresh-round refill/reroll.
-- Browser production game: no-shot crash at 8.94 s; early-miss crash at 10.13 s; full retry restored one charge; a locked X shot at 33 m killed the monster and left ammo 0/1; the stage then cleared in 12.43 s.
-- Phone viewport 390×844: dedicated FIRE tap clears the monster, spends one charge and disables the button. Ammo/target/distance HUD fits with throttle and fuel controls. No inspected browser errors/warnings.
-- All engine/campaign/weapon OfflineAudioContext checks pass. Gunshot peak ~.030, monster-hit ~.031, monster-crash ~.089, stacked effects ~.107; no clipping/non-finite samples. Muted and paused output is zero, and canceled tails stay silent after resume.
-- Final HTML copies are identical, with four inline scripts, unique element IDs and no external asset dependencies. Direct local-file loading and physical phones remain the documented verification limits.
-- `preview-cannon.jpg` shows the mounted cannon, monster and target-lock HUD.
+Pose slots are player0, rearwheel1, frontwheel2, rival3/rear4/front5, projectile6, zombies7+. Each has x/y/angle. Absent entities use NaNs. Poses snap across reset; angular interpolation follows the shortest path. **getState returns a reused telemetry object and reused nested records; do not retain it as a historical snapshot.** Its stats record is copied. Render from the interpolated pose buffer.
 
-The only remaining delivery step is publication to the existing private Site. Record the new commit/deployment after success.
+Runtime modes: title/stages/garage/settings/brief/countdown/playing/paused/cleared/failed/victory. Read-only `window.irontrail` getters expose mode, telemetry, physics, audio, campaign, stage and perf; `qa.start(index)` starts immediately for tests. `perf.trace()` returns at most600 `[timestampMs,renderedX,alpha,steps,cpuMs]` rows. FramePacer/GhostTape export in Node for tests.
 
-## Stage definitions and balance
+## Balance
 
-`TruckPhysics.STAGES` is the authoritative immutable definition array. Indices are zero-based in code; UI stage numbers are 1–10.
+Fixed simulation is120Hz, maximum8steps/display frame. Pose interpolation handles display refresh differences; excess backlog is dropped. Auto quality lowers resolution first, then effects/detail after sustained misses; it restores a tier after8s of headroom. High/Balanced/Performance and reduced-motion settings are available.
 
-| Stage | Route | Length | Can interval | Zombies | Full-throttle fuel drain |
-| --- | --- | ---: | ---: | ---: | ---: |
-| 01 | Redstone Outbreak | 220 m | 51 m | 5 | 2.60% / s |
-| 02 | Dry Creek | 250 m | 54 m | 8 | 3.12% / s |
-| 03 | Hollow Ridge | 285 m | 57 m | 11 | 3.64% / s |
-| 04 | Graveyard Pass | 320 m | 60 m | 14 | 4.16% / s |
-| 05 | Deadwood Dunes | 355 m | 63 m | 17 | 4.68% / s |
-| 06 | Rust Canyon | 390 m | 66 m | 20 | 5.20% / s |
-| 07 | Bone Valley | 425 m | 69 m | 23 | 5.72% / s |
-| 08 | Ashen Heights | 465 m | 72 m | 26 | 6.24% / s |
-| 09 | Last Refuge | 510 m | 75 m | 29 | 6.76% / s |
-| 10 | Iron Maw Showdown | 560 m | 78 m | 32 | 7.28% / s |
+Stage lengths:220/250/285/320/355/390/425/465/510/560m. Fuel-drain rates:5.98/6.75/7.90/8.00/8.25/8.30/8.95/8.98/9.25/9.35points/s. Nominal can intervals:78+2×stageIndex metres, adjusted to reachable safe locations.
 
-Fuel consumed per step is `stage.fuelDrain * (0.35 + abs(throttle) * 0.65) * dt`; idle therefore uses 35% of the listed rate. `fuelDrain = 2.6 + stageIndex * 0.52`, `fuelInterval = 51 + stageIndex * 3`, and `gapWidth = 2.2 + stageIndex * 0.38` metres. Check actual definitions before further tuning; values may be adjusted during final QA.
+Fuel per step is `fuelDrain * tankMultiplier * (.35 + abs(throttle)*.65) * dt`. Tank multipliers are1/.93/.86/.79. Engine torque is1/1.1/1.2/1.3 and speed1/1.04/1.08/1.12; tyres multiply grip1/1.08/1.16/1.24. Suspension frequencies4.4/4.6/4.8/5Hz, damping.85/.86/.87/.88 and air-control1/1.15/1.3/1.45. Base air-control target6.5rad/s.
 
-## Source map and APIs
+Iron Maw starts6m behind. Its motor speed is34.3×(1+.035×engineLevel)rad/s and fixed torque compensation1+.06×engineLevel. This tuning depends only on purchased engine level, never player position/gap. Self-righting continues through side contact with released wheel motors until upright; player righting requires held lean. See reconciled SPEC §4/§10.
 
-- `src/shell.html`: semantic page, responsive CSS, Canvas, overlays, fuel/zombie HUD, boss HUD and campaign cards container. All assets are inline/code generated.
-- `src/physics.js`: global `TruckPhysics(stageIndex=0, options={})`. `.step(dt,{throttle,brake,lean,fire})`, `.fire()`, `.getState()`, `.drainEvents()`, `.reset(checkpointIndex)` for paid recovery, `.restart()` for a fresh stage. `.track`, `.stage`, `.stageIndex`, `.checkpointIndex`, `.fuel`, `.zombies`, `.fuelCans`, `.rival`, `.failed`, `.winner`, `.finished` expose state. `.finished` means the player won; `.failed` is null, `'fuel'`, `'rival'` or `'monster'`; `.winner` is null, `'player'` or `'rival'`.
-- Physics state includes actual player transform/velocities, physical wheels/anchors, grounding/airtime, fuel, cleared/total zombie counts, rival snapshot and race position. Events: `takeoff`, `land`, `zombie`, `fuel`, `collision`, `empty`, `shot`, `monsterHit`, `monsterCrash`. Fuel events carry the actual refill amount; collision events carry a normalized impulse strength.
-- `src/audio.js`: global `TruckAudio`. Gesture-started `.unlock()`, `.update(state,dt)`, `.setMuted(bool)`, `.setPaused(bool)`, `.takeoff(strength)`, `.landing(strength)`, `.pickup()`, `.zombieHit(strength)`, `.collision(strength)`, `.result(won)`, `.gunshot()`, `.monsterHit()`, `.monsterCrash()`. RPM/gear feed the HUD. All layers/effects route through mute/pause gating, and pre-unlock calls are safe.
-- `src/game.js`: stage unlock/best-time persistence, input, state transitions, fixed-step loop, scene rendering, particles/camera, HUD and event/audio integration. Best air is committed on landing or a successful airborne finish, so an uncompleted fall does not set a record.
-- `build.py`: Python standard-library bundler inlines four scripts into `index.html`, then copies the same file to `dist/index.html`.
-- `vendor/planck.min.js`, `vendor/LICENSE-planck.txt`: pinned Planck.js 1.5.0 and license.
-- `tests/physics-smoke.cjs`: physics/campaign checks; read the current test before interpreting its coverage.
-- `tests/audio-check.html`: OfflineAudioContext engine/effect signal checks, muted/paused silence, pre-unlock calls and interrupted effect handling.
-- `tests/make-browser-fixture.py`: developer-only late-stage/low-fuel fixture generator. It reads the latest generated HTML; rebuild first.
-- `.openai/hosting.json`: existing project ID and `dist` static-directory declaration.
+## Saves and controls
 
-Read-only browser diagnostics: `window.irontrail` exposes `mode`, `telemetry`, `physics`, `audio`, `campaign` and the 1-based `stage`.
+Production key remains `irontrail-campaign-v1`; v3 adds version, stars, bestScore, scrap, upgrades, settings and totals to the earlier unlocked/completed/best/selected fields. Best ghosts use `irontrail-ghost-v1-N`. Save migration bounds values, handles corrupt/denied storage, and rewards each result once. Returning from garage/settings/results never credits rewards twice.
 
-## Physics and collision design
+Keyboard: Up/W throttle, Down/S reverse, Left/A and Right/D air balance/righting, Space brake, X/J fire, C recover, R retry, P/Escape pause, M mute, F fullscreen. Menus support arrows/Enter/Escape/Tab. Gamepad: RT throttle, LT forward brake/low-speed reverse, left stick/D-pad lean, A fire/activate, X recover, Y retry, Start pause/resume, B back. Up/down navigates settings; left/right changes focused sliders/selects and A toggles checkboxes. Touch controls are visible on small/coarse-pointer displays.
 
-All simulation coordinates use metres, seconds, radians and Y-up. Lean +1 rotates the nose down. Start X is 7.5 m; finish X is `startX + stage.length`. Progress consistently uses `(x-startX)/length`.
-
-Wheel radius is .72 m; wheelbase 3.14 m. Gravity is (0,-14). Wheel springs use 4.4 Hz frequency and .85 damping. Grounded motor torque is 48 per wheel and airborne torque 7, with brake torque 125. Player forward motor speed is -34 rad/s; reverse +13 rad/s. Rival forward speed is -31.3 rad/s. The torque-based grounded slope assist never teleports or directly rotates a truck.
-
-Player fixture group **-1** suppresses player self-collisions. Rival group **-2** suppresses rival self-collisions. Different groups and compatible category/mask bits allow actual chassis/tyre player–rival collisions. Categories are ground1, player2, rival4, zombies8 and large monster16. The monster fixture initially uses mask2 (player only); keep this separate from existing player–rival collision handling. Post-solve vehicle collision impulses drive effects with a cooldown. Contact callbacks enqueue mutations; zombie filter/body changes occur only after the world step is unlocked.
-
-Connected Chain fixtures reduce internal-edge catches, and separate chains represent actual gaps. Rival movement is motor/torque-driven; no position or velocity corrections are used for overtaking.
-
-## Persistence and controls
-
-Production localStorage key: `irontrail-campaign-v1`, containing `{unlocked,completed,best,selected}`. `completed` and `selected` use zero-based indices; best times are keyed per index. Storage failures do not prevent play. The old `irontrail-best-v2` single-course record is no longer used by the campaign.
-
-Keyboard: Up/W throttle; Down/S reverse; Left/A or Right/D air balance; Space brake; X/J single-charge cannon; C paid checkpoint recovery; R stage retry; P/Escape pause/resume; M sound; F fullscreen. Touch pedals and a dedicated FIRE button are on screen. Campaign map is available from the toolbar or overlay. Choosing a stage pauses the active run.
-
-## Build, preview and checks
+## Reproducible checks
 
 ```sh
 cd /Users/akshaykulkarni/NewGame/irontrail
 python3 build.py
-node --check src/physics.js
-node --check src/audio.js
-node --check src/game.js
+python3 tests/bundle-check.py
 node tests/physics-smoke.cjs
+node tests/rules-check.cjs
+node tests/pacing-check.cjs
+node tests/render-check.cjs
 python3 -m http.server 4173 --bind 127.0.0.1
 ```
 
-Open `http://127.0.0.1:4173/` for gameplay and `http://127.0.0.1:4173/tests/audio-check.html` for audio signal validation.
+Browser pages: `/tests/audio-check.html`, `/tests/ui-harness.html`, `/tests/render-harness.html?stage=10`, `/tests/integration-harness.html?phase=all`. Integration also accepts flow/failures/boss/gamepad phases and starts from its Start button. It fetches the current real bundle into an iframe, uses unique QA campaign/ghost namespaces and drives the actual game loop through input/DOM controls. It never changes production progress.
 
-Optional browser fixtures:
+`tests/make-browser-fixture.py` generates deterministic, isolated previews; examples:
 
 ```sh
 python3 tests/make-browser-fixture.py --stage 10 --output boss-preview.html
+python3 tests/make-browser-fixture.py --stage 1 --monster-roll .62 --approach-monster 18 --output cannon-preview.html
 python3 tests/make-browser-fixture.py --stage 1 --fuel 1 --output fuel-preview.html
-python3 tests/make-browser-fixture.py --stage 10 --rival-lead 30 --output boss-loss-preview.html
-python3 tests/make-browser-fixture.py --stage 1 --monster-roll .5 --approach-monster 12 --output cannon-preview.html
 ```
 
-The generated pages are `/tests/boss-preview.html` and `/tests/fuel-preview.html` on the local server. They unlock stage selection and optionally set initial fuel, using **`irontrail-campaign-qa-only`** so they do not alter the normal campaign save. They are excluded from `dist/` and are not shipped. They must never replace the production HTML or its storage key.
+These use separate QA storage. Initial positional/fuel/rival changes are test-fixture setup only and do not ship. Retry returns to normal attempt resources. Rebuild/regenerate before browser QA. `dist/` contains only the production HTML; fixture files are ignored.
 
-## Previously verified zombie/fuel campaign release
+Claude's optional raw-CDP `page-check.mjs`/`perf-bench.mjs` remain in the repository for developer-controlled Chrome use. They were **not run** by this agent; browser checks used supported CUA tools and self-running test pages.
 
-- Build and all source syntax checks pass. Single-file check confirms four inline scripts, unique element IDs, no external asset dependencies, and byte-identical index.html/dist/index.html.
-- `node tests/physics-smoke.cjs` passes for all ten stages at both120and60Hz. At120Hz the test runs (including1s idle) finish in12.12/13.37/15.16/16.63/18.59/20.14/22.18/24.09/26.97/29.26seconds. Stage10 has two natural vehicle impacts,5fuelpickups and18.6minimumfuel.
-- Smoke coverage includes all checkpoint safe spawns, no recovery body leaks, fuel and can conservation, depletion, terminal freeze, full retry, actual zombie contacts, no same-truck collisions, cross-truck physical impulse transfer to both bodies, rival win, brakes and reverse.
-- Production browser campaign: stage1 clears in11.19s,5/5zombies,97fuel. Continue starts stage2, which clears in18.72s with8/8zombies and95fuel while partlycoasting. Stage unlocks, current selection and per-stage besttimes persist.
-- Browser developerfixtures (isolated QA storage): stage10 player victory in31.30s,26/32zombies,80fuel; bossloss through actualrivalfinish in30.21s using an initial30mopponentlead. The lead is a fixture-only starting condition; production AI does not teleport.
-- Low-fuel browserfixture fails atzero, displaysretry, retry restores100fuel/time0/freshstage. Phone390×844 pointer-heldgas moves the truck and usesfuel100to93; pause preservesfuel andtime. HUD, overlays, horizontal stagecards and controls fit with no observed horizontal pageoverflow.
-- Browser OfflineAudioContext tests pass for engine, pickup,zombie,collision,win/loss cues, stacked cues, same-frame cooldowns, exact muted/paused silence, safepreunlockcalls, and cancellation of one-shot tails onpause/resume. Enginepeak~.259; combinedeffectspeak~.042. Inspected browser gameplaylogs contain no errors/warnings.
-- Late-stagebrowserfixtures use the realbundle plus changedinitialstage/resources and separate QAstorage. They are ignored and excluded fromdist; they do not change the user's production campaign.
+## Verified v3 results — 3 November 2026
 
-All requested zombie/fuel campaign work and its publication were completed before the cannon/monster follow-up. The following identifiers refer to that previous release; the new update is pending final verification and publication.
+- All ten stages pass at60/120Hz with base and maximum upgrades. Separate60%-throttle tests prove terrain/fuel viability; stage10 omits the rival in that specific test because race pace requires higher throttle.
+- No-idle base full-throttle fuel floors:70/65/61/53/51/45/41/33/28/26%. Tests cover missed-can tolerance, fuel depletion/pickup/conservation/retry, all recovery gates and terminal freeze.
+- Single-shot/random-giant smoke covers varied safe placement, early miss, repeated fire rejection, terrain occlusion, high-speed swept rays, lethal contact, anti-bypass, recovery conservation and reroll. Another80 varied encounter routes pass.
+- Cross-truck contact filtering and two-way impulse transfer pass. Clean boss gaps:9.2/14.3m base/max at120Hz and7.3/8.8m at60Hz. Recovery produces lead changes and rival wins. No AI position/velocity corrections.
+- Real course kicker flips with upright landings pass on stages3–10 at both rates. Stage5 flip, stage6 two perfect landings, stage7 landed1.6sair and stage10 15mlead challenges are attainable. Pose wrap/NaNs/snaps/freeze, stats, stuck detection and torque-only righting pass.
+- Rules tests pass for combo decay, landed scoring, stars, rewards, upgrade costs, save migration/corruption/denial and idempotence. Pacing tests pass for60–240Hz detection, downgrade/restore hysteresis, bounded trace/ghost storage, ghost validation and constant-speed interpolation under irregular refresh.
+- Structural renderer test runs1,400 real-physics frames over all10biomes with simultaneous effects/popups/ghosts: max168/220drawops,3/3fonts,57.7MiB current-stage caches at1600×1000DPR2; no hot canvas/gradient allocations. Retry and adaptive quality reuse caches rather than retain every biome.
+- Browser audio tests pass engine, takeoff, landing, every gameplay/UI cue, all5music moods, stacked effects, mute/pause/zero-volume silence, canceled tails and20,000suspended parameter updates with bounded targets. Output remains finite and below clipping.
+- Browser UI tests pass all8screens,10cards, focus/navigation, garage/settings events (including controller settings), global feedback, zero-change HUD mutations, transform bars, title fit and recovery hit/overlap checks at1440×900,1280×720,390×844 and844×390.
+- Browser full integration passes: stage1clear11.91s, one shot, score/stars/scrap/unlock, ghost save/replay, reward idempotence, next-stage/garage tuning, visible countdown, pause freeze/time, persistent settings, unshot monster failure8.58s, fuel failure/retries, actual boss victory29.07s with7.92mlead, and a synthetic gamepad completing stage1 through RT/Start/A.
+- At390×844, actual pointer FIRE clears the locked monster and disables the empty cannon; holding GAS moves the truck (136→143m in the approach fixture) and drains fuel. HUD/pedals fit. Inspected gameplay logs have no errors/warnings.
+- All source syntax checks and single-file checks pass:9inline scripts,45real elementIDs, embedded MIT license, no external assets and identical generated copies.
 
-- Current published source: `b3b6a5aae6656e88b59d6d3dc28043a916e7ae8e`
-- Current deployment: `appgdep_6ae8c91c083c8191a78f334aaaefd820`
-- Current saved version: `appgprj_6ae8bf943e7c8191be3fee438599f6a5~appgver_3190a50d4ce48191bc8802ee96f44a27`
-- Confirmed live URL: https://irontrail-monster-rally.mellowdew4.chatgpt.site
-- `preview-campaign.jpg` is the final live-gameplay QA image.
+Final boss callback timing,1600×1000CSSpx, High quality, native displayDPR1 at≈59.9Hz:
 
-The local sources now include the cannon/monster update. Do not assume they match the previous published release until the main agent records the new deployment.
+| Canvas backing | First playing callback | Warmed mean | Warmed p99 | Warmed max | Samples | Max draws |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1600×1000 (native appDPR1) |1.2ms|1.106ms|2.4ms|3.4ms|1,728|160 |
+| 3200×2000 (QA appDPR2 override) |0.9ms|1.102ms|2.4ms|3.3ms|1,728|160 |
 
-## Known limits and possible refinements
+The second row measures the actual2×canvas workload while explicitly retaining the native1×display. It is not a physical2×/120Hz display test. Both final-source boss runs win in29.76s with6.07mlead. Callback p99 meets the2.5ms target and no sampled warmed callback exceeds8.33ms; full-main-thread/GPU/4×CPU targets are not measured. Earlier all-phase runs also pass; their warmed callback means were.867ms(stage1) and.688ms(boss), p99≤2ms at appDPR1.
 
-- Audio is synthesized, not a real engine recording. Subjective tuning on actual speakers/headphones and physical phones remains useful.
-- Responsive browser emulation is not physical iOS/Android testing. Fullscreen support varies by browser.
-- Direct `file://` loading was blocked by the automation browser's HTTP/HTTPS-only policy in the baseline release. The source contract is self-contained; browser QA uses localhost. Users can open the generated HTML locally in a normal browser.
-- The 50 ms frame cap causes slow motion below sustained 20 FPS rather than unlimited catch-up. Hidden tabs pause automatically. Simulation is fixed at 120 Hz; graphics read physical transforms directly.
-- The campaign is local single-player. Iron Maw is AI, not a network player. The race uses finish order; there is no truck health/damage system.
-- The boss uses the same side-view course and can bump or climb the player's tyres. Changes to tuning/filtering should be verified with actual race runs, not visual overlap alone.
-- Best records and unlocks depend on localStorage availability; private browsing/file mode may deny it.
+## Verification limits and future optional work
 
-## Claude continuation prompt
+120Hz simulation/interpolation and adaptive quality are implemented. The available in-app browser displays at≈60Hz;120Hz display output was not physically verified. Supported browser checks measure callback CPU duration, not full main-thread/GPU traces or4×CPU-throttled runs. Those exact SPEC §0 budgets remain unmeasured, not claimed as passing. The renderer's amber fill does not meet a literal3:1ratio against every gradient stop in every biome; the outlined composite truck was visually checked for readability.
 
-Continue IRONTRAIL in `/Users/akshaykulkarni/NewGame/irontrail`. Read PLAN.md, HANDOFF.md and README.md, inspect current sources and tests, then continue from the latest recorded expansion status without starting over. The user wants a ten-stage zombie monster-truck campaign with depleting fuel, periodic cans and a final AI rival race with actual collision physics. Their newest request adds a mounted gun with one charge per attempt and exactly one randomly placed large monster each round. Keep a single offline HTML deliverable with inline Planck.js and Web Audio, retaining the MIT license. Preserve the single-shot/monster rules, wheel-joint suspension, physical zombies and truck collisions, the fuel/ammunition/recovery conservation rules, keyboard/touch controls, campaign unlocks, win/loss/retry/next-stage states and per-stage best records. Edit src files, run python3 build.py, run meaningful physics/audio/browser checks and update the plan/handoff with exact results and remaining work. Developer QA fixtures use separate storage and must not be shipped. When publishing, reuse project_id in .openai/hosting.json and the existing private Site URL via the supported source/packaging workflow; do not create another Site.
+Audio is procedural rather than recorded. Physical phones/controllers, Safari/iOS and speaker/headphone listening remain useful optional hardware checks. The browser automation environment blocks file:// navigation; self-containment is verified structurally and browser QA runs over localhost. Persistence depends on available localStorage. There is no network multiplayer or vehicle-health system.
+
+## Continuation prompt
+
+Continue IRONTRAIL in `/Users/akshaykulkarni/NewGame/irontrail`. Read PLAN.md, SPEC.md, HANDOFF.md and current sources/tests before editing. V3 modules and integration are complete; do not restart or regress to v2. Preserve the single offline HTML, Planck MIT license, one charge/one mandatory random giant, zombie contacts, fuel/can/recovery invariants, torque-only rival, upgrades/stars/scrap, best ghosts and existing saves. Change src files and rebuild with python3 build.py. Run relevant Node and browser harnesses; keep QA storage/fixtures outside dist. Exact full-main-thread/GPU/4×CPU budgets and physical120Hz/mobile/controller hardware checks are optional unverified follow-ups, not completed measurements. For publication reuse .openai/hosting.json and the existing private Sites project through the supported open/package/save/deploy workflow; never create a new Site or change its audience without a user request.

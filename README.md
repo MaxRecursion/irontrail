@@ -1,71 +1,76 @@
 # IRONTRAIL — Deadland Rally
 
-A single-page 2D monster truck campaign through zombie country, with one cannon charge and one large monster to stop in every round. Open **index.html** in a modern browser and press **Start your engine**. The portable file contains its physics library, graphics, interface and synthesized audio; gameplay has no network dependencies.
+A self-contained 2D monster truck game: ten increasingly demanding routes, physical zombies, depleting fuel, a single-charge cannon, and a final race against Iron Maw.
 
-Private playable URL: https://irontrail-monster-rally.mellowdew4.chatgpt.site
-
-The ten-stage zombie/fuel campaign is published. The new single-charge cannon and random-monster update is implemented locally; its verification has passed and publication is being finalized. See `HANDOFF.md` for the latest verified result.
+Play at https://irontrail-monster-rally.mellowdew4.chatgpt.site or open `index.html` in a modern browser. All physics, graphics, music and effects are inside that one file. No installation or network assets are needed.
 
 ## Play
 
-- Up / W: throttle
-- Down / S: reverse
-- Left / A and Right / D: balance in the air
-- Space: brake
-- X / J, or the on-screen FIRE button: fire the cannon once
-- C: recover at the last checkpoint, spending **12% fuel**; the run clock continues
-- R: retry the current stage with a fresh tank, pickups and cannon charge
-- P / Escape: pause or resume
-- M: mute / unmute
-- F: fullscreen, where supported
+| Action | Keyboard | Gamepad |
+| --- | --- | --- |
+| Throttle | Up / W | RT |
+| Reverse | Down / S | LT at low speed |
+| Brake | Space | LT while moving forward |
+| Air balance / self-right | Left / A, Right / D | Left stick / D-pad |
+| Fire once | X / J or FIRE | A |
+| Recover at checkpoint | C | X |
+| Retry stage | R | Y |
+| Pause / resume | P / Escape | Start / B |
+| Mute | M | Settings menu |
+| Fullscreen | F | On-screen button |
 
-Touch controls are on screen. Use **Choose stage** or the map icon to open the campaign. Finish a stage to unlock the next one; cleared stages remain replayable. The game saves unlocks, selected stage and per-stage best times locally when browser storage is available. Ammunition and monster state belong to the current attempt and are not campaign-save rewards.
+Touch pedals and a separate FIRE button appear on small or touch screens. Menus support keyboard and gamepad navigation. Sound starts after the first pointer/key gesture; browsers may require a click before gamepad audio can play.
 
-Fuel drains continuously during active play, including at idle. Throttle increases consumption. Collect the amber cans along the track to restore **up to 32% fuel**, capped at 100%. Emptying the tank ends the run. Pause freezes the fuel and rival. Checkpoint recovery preserves collected cans and cleared zombies, so it never supplies a free refill.
+Each attempt gives you **one cannon charge and one randomly placed giant monster**. Wait for the green target lock and fire. Early shots can miss or hit terrain. Reaching or passing a living monster ends the run. Holding FIRE never reloads it.
 
-Every attempt places one large monster at a random safe location on the route. Your roof-mounted cannon has **one charge for the entire attempt**. Wait for the green **TARGET LOCKED** indication, then press X / J or tap FIRE. Firing too early or into terrain can waste the charge. An unshot monster ends the run when you reach it; retry for a fresh charge. Checkpoint recovery preserves spent ammunition and the current monster, so it does not supply another shot.
+Fuel burns while playing, even at idle. Amber cans restore up to **32 fuel**, capped at 100. Recovery costs **12 fuel** and preserves ammunition, the monster, cans, zombies and rival progress. A full retry supplies a new tank, charge and random encounter. Pause freezes the run and rival.
 
-Zombies physically tumble when a truck hits them. Keep your wheels underneath you, collect fuel and reach the stage finish. Stage 10 is a race against **Iron Maw**, an AI monster truck with its own suspension and solid vehicle collisions. First truck across the line wins. Lose the race or run dry to retry the stage.
+Clear stages to unlock the next route. Earn stars for survival, par time and a route-specific challenge. Score combos, landed flips, perfect landings and big air earn scrap for engine, tyre, suspension and fuel-system upgrades. Your fastest clear leaves a ghost replay. Unlocks and earlier v2 records migrate automatically when browser storage is available.
 
-## Ten-stage campaign
+## Campaign
 
-| Stage | Route | Length | Fuel-can interval |
+| Stage | Route | Distance | Par |
 | --- | --- | ---: | ---: |
-| 01 | Redstone Outbreak | 220 m | 51 m |
-| 02 | Dry Creek | 250 m | 54 m |
-| 03 | Hollow Ridge | 285 m | 57 m |
-| 04 | Graveyard Pass | 320 m | 60 m |
-| 05 | Deadwood Dunes | 355 m | 63 m |
-| 06 | Rust Canyon | 390 m | 66 m |
-| 07 | Bone Valley | 425 m | 69 m |
-| 08 | Ashen Heights | 465 m | 72 m |
-| 09 | Last Refuge | 510 m | 75 m |
-| 10 | Iron Maw Showdown | 560 m | 78 m |
+| 01 | Redstone Outbreak | 220 m | 15 s |
+| 02 | Dry Creek | 250 m | 17 s |
+| 03 | Hollow Ridge | 285 m | 20 s |
+| 04 | Graveyard Pass | 320 m | 22 s |
+| 05 | Deadwood Dunes | 355 m | 24 s |
+| 06 | Rust Canyon | 390 m | 27 s |
+| 07 | Bone Valley | 425 m | 29 s |
+| 08 | Ashen Heights | 465 m | 32 s |
+| 09 | Last Refuge | 510 m | 36 s |
+| 10 | Iron Maw Showdown | 560 m | 40 s |
 
-Routes grow longer, gaps and hills become more demanding, zombie density rises, and fuel pressure increases. Can placement is shifted onto safe ground near the nominal intervals.
+Each route has its own palette, landscape, props and weather. Stage 10 uses two independently simulated trucks with solid chassis/tyre collisions. Iron Maw drives, balances and rights itself through motors and torque; it never teleports or rubber-bands.
 
-## Build and validate
+## Smoothness and sound
+
+Planck.js runs at a fixed 120 Hz. Rendering interpolates between simulation poses, with cached artwork, bounded effects, a smooth camera and adaptive quality. Auto quality lowers resolution/effects after sustained missed frames and restores detail when there is headroom. Settings also offer High, Balanced and Performance, separate volume controls, reduced motion and an FPS overlay.
+
+120 Hz simulation and rendering support do not guarantee 120 displayed frames on every device. The display, browser and hardware determine the actual rate. Music and V8/jump/impact sounds are synthesized with Web Audio, rather than engine recordings.
+
+## Build and checks
+
+No npm dependencies are required. Python and Node are development tools only.
 
 ```sh
 python3 build.py
-node --check src/physics.js
-node --check src/audio.js
-node --check src/game.js
+python3 tests/bundle-check.py
 node tests/physics-smoke.cjs
+node tests/rules-check.cjs
+node tests/pacing-check.cjs
+node tests/render-check.cjs
 python3 -m http.server 4173 --bind 127.0.0.1
 ```
 
-Open http://127.0.0.1:4173/ to play, and http://127.0.0.1:4173/tests/audio-check.html for Web Audio signal validation. No npm install is required. Node is needed only for JavaScript syntax and physics checks; the bundler uses the Python standard library.
+Browser checks on localhost:
 
-Optional browser QA fixtures let developers inspect late stages or fuel failure without changing the shipped campaign:
+- `/tests/audio-check.html`: real OfflineAudioContext signal, silence and scheduler checks.
+- `/tests/ui-harness.html`: real shell/UI at desktop, phone and landscape dimensions.
+- `/tests/render-harness.html?stage=10`: scripted real physics and instrumented Canvas rendering; `?cycle=1` tours the biomes.
+- `/tests/integration-harness.html`: isolated gameplay, progression and frame timing checks.
 
-```sh
-python3 tests/make-browser-fixture.py --stage 10 --output boss-preview.html
-python3 tests/make-browser-fixture.py --stage 1 --fuel 1 --output fuel-preview.html
-```
+`tests/make-browser-fixture.py` creates isolated developer previews from the current build. Test pages and fixtures are excluded from the deployed `dist/` directory. Claude's optional `page-check.mjs` and `perf-bench.mjs` remain available for a developer-controlled Chrome session; they were not used for this release's browser checks.
 
-Open `/tests/boss-preview.html` or `/tests/fuel-preview.html` on the local server. Fixtures use the separate `irontrail-campaign-qa-only` storage key and are excluded from the hosted `dist/` output. Production campaign progress uses `irontrail-campaign-v1`.
-
-Edit `src/`, then rebuild. Generated `index.html` and `dist/index.html` must remain identical. `dist/` is the hosted static directory. Planck.js 1.5.0 is included under its MIT license in `vendor/LICENSE-planck.txt` and in the bundled HTML. Preserve the license and the single-file contract.
-
-Read `PLAN.md` and `HANDOFF.md` for architecture, current verification, remaining work and a Claude continuation prompt.
+Edit `src/`, then rebuild. Generated `index.html` and `dist/index.html` must be identical. Preserve Planck.js 1.5.0 and its inline MIT license. `PLAN.md`, `SPEC.md` and `HANDOFF.md` contain module contracts, exact verification results and continuation instructions. Hosting retains the existing private Site identity in `.openai/hosting.json`.

@@ -5,13 +5,16 @@
 <style>body{background:#19221b;color:#d6efb1;font:16px monospace;padding:30px}pre{white-space:pre-wrap}</style>
 <h1>Audio signal validation</h1>
 <pre id="result">Rendering…</pre>
-<script src="../src/audio.js"></script>
+<script src="../src/music.js?v=3"></script>
+<script src="../src/audio.js?v=4"></script>
 <script>
 (async () => {
   const result = document.getElementById('result');
   const reports = {}, passes = [];
   const assert = (condition, message) => { if (!condition) throw Error(message); };
   const eventCalls = [
+    ['takeoff',a=>a.takeoff(1)], ['landing',a=>a.landing(1)],
+    ['flip',a=>a.flip(1)], ['perfect',a=>a.perfect()], ['combo',a=>a.combo(3)], ['scoreTick',a=>a.scoreTick()], ['star',a=>a.star(1)], ['checkpoint',a=>a.checkpoint()], ['lowFuel',a=>a.lowFuel()], ['countdown',a=>a.countdown(3)], ['go',a=>a.go()], ['uiMove',a=>a.ui('move')], ['uiBuy',a=>a.ui('buy')], ['celebrate',a=>a.celebrate()],
     ['pickup', audio => audio.pickup()],
     ['zombieHit', audio => audio.zombieHit(1)],
     ['collision', audio => audio.collision(1)],
@@ -51,7 +54,7 @@
     audio.setPaused(paused);
     if (effectsOnly) {
       // Isolate event energy from the persistent engine and ambience graph.
-      for (const gain of [audio.engineGain, audio.subGain, audio.intakeGain, audio.gravel.gain, audio.wind.gain, audio.exhaustNoise.gain]) gain.gain.value = 0;
+      for (const gain of [audio.engineGain, audio.subGain, audio.intakeGain, audio.gravel.gain, audio.wind.gain, audio.exhaustNoise.gain,audio.skid.gain,audio.creak.gain]) gain.gain.value = 0;
     }
     return audio;
   }
@@ -117,6 +120,27 @@
       'Paused event tail resurfaced on resume: ' + JSON.stringify(reports.afterPauseResume));
     passes.push('PASS · Pause cancels pending result/impact voices; resuming cannot replay their tails.');
 
+    for(const mood of TruckMusic.MOODS){
+      const c=new OfflineAudioContext(1,96000,48000),music=new TruckMusic(c,c.destination);
+      music.scheduleOffline(2,{biome:4,intensity:.8,mood,playing:true});
+      reports['music-'+mood]=stats((await c.startRendering()).getChannelData(0));
+      finiteAndComfortable(reports['music-'+mood],'Music '+mood);music.dispose();
+    }
+    passes.push('PASS · Persistent-voice music renders finite audible output in every mood.');
+    const mutedMusicContext=new OfflineAudioContext(1,48000,48000),mutedMusic=new TruckMusic(mutedMusicContext,mutedMusicContext.destination);
+    mutedMusic.setVolume(0);mutedMusic.scheduleOffline(1,{mood:'boss',playing:true,intensity:1});
+    const musicZero=stats((await mutedMusicContext.startRendering()).getChannelData(0));assert(musicZero.peak===0,'Music volume0 is not silent');mutedMusic.dispose();
+    const zeroMaster=createAudio();zeroMaster.setVolumes({master:0});zeroMaster.gunshot();assert(stats(await render(zeroMaster)).peak===0,'Master volume0 leaks');
+    passes.push('PASS · Zero music/master volumes produce silence.');
+    // A mock suspended AudioParam makes accidental scheduling an immediate test
+    // failure, and demonstrates bounded targets after 20,000 render updates.
+    const suspended=new TruckAudio();let scheduled=0;
+    suspended.context={state:'suspended',currentTime:12};
+    const param={setTargetAtTime(){scheduled++;},cancelScheduledValues(){}};
+    for(let i=0;i<20000;i++)suspended._set(param,i%113,.05);
+    assert(scheduled===0&&suspended._targets.size===1,'Suspended context queued automation');
+    suspended.context.state='running';suspended._flushTargets();assert(scheduled===1,'Targets were not flushed exactly once onresume');
+    passes.push('PASS · Suspended context queues no automation and keeps bounded targets.');
     result.textContent = passes.join('\n') + '\n\n' + JSON.stringify(reports, null, 2);
     document.title = 'PASS — IRONTRAIL audio validation';
   } catch (error) {

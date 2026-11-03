@@ -153,7 +153,7 @@ User request: mount a gun on the monster truck with exactly one shot per round. 
 3. [x] Add gun/monster rendering, ammo/lock HUD, keyboard/touch controls and failure flow.
 4. [x] Add/test gunshot, monster hit and crash audio.
 5. [x] Test hit, early miss, empty charge, crash, recovery/retry, all ten stages and browser desktop/phone controls.
-6. [ ] Update README/HANDOFF, rebuild portable HTML and republish the existing private URL.
+6. [x] Update README/HANDOFF, rebuild portable HTML and republish the existing private URL.
 
 ## Weapon validation results
 
@@ -163,4 +163,73 @@ User request: mount a gun on the monster truck with exactly one shot per round. 
 - Browser: unshot monster caused failure at 8.94 s; an early shot spent the charge and a later collision caused failure at 10.13 s. A new retry restored 1/1; X fired on lock at 33 m, cleared the monster with 0/1 remaining, and the stage finished at 12.43 s.
 - Phone 390×844: dedicated FIRE tap cleared the target, changed ammo from 1/1 to 0/1, and disabled FIRE. HUD and controls fit. Inspected gameplay logs have no errors/warnings.
 - Audio validation passes for gunshot, monster hit/crash and all earlier cues, stacked effects, silence while muted/paused and voice cancellation.
-- Preview image: preview-cannon.jpg. Publication is the remaining delivery step.
+- Preview image: preview-cannon.jpg. The cannon update is published at the existing private URL.
+
+## Weapon delivery
+
+The cannon/random-monster update was privately published on 3 November 2026. Source commit: 244102348680f75f112c660910bf530cb736a4de. Deployment: appgdep_6ae9508d73f88191b31771b1788e1fe1. URL: https://irontrail-monster-rally.mellowdew4.chatgpt.site . All requested work is complete. Final local notes include publication verification; gameplay sources and HTML copies match the published release.
+
+# v3 plan — indie polish at a smooth 120 FPS (3 November 2026)
+
+User request: analyse the game first, then improve it to the level of polished indie games, with everything running
+smoothly at 120 FPS. Analysis results: `ANALYSIS.md`. Module contract: `SPEC.md` (authoritative for v3).
+
+## Decisions
+
+- Keep every hard rule from the earlier releases (single offline HTML, Planck physics, ten stages, fuel/cans, physical
+  zombies, Iron Maw race without teleporting, one cannon charge + one random monster per attempt, recovery costs 12 fuel).
+- Smoothness: fixed 120 Hz physics with render interpolation (pose buffers in physics), frame-pacing monitor with adaptive
+  resolution/effects, allocation-free hot paths, write-on-change HUD, JIT warm-up and early audio unlock (no first-run hitch).
+- Renderer rewrite (`src/render.js`, `src/biomes.js`): persistent world-space Path2D terrain, cached sprites/strips, ten
+  art-directed biomes, ravines, props, weather, lighting, pooled particles, camera with look-ahead/zoom/trauma shake.
+- Feel and progression: velocity-target air control so flips are possible, landing quality, score/combos, three-star
+  objectives, scrap economy + four-track garage (never touches the one-charge rule), ghost of the best run, gamepad.
+- Level design: feature-grammar track generator (kickers, climbs, drops, rollers, tables) with a smoother fuel curve and
+  reachable cans; competitive, self-righting Iron Maw (torque only); stuck/roof fixes.
+- Presentation: full-viewport game with title, stage select, garage, settings, brief, pause, results and failure screens;
+  decluttered HUD; reserved recover-button slot; procedural adaptive music and new SFX; audio suspended-context fix.
+- Delivery: four module owners build in parallel workspace copies (physics, audio+music, renderer+biomes, UI+rules+shell),
+  then the main agent integrates `src/game.js`, rebuilds, verifies and documents. The supported Sites workflow
+  republishes the existing owner-private Site; `dist/index.html` stays the deployable output.
+
+## v3 checklist
+
+1. [x] Measure v2 (frame/trace/op counts, physics, audio, layout, contrast) and write `ANALYSIS.md`.
+2. [x] Write `SPEC.md` contract, benchmark (`tests/perf-bench.mjs`), page runner (`tests/page-check.mjs`), bundle check.
+3. [x] Build modules in parallel: physics, audio+music, renderer+biomes, UI+rules+shell (self-tested).
+4. [x] Integrate `src/game.js` (loop, interpolation, pacing/quality, input, rules, ghost, save, screens) and `build.py`.
+5. [x] Verify physics/rules/audio/bundle/pacing/render checks, browser desktop/phone, complete clear/failure paths,
+       saves/garage/ghost/gamepad and supported callback timing. Full GPU/main-thread trace,4×CPU and physical120Hz
+       targets are explicitly unmeasured; see verification limits in HANDOFF.md.
+6. [x] Update README/HANDOFF with exact results, verification limits and continuation prompt.
+7. [x] Package and republish the same owner-private Site through the supported workflow.
+
+
+## v3 validation
+
+- All ten stages pass with base/max upgrades at60/120Hz, including actual course flips, star-challenge feasibility,
+  fuel/monster/recovery invariants, cross-truck impulses, close boss wins and recovery-driven race losses.
+- Fuel curve reaches no-idle floors70/65/61/53/51/45/41/33/28/26%. Rival remains motor/torque driven, with fixed
+  engine-level tuning only. Air-control/righting refinements are reconciled in SPEC §4/§10.
+- Rules, saved upgrade migration, bounded ghost/pacing/interpolation checks pass. Renderer stress covers1,400frames
+  across10biomes:168/220maxdrawops,3fonts,57.7MiB current-stage caches, no hot canvases/gradients.
+- Real browser audio passes engine/takeoff/landing/newcues,5music moods, stacked output, mute/pause/zero-volume silence,
+  voice cancellation and bounded suspended targets. UI passes8screens and four desktop/phone/landscape sizes.
+- End-to-end browser passes one-shot clear, progression/rewards, ghost save/replay, garage-from-brief tuning,
+  countdown, pause/time/fuel freeze, settings persistence, mandatory-monster/fuel retries, boss victory and gamepad.
+  Actual phone FIRE and heldGAS work at390×844. Inspected logs have no errors/warnings.
+- Integration fixes include global feedback/transition clearing, controller settings, correct pause time,
+  immediate purchased tuning, reduced-motion quality cache and high-quality asset rebaking from lower saved quality.
+- Exact callback timing and its limits are recorded in HANDOFF.md; historical ANALYSIS.md measurements are not
+  presented as new verification. No raw-CDP scripts were run for this release.
+
+- Final High-quality boss test at1600×1000CSSpx with a QA2×backing scale (actual3200×2000canvas, native displayDPR1)
+  passes29.76s/6.07mlead: firstcallback0.9ms, warmedmean1.102ms/p992.4ms/max3.3ms over1,728frames, max160drawops.
+  Native1× test also passes. Display observed≈60Hz; no physical120Hz or GPU/fullmainthread/4×trace certification.
+
+## v3 delivery
+
+Completed on3November2026. The nine-module single-file v3 build is published at the existing owner-private URL:
+https://irontrail-monster-rally.mellowdew4.chatgpt.site . README.md and HANDOFF.md describe the finished implementation,
+exact passing checks, measurement limits and continuation prompt. Source/deployment identifiers are returned by the
+supported Sites publication workflow; historical release identifiers above refer to earlier builds.
