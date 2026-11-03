@@ -136,7 +136,7 @@ Current sources preserve the user's runner changes, complete partial UI/renderer
 
 Build, bundle, rules, pacing, structural render, UI and audio checks pass. Browser integration passes slow-motion flight+impact assertions, stage clear, one-charge encounter, garage/persistence/ghost/pause/retry, both mandatory-monster/fuel failure paths, boss victory and synthetic gamepad. Boss29.07s/7.92mlead; one-shot stage1clear11.91s. Render stress max169drawops.
 
-New private repo: https://github.com/MaxRecursion/irontrail . Vercel team max-recursion/project irontrail is connected. Custom domain irontrail.maxrecursion.dev is assigned and its Namecheap CNAME is saved. Exact Vercel recommendation: CNAME host irontrail target1c83a48bcee72fc4.vercel-dns-017.com. User explicitly authorized browser DNS setup. No other domain records should change. Legacy Sites IDs above are historical hosting; this follow-up uses GitHub/Vercel at the user's request.
+Public repo: https://github.com/MaxRecursion/irontrail . Vercel team max-recursion/project irontrail is connected. Custom domain irontrail.maxrecursion.dev is assigned and its Namecheap CNAME is saved. Exact Vercel recommendation: CNAME host irontrail target1c83a48bcee72fc4.vercel-dns-017.com. User explicitly authorized browser DNS setup. No other domain records should change. Legacy Sites IDs above are historical hosting; this follow-up uses GitHub/Vercel at the user's request.
 
 Vercel production deploy succeeded: https://irontrail-iota.vercel.app . Phone cinematic camera tracks the projectile and target at a readable scale, then returns smoothly. Custom-domain DNS setup is complete.
 

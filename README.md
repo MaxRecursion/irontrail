@@ -79,4 +79,4 @@ Edit `src/`, then rebuild. Generated `index.html` and `dist/index.html` must be 
 
 A short automatic aim window eases into slow motion. Firing slows the complete world to22% speed, tracks the shot, adds an impact ring, and smoothly restores pace. The rival, fuel and run/ghost clock share the same simulation time. The one-charge rule and actual projectile raycast still apply. Reduced motion keeps normal speed and removes camera emphasis. Crosshair pulses, one ammo pip, animated icon cues and numeric rewards replace long gameplay prompts.
 
-Vercel builds the portable file with `python3 build.py`, serves `dist/`, and is connected to the private GitHub repository. The custom domain uses a Namecheap CNAME host `irontrail` → `1c83a48bcee72fc4.vercel-dns-017.com.`. Keep other DNS records unchanged.
+Vercel builds the portable file with `python3 build.py`, serves `dist/`, and is connected to the public GitHub repository. The custom domain uses a Namecheap CNAME host `irontrail` → `1c83a48bcee72fc4.vercel-dns-017.com.`. Keep other DNS records unchanged.
