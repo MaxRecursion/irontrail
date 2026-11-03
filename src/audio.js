@@ -21,6 +21,9 @@ class TruckAudio {
     this._lastZombieHit = -10;
     this._lastCollision = -10;
     this._lastResult = -10;
+    this._lastGunshot = -10;
+    this._lastMonsterHit = -10;
+    this._lastMonsterCrash = -10;
     this._voices = new Set();
     this._noise = null;
     this._ratios = [24, 18, 14, 11, 9];
@@ -353,6 +356,65 @@ class TruckAudio {
     this._thump(0.04 + s * 0.13, 96, 36, 0.14 + s * 0.06);
     this._noiseBurst(0.018 + s * 0.075, 1350, 0.075 + s * 0.1, 0, 'bandpass');
     this._thump(s * 0.027, 730, 420, 0.06, 0.012);
+  }
+
+  gunshot() {
+    if (!this._canPlay()) return;
+    const now = this.context.currentTime;
+    if (now - this._lastGunshot < 0.15) return;
+    this._lastGunshot = now;
+    // A short powder crack, low recoil and a quiet mechanical action. This is
+    // synthesized game audio; the gain stays comfortable alongside the V8.
+    this._noiseBurst(0.15, 1250, 0.075, 0, 'highpass');
+    this._noiseBurst(0.055, 1700, 0.12);
+    this._thump(0.17, 118, 40, 0.15);
+    this._thump(0.032, 690, 310, 0.045, 0.025);
+    this._noiseBurst(0.028, 2100, 0.05, 0.07, 'bandpass');
+  }
+
+  _monsterGrowl(strength, duration, delay = 0) {
+    if (!(strength > 0)) return;
+    const ctx = this.context, now = ctx.currentTime + delay;
+    const source = ctx.createOscillator(), filter = ctx.createBiquadFilter(), gain = ctx.createGain();
+    source.type = 'sawtooth';
+    source.frequency.setValueAtTime(115, now);
+    source.frequency.exponentialRampToValueAtTime(45, now + duration);
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(310, now);
+    filter.frequency.exponentialRampToValueAtTime(145, now + duration);
+    filter.Q.value = 0.85;
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(strength, now + 0.018);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    source.connect(filter); filter.connect(gain); gain.connect(this.master);
+    source.start(now); source.stop(now + duration + 0.025);
+    this._trackVoice(source, [filter, gain]);
+  }
+
+  monsterHit() {
+    if (!this._canPlay()) return;
+    const now = this.context.currentTime;
+    if (now - this._lastMonsterHit < 0.12) return;
+    this._lastMonsterHit = now;
+    // Stylized shell shatter and a low cartoon growl, with no gore/vocal sample.
+    this._thump(0.12, 145, 48, 0.18);
+    this._noiseBurst(0.065, 2200, 0.14, 0, 'bandpass');
+    this._noiseBurst(0.027, 3600, 0.08, 0.04, 'highpass');
+    this._monsterGrowl(0.065, 0.19, 0.012);
+  }
+
+  monsterCrash() {
+    if (!this._canPlay()) return;
+    const now = this.context.currentTime;
+    if (now - this._lastMonsterCrash < 0.22) return;
+    this._lastMonsterCrash = now;
+    // Heavy body/chassis contact, tumbling debris and one brief low roar.
+    this._thump(0.2, 93, 29, 0.2);
+    this._thump(0.065, 69, 33, 0.13, 0.045);
+    this._noiseBurst(0.12, 1250, 0.17);
+    this._noiseBurst(0.045, 2750, 0.1, 0.035, 'bandpass');
+    this._thump(0.026, 510, 190, 0.075, 0.025);
+    this._monsterGrowl(0.06, 0.17, 0.015);
   }
 
   result(won = true) {

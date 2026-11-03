@@ -30,7 +30,7 @@
   let camera={x:0,y:0},last=performance.now(),accumulator=0;
   let state=physics.getState(),shake=0,toastUntil=0,particles=[];
   let dustClock=0,flippedTime=0,hudClock=0,offscreenRecoveryClock=0,lowFuelWarned=false;
-  let markers=[],resultTimer=null;
+  let markers=[],resultTimer=null,gunKick=0,muzzleFlash=0,monsterWarned=false,lockAnnounced=false;
   const keys=new Set(),pointers=new Map(),STEP=1/120;
   const saveCampaign=()=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify(campaign));}catch(_){}};
   function updateBest(){const best=campaign.best[selectedStage];$('bestValue').textContent=best?`${fmtTime(best)} · Stage ${selectedStage+1}`:'Set the first clean time';}
@@ -51,7 +51,7 @@
   }
   function stageBrief(){
     const stage=stages[selectedStage];
-    setOverlay(stage.boss?'FINAL BOSS · IRON MAW':`STAGE ${String(selectedStage+1).padStart(2,'0')} / 10 · ${stage.name.toUpperCase()}`,stage.boss?'METAL.<br>ON METAL.':'FUEL UP.<br>ROLL OUT.',stage.boss?'Beat Iron Maw to the finish. Trade paint, keep your wheels down, and grab fuel before the tank runs dry.':`${stage.length} metres of infected wilderness. Knock zombies aside and collect fuel cans to keep your V8 alive.`,'Start your engine','↑ / W TO DRIVE · CANS REFILL +32%');
+    setOverlay(stage.boss?'FINAL BOSS · IRON MAW':`STAGE ${String(selectedStage+1).padStart(2,'0')} / 10 · ${stage.name.toUpperCase()}`,stage.boss?'METAL.<br>ON METAL.':'FUEL UP.<br>ROLL OUT.',stage.boss?'Beat Iron Maw and stop the track monster. You have one cannon charge: fire on a locked target before you crash.':`${stage.length} metres. One random monster. Save your single cannon charge and fire when the target locks.`,'Start your engine','↑ / W DRIVE · X / J FIRE · ONE CHARGE PER ROUND');
   }
   function syncStageUI(){
     const stage=stages[selectedStage];$('stageNumber').textContent=String(selectedStage+1).padStart(2,'0');$('stageName').textContent=stage.name.toUpperCase();
@@ -103,6 +103,7 @@
     if(!ready)begin();else{$('playButton').focus({preventScroll:true});document.querySelector('.game-shell').scrollIntoView({behavior:'smooth',block:'start'});}
   }
   function resetRunState(){
+    gunKick=0;muzzleFlash=0;monsterWarned=false;lockAnnounced=false;
     state=physics.getState();time=0;bestAir=0;checkpoint=0;recoveries=0;particles=[];shake=0;accumulator=0;flippedTime=0;offscreenRecoveryClock=0;lowFuelWarned=false;
     camera={x:state.x+width/scale*.21,y:0};audio.rpm=820;$('recoverButton').classList.remove('visible');$('toast').classList.remove('show');$('toast').textContent='';toastUntil=0;clearInput();
   }
@@ -134,9 +135,16 @@
     setOverlay(final?'ALL TEN STAGES CLEARED':`STAGE ${selectedStage+1} CLEARED${newBest?' · NEW BEST':''}`,final?'KING OF THE<br>WASTELAND.':'TRAIL.<br>SURVIVED.',`${fmtTime(time)} · ${state.cleared} zombies cleared · ${Math.ceil(state.fuel)}% fuel left.${final?' Iron Maw is behind you.':` Stage ${selectedStage+2} is unlocked.`}`,final?'Ride the campaign again':`Continue to stage ${String(selectedStage+2).padStart(2,'0')}`,final?'TEN STAGES. ONE SURVIVOR.':`${stages[Math.min(9,selectedStage+1)].name.toUpperCase()} IS WAITING`);
     $('pauseBackdrop').classList.add('visible');$('recoverButton').classList.remove('visible');syncPauseButton();updateHUD();
   }
+  function fireCannon(){
+    if(mode!=='playing')return;
+    if(physics.fire()){state=physics.getState();updateHUD();}
+    else if(state.ammo===0)showToast('CANNON EMPTY · ONE SHOT PER ROUND',1);
+  }
   function fail(reason){
     if(mode!=='playing')return;mode='failed';clearInput();resultAudio(false);
-    const fuel=reason==='fuel';setOverlay(fuel?'THE TANK RAN DRY':'IRON MAW TOOK THE FLAG',fuel?'EMPTY TANK.<br>TRY AGAIN.':'OUTRUN.<br>OUTMUSCLE.',fuel?'Keep moving and collect the amber fuel cans. A fresh retry restores your tank and the pickups.':'Iron Maw reached the finish first. Use your launch speed and physical bumps to take the lead.','Retry this stage',fuel?'FUEL DRAINS WHILE DRIVING · CANS REFILL +32%':'YOUR RIVAL HAS REAL SUSPENSION. SO DO YOU.');
+    const fuel=reason==='fuel',monster=reason==='monster';
+    if(monster)setOverlay('THE MONSTER STOPPED YOUR RUN','MONSTER.<br>TRUCK DOWN.','You hit the track monster alive. Retry for one fresh charge, then fire with X / J or the FIRE button when the target locks.','Retry this stage','ONE CHARGE · ONE MONSTER · MAKE IT COUNT');
+    else setOverlay(fuel?'THE TANK RAN DRY':'IRON MAW TOOK THE FLAG',fuel?'EMPTY TANK.<br>TRY AGAIN.':'OUTRUN.<br>OUTMUSCLE.',fuel?'Keep moving and collect the amber fuel cans. A fresh retry restores your tank and the pickups.':'Iron Maw reached the finish first. Use your launch speed and physical bumps to take the lead.','Retry this stage',fuel?'FUEL DRAINS WHILE DRIVING · CANS REFILL +32%':'YOUR RIVAL HAS REAL SUSPENSION. SO DO YOU.');
     $('pauseBackdrop').classList.add('visible');$('recoverButton').classList.remove('visible');syncPauseButton();updateHUD();
   }
   function toggleSound(){
@@ -145,16 +153,16 @@
   }
   async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else if(document.querySelector('.game-shell').requestFullscreen)await document.querySelector('.game-shell').requestFullscreen();else showToast('Fullscreen is unavailable in this browser');}catch(_){showToast('Fullscreen is unavailable in this preview');}}
   document.addEventListener('fullscreenchange',()=>{$('fullscreenButton').setAttribute('aria-label',document.fullscreenElement?'Exit fullscreen':'Enter fullscreen');resize();});
-  $('playButton').addEventListener('click',playAction);$('pauseButton').addEventListener('click',pause);$('restartButton').addEventListener('click',()=>restart());$('soundButton').addEventListener('click',toggleSound);$('fullscreenButton').addEventListener('click',fullscreen);$('recoverButton').addEventListener('click',recover);$('stagesButton').addEventListener('click',chooseStage);$('mapButton').addEventListener('click',chooseStage);
-  const controlCodes=new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD','Space','KeyR','KeyC','KeyP','KeyM','KeyF','Escape','Enter']);
+  $('playButton').addEventListener('click',playAction);$('pauseButton').addEventListener('click',pause);$('restartButton').addEventListener('click',()=>restart());$('soundButton').addEventListener('click',toggleSound);$('fullscreenButton').addEventListener('click',fullscreen);$('recoverButton').addEventListener('click',recover);$('stagesButton').addEventListener('click',chooseStage);$('mapButton').addEventListener('click',chooseStage);$('fireButton').addEventListener('click',fireCannon);
+  const controlCodes=new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD','Space','KeyR','KeyC','KeyP','KeyM','KeyF','KeyX','KeyJ','Escape','Enter']);
   window.addEventListener('keydown',e=>{
     if(e.ctrlKey||e.metaKey||e.altKey||!controlCodes.has(e.code))return;
-    if(e.target instanceof HTMLButtonElement&&(e.code==='Enter'||(e.code==='Space'&&mode!=='playing')))return;
-    e.preventDefault();if(!e.repeat){if(e.code==='KeyM')return toggleSound();if(e.code==='KeyF')return fullscreen();if(e.code==='KeyR')return restart();if(e.code==='KeyC')return recover();if(e.code==='KeyP'||e.code==='Escape')return pause();if(e.code==='Enter'&&mode!=='playing')return playAction();if((e.code==='ArrowUp'||e.code==='KeyW')&&mode==='ready')begin();}
+    if(e.target instanceof HTMLButtonElement&&(e.code==='Enter'||(e.code==='Space'&&(mode!=='playing'||e.target.id==='fireButton'))))return;
+    e.preventDefault();if(!e.repeat){if(e.code==='KeyM')return toggleSound();if(e.code==='KeyF')return fullscreen();if(e.code==='KeyX'||e.code==='KeyJ')return fireCannon();if(e.code==='KeyR')return restart();if(e.code==='KeyC')return recover();if(e.code==='KeyP'||e.code==='Escape')return pause();if(e.code==='Enter'&&mode!=='playing')return playAction();if((e.code==='ArrowUp'||e.code==='KeyW')&&mode==='ready')begin();}
     if(mode==='playing')keys.add(e.code);
   });
   window.addEventListener('keyup',e=>keys.delete(e.code));
-  document.querySelectorAll('.pedal').forEach(button=>{
+  document.querySelectorAll('.pedal[data-input]').forEach(button=>{
     button.addEventListener('pointerdown',e=>{e.preventDefault();if(mode!=='playing')return;button.setPointerCapture(e.pointerId);pointers.set(e.pointerId,button.dataset.input);button.classList.add('pressed');});
     for(const event of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(event,e=>{pointers.delete(e.pointerId);button.classList.remove('pressed');});button.addEventListener('contextmenu',e=>e.preventDefault());
   });
@@ -170,8 +178,13 @@
       if(event.type==='land'){bestAir=Math.max(bestAir,event.airtime||0);audio.landing(event.strength);shake=Math.max(shake,event.strength*5);for(const wheel of state.wheels)addDust(wheel.x,wheel.y-.63,10,event.strength+.5);}
       if(event.type==='fuel'){audio.pickup();lowFuelWarned=false;showToast(`FUEL CAN · +${Math.round(event.amount??32)}%`,1.1);addDust(event.x,event.y,9,.7,'#e6c57c');}
       if(event.type==='zombie'){audio.zombieHit(event.strength);addDust(event.x,event.y,7,.65,'#99b879');}
+      if(event.type==='shot'){audio.gunshot();gunKick=1;muzzleFlash=.085;showToast('CANNON FIRED · CHARGE SPENT',.8);}
+      if(event.type==='monsterHit'){audio.monsterHit();shake=Math.max(shake,4);showToast('MONSTER CLEARED · KEEP ROLLING',2);addDust(event.x,event.y,30,2,'#a3ba8a');}
+      if(event.type==='monsterCrash'){audio.monsterCrash();shake=11;addDust(state.x,state.y,25,1.7,'#d2b77f');}
       if(event.type==='collision'){audio.collision(event.strength);shake=Math.max(shake,event.strength*7);addDust(event.x||state.x,event.y||state.y,10,event.strength,'#d0b77d');}
     }
+    if(state.monster.alive&&state.weapon.distance>0&&state.weapon.distance<70&&!monsterWarned){monsterWarned=true;showToast('MONSTER AHEAD · SAVE YOUR ONE SHOT',1.8);}
+    if(state.weapon.canHit&&state.ammo>0&&!lockAnnounced){lockAnnounced=true;showToast('TARGET LOCKED · X / J OR TAP FIRE',1.5);}
     if(physics.checkpointIndex>checkpoint){checkpoint=physics.checkpointIndex;showToast(`CHECKPOINT ${checkpoint} · RECOVERY SAVED`,1.7);}
     if(state.fuel<23&&!lowFuelWarned){showToast('LOW FUEL · FIND AN AMBER CAN',2);lowFuelWarned=true;}
     dustClock+=dt;if(dustClock>.035&&state.grounded&&Math.abs(state.speed)>1){dustClock=0;for(const wheel of state.wheels)addDust(wheel.x,wheel.y-.65,1,Math.min(1.5,Math.abs(state.speed)/12));}
@@ -185,6 +198,12 @@
   }
   function updateHUD(){
     $('bossHud').hidden=!state.rival||mode!=='playing';
+    $('weaponHud').hidden=mode!=='playing';
+    $('ammoValue').textContent=`${state.ammo} / 1`;$('fireButton').disabled=mode!=='playing'||state.ammo===0;
+    $('fireButton').setAttribute('aria-label',state.ammo?'Fire cannon, one charge available':'Cannon empty');
+    $('weaponHud').classList.toggle('locked',state.weapon.canHit&&state.ammo>0);$('weaponHud').classList.toggle('spent',state.ammo===0);$('weaponHud').classList.toggle('warning',state.monster.alive&&state.weapon.distance<70&&!state.weapon.canHit);
+    $('weaponStatus').textContent=!state.monster.alive?'MONSTER CLEARED':state.projectile?'SHOT IN FLIGHT':state.ammo===0?'CHARGE SPENT · DANGER':state.weapon.canHit?'TARGET LOCKED · FIRE':'SAVE YOUR ONE SHOT';
+    $('monsterDistance').textContent=!state.monster.alive?'PATH OPEN':`${Math.max(0,Math.ceil(state.weapon.distance))} M TO MONSTER`;
     $('timeValue').textContent=fmtTime(time);$('airValue').innerHTML=`${bestAir.toFixed(2)} <small>s</small>`;$('speedValue').textContent=String(Math.round(Math.abs(state.speed)*3.6)).padStart(2,'0');$('gearValue').textContent=mode==='ready'?'N':audio.gear;
     const distance=clamp(state.x-physics.track.startX,0,physics.track.length),won=mode==='cleared'||mode==='victory';
     $('distanceValue').textContent=won?physics.track.length:Math.floor(distance);$('progressFill').style.width=`${won?100:distance/physics.track.length*100}%`;markers.forEach((m,i)=>m.classList.toggle('passed',checkpoint>i));
@@ -387,6 +406,77 @@
     path(right?[[px,py],[px-10,py-7],[px-10,py+7]]:[[px,py],[px+10,py-7],[px+10,py+7]],'#a8543c');
     ctx.fillStyle='#6d4934';ctx.font='bold 9px monospace';ctx.textAlign=right?'right':'left';ctx.fillText('IRON MAW',right?px-17:px+17,py+3);
   }
+  function drawMountedCannon(){
+    const weapon=state.weapon,mount=weapon.mount,muzzle=weapon.muzzle;
+    if(!mount||!muzzle)return;
+    const x=sx(mount.x),y=sy(mount.y),s=scale;
+    ctx.save();ctx.translate(x,y);ctx.rotate(-state.angle);ctx.fillStyle='#3c5141';ctx.fillRect(-s*.35,-s*.04,s*.7,s*.2);ctx.restore();
+    ctx.save();ctx.translate(x,y);ctx.rotate(-weapon.angle);ctx.scale(s,s);
+    const recoil=gunKick*.14;
+    circle(0,0,.25,'#455e47');circle(0,0,.15,'#758768');
+    path([[-.29-recoil,-.19],[.53-recoil,-.19],[.65-recoil,.16],[-.24-recoil,.16]],'#334c3d','#a6b884',.025);
+    path([[.41-recoil,-.105],[1.43-recoil,-.105],[1.43-recoil,.105],[.41-recoil,.105]],'#58705a','#263f34',.025);
+    path([[1.19-recoil,-.15],[1.45-recoil,-.15],[1.45-recoil,.15],[1.19-recoil,.15]],'#2b4437');
+    line([.8-recoil,-.1],[.8-recoil,.1],'#a9b98b',.06);
+    path([[-.05,-.19],[.1,-.32],[.22,-.32],[.22,-.18]],'#2b4437');
+    circle(-.12,-.04,.065,state.ammo?'#e0ed89':'#6f7766');
+    ctx.restore();
+    if(muzzleFlash>0){
+      ctx.save();ctx.translate(sx(muzzle.x),sy(muzzle.y));ctx.rotate(-weapon.angle);ctx.globalAlpha=muzzleFlash/.085;
+      path([[0,-s*.11],[s*.45,-s*.23],[s*.32,-s*.06],[s*.75,0],[s*.3,s*.09],[s*.45,s*.22],[0,s*.12]],'#f0dd92');
+      circle(0,0,s*.14,'#fff0bb');ctx.restore();
+    }
+  }
+  function drawCannonProjectile(){
+    const p=state.projectile;if(!p)return;
+    const x=sx(p.x),y=sy(p.y),px=sx(p.prevX??p.x),py=sy(p.prevY??p.y);
+    ctx.save();ctx.shadowColor='#f4df99';ctx.shadowBlur=10;
+    line([px,py],[x,y],'#e6c96c',Math.max(2,scale*.07));circle(x,y,Math.max(2,scale*.08),'#fff0b2');ctx.restore();
+  }
+  function drawTrackMonster(){
+    const m=state.monster;if(!m)return;
+    const t=m.timeSinceHit||0;if(!m.alive&&t>1.25)return;
+    const x=sx(m.x),y=sy(m.y);if(x<-220||x>width+220)return;
+    ctx.save();ctx.translate(x,y);ctx.scale(scale,-scale);
+    if(!m.alive){ctx.globalAlpha=clamp(1-t/1.25,0,1);ctx.rotate(-Math.min(1.3,t*1.7));}
+    // A hulking silhouette and amber core distinguish this one-shot encounter
+    // from the smaller shambling zombies. The physics shape stays 3×4.8 m.
+    path([[-1.4,0],[-1.4,.35],[-1.02,.65],[-.55,.58],[-.48,.1]],'#354c42','#233e35',.035);
+    path([[.48,.1],[.55,.58],[1.02,.65],[1.4,.35],[1.4,0]],'#354c42','#233e35',.035);
+    path([[-1.05,.45],[-.94,1.65],[-.48,1.7],[-.32,.43]],'#526b54');
+    path([[.32,.43],[.48,1.7],[.94,1.65],[1.05,.45]],'#526b54');
+    path([[-.94,1.4],[-1.22,2.45],[-1.2,3.45],[-.83,3.91],[.83,3.91],[1.2,3.45],[1.22,2.45],[.94,1.4],[.16,1.25]],'#657b5c','#2f4d3b',.05);
+    path([[-1.15,3.45],[-1.62,3.02],[-1.75,2.03],[-1.28,1.75],[-.98,2.78]],'#435e49','#2c4938',.035);
+    path([[1.15,3.45],[1.62,3.02],[1.75,2.03],[1.28,1.75],[.98,2.78]],'#435e49','#2c4938',.035);
+    for(const side of [-1,1])for(let i=0;i<3;i++)path([[side*(1.42+i*.11),2.04],[side*(1.37+i*.11),1.67],[side*(1.52+i*.1),1.8]],'#d2cf9d');
+    path([[-.72,3.52],[-.83,4.02],[-.57,4.43],[.57,4.43],[.83,4.02],[.72,3.52],[.14,3.35]],'#79916a','#2f4d3b',.04);
+    path([[-.66,4.27],[-.92,4.8],[-.36,4.45]],'#d7cfa0','#586749',.035);
+    path([[.36,4.45],[.92,4.8],[.66,4.27]],'#d7cfa0','#586749',.035);
+    path([[-.61,4.12],[-.12,4.01],[-.19,3.84],[-.55,3.9]],'#253f35');
+    path([[.12,4.01],[.61,4.12],[.55,3.9],[.19,3.84]],'#253f35');
+    line([-.49,3.98],[-.24,3.94],'#f1ca78',.075);line([.24,3.94],[.49,3.98],'#f1ca78',.075);
+    line([-.31,3.62],[.31,3.62],'#304734',.09);
+    for(const side of [-1,1])path([[side*.24,3.68],[side*.17,3.85],[side*.12,3.64]],'#ddd7aa');
+    path([[-.95,3.42],[-.3,3.2],[0,3.4],[.3,3.2],[.95,3.42],[.63,2.93],[-.63,2.93]],'#425b48');
+    line([-.72,2.3],[.72,2.3],'#879879',.07);line([-.56,1.82],[.56,1.82],'#3f5742',.08);
+    const coreY=(m.weakpoint?.y??m.y+2.85)-m.y;
+    circle(0,coreY,.4,'#293f35');circle(0,coreY,.29,'#cda960');circle(0,coreY,.14,'#eddda0');
+    ctx.restore();
+    if(m.alive){
+      const target=m.weakpoint||{x:m.x,y:m.y+2.85},tx=sx(target.x),ty=sy(target.y),r=scale*.54;
+      ctx.save();ctx.strokeStyle=state.weapon.canHit?'#e4f493':'#e5c687';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.arc(tx,ty,r,0,Math.PI*2);ctx.stroke();
+      for(const angle of [0,Math.PI/2,Math.PI,Math.PI*1.5])line([tx+Math.cos(angle)*r*.78,ty+Math.sin(angle)*r*.78],[tx+Math.cos(angle)*r*1.3,ty+Math.sin(angle)*r*1.3],ctx.strokeStyle,1.5);
+      ctx.font=`bold ${Math.max(8,scale*.2)}px monospace`;ctx.textAlign='center';ctx.fillStyle='#3f573d';ctx.fillText('ONE SHOT · MAKE IT COUNT',x,y-scale*5.15);ctx.restore();
+    }
+  }
+  function drawMonsterIndicator(){
+    const m=state.monster;if(!m.alive||mode!=='playing')return;
+    const x=sx(m.x);if(x<width-25)return;
+    const px=width-18,py=height*.55;
+    path([[px,py],[px-10,py-7],[px-10,py+7]],'#b27c4a');
+    ctx.fillStyle='#6b5835';ctx.font='bold 9px monospace';ctx.textAlign='right';ctx.fillText(`MONSTER · ${Math.ceil(state.weapon.distance)} M`,px-17,py+3);
+  }
   function drawParticles(dt) {
     for(let i=particles.length-1;i>=0;i--){const p=particles[i];if(mode==='playing'){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy-=dt*.7;p.life-=dt;p.r+=dt*.12;}if(p.life<=0){particles.splice(i,1);continue;}ctx.globalAlpha=clamp(p.life*.4,0,.35);circle(sx(p.x),sy(p.y),p.r*scale,p.color||'#d0ce96');}ctx.globalAlpha=1;
   }
@@ -397,7 +487,7 @@
     const targetX=state.x+width/scale*.21+clamp(state.speed*.12,-1.8,2.5);
     camera.x=lerp(camera.x,targetX,1-Math.exp(-dt*4));camera.y=lerp(camera.y,Math.max(0,state.y-2.9),1-Math.exp(-dt*3));
     ctx.save();if(shake>.05){ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=Math.exp(-dt*14);}
-    drawBackground();drawDecor();drawTerrain();drawFuelCans(nowForScene());drawZombies();if(state.rival)drawTruck(state.rival,true);drawTruck();drawParticles(dt);drawRivalIndicator();ctx.restore();
+    drawBackground();drawDecor();drawTerrain();drawFuelCans(nowForScene());drawZombies();drawTrackMonster();if(state.rival)drawTruck(state.rival,true);drawTruck();drawMountedCannon();drawCannonProjectile();drawParticles(dt);drawRivalIndicator();drawMonsterIndicator();ctx.restore();
   }
   function frame(now) {
     const dt=clamp((now-last)/1000,0,.05);last=now;
@@ -407,6 +497,7 @@
       if(accumulator<0)accumulator=0;
       if(mode==='playing')audio.update({...state,throttle:input().throttle},dt);
     } else accumulator=0;
+    gunKick*=Math.exp(-dt*17);muzzleFlash=Math.max(0,muzzleFlash-dt);
     render(dt);hudClock+=dt;if(hudClock>.05){updateHUD();hudClock=0;}
     if(toastUntil&&now>toastUntil){$('toast').classList.remove('show');toastUntil=0;}
     requestAnimationFrame(frame);

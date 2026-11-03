@@ -7,6 +7,8 @@ import argparse
 p=argparse.ArgumentParser()
 p.add_argument('--stage',type=int,default=10,choices=range(1,11))
 p.add_argument('--fuel',type=float,default=100)
+p.add_argument('--monster-roll',type=float,help='Seed monster placement for repeatable cannon QA')
+p.add_argument('--approach-monster',type=float,default=0,help='QA-only initial distance before monster')
 p.add_argument('--rival-lead',type=float,default=0,help='QA-only initial lead for testing race loss')
 p.add_argument('--output',default='boss-preview.html')
 args=p.parse_args()
@@ -19,6 +21,17 @@ if args.rival_lead:
     setup=f'''let physics = new TruckPhysics(selectedStage); physics.fuel={max(0,min(100,args.fuel))};'''
     moved=setup+f''' if(physics.rival){{const targetX=physics.track.startX+{args.rival_lead};const dx=targetX-physics.rival.chassis.getPosition().x;const dy=physics._heightAt(targetX)-physics._heightAt(physics.rival.chassis.getPosition().x);for(const body of [physics.rival.chassis,...physics.rival.wheels]){{const pos=body.getPosition();body.setTransform(planck.Vec2(pos.x+dx,pos.y+dy),0);}}}}'''
     html=html.replace(setup,moved)
+if args.monster_roll is not None:
+    roll=max(0,min(.999999,args.monster_roll))
+    html=html.replace('new TruckPhysics(selectedStage);',f'new TruckPhysics(selectedStage,{{random:()=>{roll}}});')
+if args.approach_monster:
+    initial='let physics = new TruckPhysics(selectedStage'
+    begin=html.index(initial)
+    stop=html.index('let mode=',begin)
+    setup=html[begin:stop]
+    moved=setup+f'''const qaTargetX=physics.monster.x-{args.approach_monster};const qaDX=qaTargetX-physics.chassis.getPosition().x;const qaDY=physics._heightAt(qaTargetX)+1.43-physics.chassis.getPosition().y;for(const body of [physics.chassis,...physics.wheels]){{const p=body.getPosition();body.setTransform(planck.Vec2(p.x+qaDX,p.y+qaDY),0);}}
+  '''
+    html=html[:begin]+moved+html[stop:]
 output=root/'tests'/Path(args.output).name
 output.write_text(html)
 print(output)

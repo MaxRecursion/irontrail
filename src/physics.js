@@ -20,9 +20,10 @@
   class TruckPhysics {
     static get STAGES() { return STAGES; }
 
-    constructor(stageIndex = 0) {
+    constructor(stageIndex = 0, options = {}) {
       this.stageIndex = clamp(Math.floor(Number(stageIndex) || 0), 0, STAGES.length - 1);
       this.stage = STAGES[this.stageIndex];
+      this.random = typeof options.random === 'function' ? options.random : Math.random;
       this.track = this._makeTrack();
       this.restart();
     }
@@ -92,6 +93,86 @@
       return clamp(x, segment[0].x + margin, segment[segment.length - 1].x - margin);
     }
 
+    _createMonster() {
+      const candidates = [];
+      for (let x = this.track.startX + 65; x <= this.track.finishX - 38; x += 1) {
+        const segment = this._segmentAt(x);
+        if (!segment || x - segment[0].x < 12 || segment[segment.length - 1].x - x < 12) continue;
+        if (this.track.checkpoints.some(cp => Math.abs(cp.x - x) < 14)) continue;
+        if (Math.abs(this._heightAt(x + 2) - this._heightAt(x - 2)) / 4 > 0.055) continue;
+        candidates.push(x);
+      }
+      // Every authored stage has several flat valleys/plateaus in this range.
+      if (!candidates.length) throw new Error('The stage needs a safe monster spawn zone.');
+      const sample = Number(this.random()), roll = Number.isFinite(sample) ? clamp(sample, 0, 0.999999999) : 0.5;
+      const x = candidates[Math.floor(roll * candidates.length)], y = this._heightAt(x);
+      const monster = { x, y, width: 3, height: 4.8, weakpoint: { x, y: y + 2.85 }, alive: true, hit: false, timeSinceHit: 0 };
+      monster.body = this.world.createBody({ position: V(x, y + monster.height / 2) });
+      monster.body.setUserData({ type: 'monster', entity: monster });
+      monster.body.createFixture(new P.Box(monster.width / 2, monster.height / 2), {
+        friction: 0.8, restitution: 0.05, filterCategoryBits: 16, filterMaskBits: 2
+      });
+      return monster;
+    }
+
+    _rayHit(from, to) {
+      let nearest = null;
+      this.world.rayCast(V(from.x, from.y), V(to.x, to.y), (fixture, point, normal, fraction) => {
+        const type = fixture.getBody().getUserData()?.type;
+        if (type !== 'ground' && type !== 'monster') return -1;
+        if (!nearest || fraction < nearest.fraction) nearest = { type, fixture, x: point.x, y: point.y, fraction };
+        return fraction;
+      });
+      return nearest;
+    }
+
+    _weaponState() {
+      const mount = this.chassis.getWorldPoint(V(0.2, 1.4));
+      const target = this.monster.weakpoint, dx = target.x - mount.x, dy = target.y - mount.y;
+      const aimAngle = Math.atan2(dy, dx), aimDistance = Math.hypot(dx, dy) - 1.45;
+      const aimedMuzzle = { x: mount.x + Math.cos(aimAngle) * 1.45, y: mount.y + Math.sin(aimAngle) * 1.45 };
+      const inRange = this.monster.alive && dx > 0 && aimDistance <= 45;
+      const sight = inRange ? this._rayHit(aimedMuzzle, target) : null;
+      const clear = inRange && sight?.type === 'monster';
+      const angle = clear ? aimAngle : this.chassis.getAngle();
+      const muzzle = { x: mount.x + Math.cos(angle) * 1.45, y: mount.y + Math.sin(angle) * 1.45 };
+      return { mount: { x: mount.x, y: mount.y }, muzzle, target: { ...target }, angle, range: 45,
+        canHit: !!(clear && this.ammo > 0 && !this.failed && !this.winner),
+        distance: Math.max(0, aimDistance) };
+    }
+
+    fire() {
+      if (this.failed || this.winner || this.ammo <= 0) return false;
+      const weapon = this._weaponState();
+      this.ammo = 0;
+      this.projectile = { x: weapon.muzzle.x, y: weapon.muzzle.y, prevX: weapon.muzzle.x, prevY: weapon.muzzle.y,
+        angle: weapon.angle, speed: 75, remaining: weapon.range, life: weapon.range / 75 };
+      this.events.push({ type: 'shot', x: weapon.muzzle.x, y: weapon.muzzle.y, angle: weapon.angle });
+      return true;
+    }
+
+    _advanceProjectile(dt) {
+      if (!this.projectile) return;
+      const bullet = this.projectile, distance = Math.min(bullet.remaining, bullet.speed * dt);
+      const next = { x: bullet.x + Math.cos(bullet.angle) * distance, y: bullet.y + Math.sin(bullet.angle) * distance };
+      const hit = this._rayHit(bullet, next);
+      bullet.prevX = bullet.x; bullet.prevY = bullet.y;
+      bullet.x = hit ? hit.x : next.x; bullet.y = hit ? hit.y : next.y;
+      bullet.remaining -= distance; bullet.life = Math.max(0, bullet.remaining / bullet.speed);
+      if (hit?.type === 'monster' && this.monster.alive) {
+        this.monster.alive = false; this.monster.hit = true; this.monster.timeSinceHit = 0;
+        this.monster.body.setActive(false);
+        this.events.push({ type: 'monsterHit', x: this.monster.x, y: this.monster.weakpoint.y, strength: 1 });
+      }
+      if (hit || bullet.remaining <= 0.000001) this.projectile = null;
+    }
+
+    _failMonster() {
+      if (this.failed || this.winner) return;
+      this.failed = 'monster'; this.finished = false;
+      this.events.push({ type: 'monsterCrash', x: this.monster.x, y: this.monster.y + 2.4, strength: 1 });
+    }
+
     restart() {
       this.world = new P.World({ gravity: V(0, -14), allowSleep: true });
       this.ground = this.world.createBody();
@@ -102,6 +183,7 @@
       this.ground.createFixture(new P.Edge(V(-35, -4), V(-35, 12)), { friction: 0.6 });
       this.events = []; this._pendingHits = new Set(); this._pendingCollision = 0;
       this._lastCollisionTime = -100; this._elapsed = 0;
+      this._pendingMonsterCrash = false; this.ammo = 1; this.projectile = null;
       this.fuel = 100; this.failed = null; this.winner = null; this.finished = false; this.cleared = 0;
       this.checkpointIndex = 0;
       this._spawnPlayer(0);
@@ -123,10 +205,13 @@
         const safeX = this._safeEntityX(x, 10);
         this.fuelCans.push({ id: i, x: safeX, y: this._heightAt(safeX) + 1.3, collected: false });
       }
+      this.monster = this._createMonster();
       this.world.on('begin-contact', contact => {
         const a = contact.getFixtureA().getBody().getUserData(), b = contact.getFixtureB().getBody().getUserData();
         if (a?.type === 'zombie' && b?.type === 'vehicle' && a.entity.alive) this._pendingHits.add(a.entity);
         if (b?.type === 'zombie' && a?.type === 'vehicle' && b.entity.alive) this._pendingHits.add(b.entity);
+        if ((a?.type === 'monster' && b?.type === 'vehicle' && b.owner === 'player') ||
+            (b?.type === 'monster' && a?.type === 'vehicle' && a.owner === 'player')) this._pendingMonsterCrash = true;
       });
       this.world.on('post-solve', (contact, impulse) => {
         const a = contact.getFixtureA().getBody().getUserData(), b = contact.getFixtureB().getBody().getUserData();
@@ -141,7 +226,7 @@
       const spawn = V(x, this._heightAt(x) + 1.43), rival = owner === 'rival';
       const chassis = this.world.createDynamicBody({ position: spawn, linearDamping: 0.045, angularDamping: 0.65, bullet: true });
       const filter = { filterGroupIndex: rival ? -2 : -1, filterCategoryBits: rival ? 4 : 2,
-        filterMaskBits: 1 | 2 | 4 | 8, friction: 0.5, restitution: 0.045 };
+        filterMaskBits: 1 | 2 | 4 | 8 | (rival ? 0 : 16), friction: 0.5, restitution: 0.045 };
       chassis.setUserData({ type: 'vehicle', owner, part: 'chassis' });
       chassis.createFixture(new P.Polygon([V(-2.1, -0.32), V(2.1, -0.32), V(2.1, 0.23), V(1.7, 0.45), V(-1.8, 0.45), V(-2.1, 0.25)]), { ...filter, density: 3.5 });
       chassis.createFixture(new P.Polygon([V(-1, 0.4), V(1.12, 0.4), V(0.55, 1.22), V(-0.76, 1.22)]), { ...filter, density: 0.65 });
@@ -176,7 +261,9 @@
       if (this.failed || this.winner) return false;
       this.fuel = Math.max(0, this.fuel - 12);
       if (this.fuel <= 0) { this._failFuel(); return false; }
-      this._spawnPlayer(checkpointIndex);
+      let safeIndex = clamp(Math.floor(Number(checkpointIndex) || 0), 0, this.track.checkpoints.length - 1);
+      while (safeIndex > 0 && this.monster.alive && this.track.checkpoints[safeIndex].x + 13.5 >= this.monster.x) safeIndex--;
+      this._spawnPlayer(safeIndex);
       return true;
     }
 
@@ -225,6 +312,9 @@
     step(dt, input = {}) {
       dt = clamp(Number(dt) || 0, 0, 1 / 30);
       if (!dt || this.failed || this.winner) return;
+      if (input.fire) this.fire();
+      this._advanceProjectile(dt);
+      if (this.monster.hit) this.monster.timeSinceHit += dt;
       const throttle = clamp(Number(input.throttle) || 0, -1, 1), lean = clamp(Number(input.lean) || 0, -1, 1);
       const beforeX = this.chassis.getPosition().x, vyBefore = this.chassis.getLinearVelocity().y;
       this._drive(this.player, throttle, !!input.brake, lean);
@@ -247,6 +337,11 @@
       }
       this.world.step(dt, 8, 3);
       this._elapsed += dt;
+      // A physical touch is lethal. The crossing gate additionally rejects
+      // jumping over a living monster or teleporting beyond it via a checkpoint.
+      if (this.monster.alive && (this._pendingMonsterCrash || this.chassis.getPosition().x >= this.monster.x - this.monster.width / 2)) {
+        this._failMonster(); return;
+      }
       this._updateFlight(this.player, dt, vyBefore, true);
       this.grounded = this.player.grounded; this.airtime = this.player.airtime;
       if (this.rival) this._updateFlight(this.rival, dt, rivalVy, false);
@@ -280,9 +375,12 @@
         can.collected = true; const amount = Math.min(32, 100 - this.fuel); this.fuel += amount;
         this.events.push({ type: 'fuel', x: can.x, y: can.y, amount });
       }
-      for (let i = this.checkpointIndex + 1; i < this.track.checkpoints.length; i++) if (p.x >= this.track.checkpoints[i].x && p.y > -3) this.checkpointIndex = i;
+      for (let i = this.checkpointIndex + 1; i < this.track.checkpoints.length; i++) {
+        const cp = this.track.checkpoints[i];
+        if (p.x >= cp.x && p.y > -3 && (!this.monster.alive || cp.x + 13.5 < this.monster.x)) this.checkpointIndex = i;
+      }
       if (this.fuel <= 0) { this._failFuel(); return; }
-      const playerCrossed = p.x >= this.track.finishX && p.y > -3;
+      const playerCrossed = p.x >= this.track.finishX && p.y > -3 && !this.monster.alive;
       const rivalPos = this.rival?.chassis.getPosition();
       const rivalCrossed = !!rivalPos && rivalPos.x >= this.track.finishX && rivalPos.y > -3;
       if (playerCrossed || rivalCrossed) {
@@ -306,7 +404,11 @@
     getState() {
       const rival = this.rival ? this._snapshot(this.rival) : null, player = this._snapshot(this.player);
       return { ...player, fuel: this.fuel, cleared: this.cleared, totalZombies: this.zombies.length,
-        rival, racePosition: rival && rival.x > player.x ? 2 : 1 };
+        rival, racePosition: rival && rival.x > player.x ? 2 : 1,
+        ammo: this.ammo,
+        monster: { x: this.monster.x, y: this.monster.y, width: this.monster.width, height: this.monster.height,
+          weakpoint: { ...this.monster.weakpoint }, alive: this.monster.alive, hit: this.monster.hit, timeSinceHit: this.monster.timeSinceHit },
+        projectile: this.projectile ? { ...this.projectile } : null, weapon: this._weaponState() };
     }
 
     drainEvents() { return this.events.splice(0); }

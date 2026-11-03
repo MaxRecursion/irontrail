@@ -15,6 +15,9 @@
     ['pickup', audio => audio.pickup()],
     ['zombieHit', audio => audio.zombieHit(1)],
     ['collision', audio => audio.collision(1)],
+    ['gunshot', audio => audio.gunshot()],
+    ['monsterHit', audio => audio.monsterHit()],
+    ['monsterCrash', audio => audio.monsterCrash()],
     ['resultWin', audio => audio.result(true)],
     ['resultLose', audio => audio.result(false)]
   ];
@@ -63,7 +66,7 @@
     for (const [, call] of eventCalls) call(locked);
     locked.setPaused(true); locked.setMuted(true);
     assert(locked._voices.size === 0 && locked.context === null, 'Pre-unlock events created audio resources');
-    passes.push('PASS · Existing and campaign APIs are safe before unlock.');
+    passes.push('PASS · Driving, campaign, shotgun, and monster APIs are safe before unlock.');
 
     const engine = createAudio();
     engine.update({ speed: 18, wheelSpeed: 25, throttle: 1, grounded: true, airtime: 0 }, 1 / 60);
@@ -84,8 +87,8 @@
       call(allEffects);
     }
     reports.combined = stats(await render(allEffects));
-    finiteAndComfortable(reports.combined, 'Combined campaign effects');
-    passes.push('PASS · Fuel, zombie, collision, win, and loss cues are audible; stacked impacts stay finite and below clipping.');
+    finiteAndComfortable(reports.combined, 'Combined gameplay effects');
+    passes.push('PASS · Fuel, zombie, collision, shotgun, monster-hit/crash, win, and loss cues are audible; stacked effects stay finite and below clipping.');
     passes.push('PASS · Same-frame repeated event callbacks are suppressed.');
 
     for (const flag of ['muted', 'paused']) {
@@ -101,9 +104,10 @@
 
     const interrupted = createAudio({ effectsOnly: true });
     interrupted.result(true); interrupted.pickup(); interrupted.collision(1);
+    interrupted.gunshot(); interrupted.monsterHit(); interrupted.monsterCrash();
     assert(interrupted._voices.size > 0, 'Interruption test did not schedule voices');
     interrupted.setPaused(true);
-    interrupted.zombieHit(1);
+    interrupted.zombieHit(1); interrupted.gunshot(); interrupted.monsterHit(); interrupted.monsterCrash();
     // Resume immediately: previously scheduled tones must still end at the
     // pause cutoff, rather than resurfacing when the master gate reopens.
     interrupted.setPaused(false);

@@ -105,7 +105,7 @@ User request: add zombies on the track, continuously depleting fuel with periodi
 6. [x] Implement stage retry, fuel failure, boss loss, next-stage and campaign victory.
 7. [x] Validate all ten stages, pickups/depletion, recovery, same-vehicle filtering/cross-vehicle impacts and race outcomes; inspect browser desktop/mobile and audio.
 8. [x] Update README/HANDOFF with exact new controls, architecture and checks.
-9. [ ] Rebuild and republish the same private URL; return updated HTML and handoff.
+9. [x] Rebuild and republish the same private URL; return updated HTML and handoff.
 
 ## Continuation note
 
@@ -120,3 +120,47 @@ This expansion supersedes the original single-course scope. Keep historical veri
 - Phone viewport390×844: touch throttle works, fuel drops from100to93, pause keeps time/fuel fixed, campaign scroll and HUD fit. Fullscreen styles avoid resource/pedal overlap; real devices remain untested.
 - Audio checks: engine and every new cue audible/finite/belowclipping; stacked events safe; mute/pause producezero; canceled eventtails do not reappear onresume. Inspected gameplay console hasnoerrors/warnings.
 - Final build containsfourinline scripts, uniqueUI IDs, noexternalassetdependencies andidentical index/distHTML.
+
+## Expansion delivery
+
+Private deployment succeeded on 2 November 2026 at the existing URL: https://irontrail-monster-rally.mellowdew4.chatgpt.site . All expansion milestones are complete. Published source: b3b6a5aae6656e88b59d6d3dc28043a916e7ae8e. Deployment: appgdep_6ae8c91c083c8191a78f334aaaefd820. Local final notes record the completed delivery; gameplay sources and both generated HTML files match the published release.
+
+# Weapon encounter plan — one charge, one monster
+
+User request: mount a gun on the monster truck with exactly one shot per round. Place one monster randomly on the track. The player must fire to clear it; hitting it alive ends the run.
+
+## Decisions
+
+- A round means one stage attempt. Each new stage/full retry starts with one charge and one newly randomized large monster. Checkpoint recovery does not restore ammunition or reroll/resurrect the monster.
+- Keep the existing zombies, ten stages, fuel loop and final rival race. The new large monster is a distinct, mandatory encounter on every stage.
+- Mount an auto-aiming forward cannon on the truck. Press X or J, or tap/click the dedicated FIRE button. One press consumes the charge, even if the shot misses or is fired too early. Holding a key/button never reloads it.
+- A 45 m aim window and visible distance/lock indicator give fair notice on phones. A projectile traces its actual path against the physics world; terrain can block the shot. An impact clears the monster with a brief cartoon effect.
+- Spawn the monster at one of many safe interior track positions, away from gaps, spawn, finish and checkpoint pads. It remains stationary for that attempt. Tests inject a seeded random source; production uses Math.random.
+- A living monster physically collides with the player and causes immediate game over. Crossing past it alive also fails, preventing jump/recovery skips. Iron Maw cannot clear the player's target or shoot the player's charge.
+- Add explicit ammo/target HUD, aiming/recoil/shot trail/monster artwork, gunshot/hit/crash sounds, and a monster-crash retry explanation. Preserve the single offline HTML contract.
+
+## Ownership / APIs
+
+- `src/physics.js`: optional constructor RNG, one monster, one charge, fire/projectile/raycast collision, mandatory encounter/failure, recovery invariants. `getState()` adds ammo, monster, projectile, weapon {muzzle,angle,range,canHit,distance}. New events: shot, monsterHit, monsterCrash. Failure: monster.
+- `src/game.js`: X/J and FIRE event wiring, encounter HUD and warnings, mounted cannon and monster/projectile rendering, failure/clear effects, campaign integration.
+- `src/shell.html`: ammo/target/FIRE controls and responsive layout. Keep old control IDs.
+- `src/audio.js`: gunshot, monsterHit, monsterCrash cues and signal checks.
+
+## Checklist
+
+1. [x] Reopen the same Site and record this plan before integration.
+2. [x] Implement/test random encounter, one-shot projectile, crash and recovery rules.
+3. [x] Add gun/monster rendering, ammo/lock HUD, keyboard/touch controls and failure flow.
+4. [x] Add/test gunshot, monster hit and crash audio.
+5. [x] Test hit, early miss, empty charge, crash, recovery/retry, all ten stages and browser desktop/phone controls.
+6. [ ] Update README/HANDOFF, rebuild portable HTML and republish the existing private URL.
+
+## Weapon validation results
+
+- Source syntax, bundle checks and physics smoke pass. All ten stages still complete at 60 and 120 Hz when the one shot is fired on a valid lock.
+- A further 100 simulated runs cover ten stages, five random placements and both rates. Monster position varies safely; the worst first clear firing line opened at 37.9 m, with most opening at 45 m.
+- Focused checks cover exactly one monster, early misses, repeated/held fire, terrain occlusion, high-speed raycasts, lethal contact, jump/finish/checkpoint bypass rejection, charge/monster/projectile conservation on recovery, and full-retry reload/reroll.
+- Browser: unshot monster caused failure at 8.94 s; an early shot spent the charge and a later collision caused failure at 10.13 s. A new retry restored 1/1; X fired on lock at 33 m, cleared the monster with 0/1 remaining, and the stage finished at 12.43 s.
+- Phone 390×844: dedicated FIRE tap cleared the target, changed ammo from 1/1 to 0/1, and disabled FIRE. HUD and controls fit. Inspected gameplay logs have no errors/warnings.
+- Audio validation passes for gunshot, monster hit/crash and all earlier cues, stacked effects, silence while muted/paused and voice cancellation.
+- Preview image: preview-cannon.jpg. Publication is the remaining delivery step.
