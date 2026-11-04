@@ -176,3 +176,5 @@ Exact previous/new Web Audio comparison with seeded noise: cannon RMS+6.38dB, co
 Render harness:1,400frames/10biomes,169/220maxdraws,3fonts,57.8MiB current caches, no hot allocations; impact displacement bounded and both motion switches suppress it. Browser flow: stage1clear11.91s, slow-motion hit, one charge, progression/garage/ghost/pause/settings pass, no warnings/errors. Available browser≈60Hz: callback mean.633ms/p991.7ms over786warm frames at1280×530CSS,DPR2; does not certify device display/GPU timing. Build/bundle/shot checks pass. The user's refresh-rate issue was reported resolved; no refresh lock change was made.
 
 Temporary ignored comparison page tests/impact-compare-preview.html is developer-only and excluded from dist; its numerical result is retained in /tmp/irontrail-impact-comparison.txt for this session. Production verification follows publication.
+
+Impact release3744e82 pushed to public main, Vercel deployment7JAcnuyoh8HFeF4mtJsYqjHpkZwo succeeded. Both custom and fallback URLs returnHTTP200 with the exact554,153byte tested bundle; live custom-domain gameplay opens successfully.

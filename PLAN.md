@@ -267,4 +267,4 @@ Shooting implementation and functional validation complete. GitHub repo and Verc
 - [x] Strengthen cannon/collision attacks, body, metal/echo layers and phone-band audibility; retain strongest active mix duck so softer contacts cannot mask the shot.
 - [x] Enlarge muzzle flash and recoil, increase collision sparks and double camera shake amplitude7→14; retain motion controls and bounded particles.
 - [x] Compare rendered revisions: cannon+6.38dB/collision+6.53dB full band and+9.24/+9.46dB at250–5000Hz. Signal/real-time/priority/mute/pause and gameplay flow pass. Render stress169/220draws; motion suppression passes.
-- [ ] Push main and verify production delivery.
+- [x] Push main and verify production delivery. Release3744e82 deployed automatically; both URLs returnHTTP200 and the exact554,153byte tested bundle.
