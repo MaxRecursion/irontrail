@@ -165,3 +165,14 @@ Regression harness `tests/audio-live-check.html?legacy=1` restores the old event
 
 
 Live custom-domain verification of18ad317 completed: HTTP200 exact552,569byte bundle on both aliases and Vercel status success (deployment GheeMBd3jAbFdsfrDZjHVetoJ3Wv). At https://irontrail.maxrecursion.dev/?audioDebug=1, actual UI Settings activation produced running context with music RMS.0077867/peak.03034. With music0 to isolate effects, driving showed RMS.0568736/peak.23408; firing the real cannon spent the charge and measured RMS.0285906/peak.10971. Live mute and pause each measured peak/RMS exactly0. Isolated Settings Test sound measured RMS.0180738/peak.03877. Original volumes90/55/90 restored. Browser signal is confirmed; external tab/app/OS output muting and physical speaker output cannot be certified by this meter. No claim that the user's specific device issue is fully reproduced.
+
+
+## Pronounced impacts and doubled shake — 4 November 2026
+
+Added a short triangle impact body with midrange harmonics, boosted cannon/collision transient, bass and steel/echo layers, stronger monster hit/crash, and deeper/longer engine/music ducking. The strongest active duck wins until recovery, so a soft collision cannot reopen the cannon's backing mix. Existing activation fixes, source caps, master limiter, mute/pause and single-charge physics remain. Muzzle flash grows and lasts.12s, barrel recoil rises1→1.5, collision sparks/debris increase within existing particle/draw caps. Camera amplitude multiplier doubles7→14CSSpixels at full trauma, retains decay and respects both shake:false and reducedMotion:true.
+
+Exact previous/new Web Audio comparison with seeded noise: cannon RMS+6.38dB, collision+6.53dB;250–5000Hz band+9.24/+9.46dB. This band is a lab audibility proxy, not a physical iPhone speaker measurement. Monster-hit/crash full-band gain+3.37/+2.29dB. Final isolated gun/collision peaks≈.171/.127; stacked effects≈.275 and maximum-volume music/V8/impacts≈.297, no non-finite samples/clipping. Running cannon+collision output peak≈.569, RMS.154; mix priority and exact mute/pause/resume pass.
+
+Render harness:1,400frames/10biomes,169/220maxdraws,3fonts,57.8MiB current caches, no hot allocations; impact displacement bounded and both motion switches suppress it. Browser flow: stage1clear11.91s, slow-motion hit, one charge, progression/garage/ghost/pause/settings pass, no warnings/errors. Available browser≈60Hz: callback mean.633ms/p991.7ms over786warm frames at1280×530CSS,DPR2; does not certify device display/GPU timing. Build/bundle/shot checks pass. The user's refresh-rate issue was reported resolved; no refresh lock change was made.
+
+Temporary ignored comparison page tests/impact-compare-preview.html is developer-only and excluded from dist; its numerical result is retained in /tmp/irontrail-impact-comparison.txt for this session. Production verification follows publication.

@@ -260,3 +260,11 @@ Shooting implementation and functional validation complete. GitHub repo and Verc
 - [x] Retry suspended/interrupted audio from click/touchend; provide Settings sound test and output meter.
 - [x] Verify actual music/V8/cannon output, mute/pause silence, resume, bundle and responsive UI.
 - [x] Verify the published custom-domain build through its sound test and measured output. Release18ad317: live music RMS.00779, engine RMS.05687, fired cannon RMS.02859, isolated sound test RMS.01807; live mute and pause both exactly0. Original volumes restored.
+
+
+## Pronounced impacts — 4 November 2026
+
+- [x] Strengthen cannon/collision attacks, body, metal/echo layers and phone-band audibility; retain strongest active mix duck so softer contacts cannot mask the shot.
+- [x] Enlarge muzzle flash and recoil, increase collision sparks and double camera shake amplitude7→14; retain motion controls and bounded particles.
+- [x] Compare rendered revisions: cannon+6.38dB/collision+6.53dB full band and+9.24/+9.46dB at250–5000Hz. Signal/real-time/priority/mute/pause and gameplay flow pass. Render stress169/220draws; motion suppression passes.
+- [ ] Push main and verify production delivery.

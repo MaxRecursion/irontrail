@@ -81,7 +81,7 @@ class TruckAudio {
 
     this.engineBus=ctx.createGain();this.sfxBus=ctx.createGain();this.musicBus=ctx.createGain();
     this.engineBus.gain.value=this.volumes.sfx;this.sfxBus.gain.value=this.volumes.sfx;this.musicBus.gain.value=this.volumes.music;
-    this.engineFocus=ctx.createGain();this.engineFocus.gain.value=1;this._focusUntil=0;
+    this.engineFocus=ctx.createGain();this.engineFocus.gain.value=1;this._focusUntil=0;this._focusDepth=1;
     this.engineBus.connect(this.engineFocus);this.engineFocus.connect(this.master);this.sfxBus.connect(this.master);this.musicBus.connect(this.master);
     for(const bus of [this.engineBus,this.sfxBus,this.musicBus])try{bus.gain.automationRate='k-rate';}catch(_){}
     const exhaust = ctx.createBiquadFilter();
@@ -399,9 +399,20 @@ class TruckAudio {
   }
   _focus(seconds=.3,depth=.5) {
     if(this.context.state!=='running')return;
-    const t=this.context.currentTime,p=this.engineFocus.gain;this._focusUntil=Math.max(this._focusUntil,t+seconds);
+    const t=this.context.currentTime,p=this.engineFocus.gain;
+    this._focusDepth=t<this._focusUntil?Math.min(this._focusDepth,depth):depth;this._focusUntil=Math.max(this._focusUntil,t+seconds);
     if(p.cancelAndHoldAtTime)p.cancelAndHoldAtTime(t);else{const value=p.value;p.cancelScheduledValues(t);p.setValueAtTime(value,t);}
-    p.linearRampToValueAtTime(depth,t+.008);p.linearRampToValueAtTime(1,this._focusUntil);
+    p.linearRampToValueAtTime(this._focusDepth,t+.006);p.setValueAtTime(this._focusDepth,t+.04);p.linearRampToValueAtTime(1,this._focusUntil);
+  }
+  _impactBody(strength,frequency,duration,delay=0) {
+    if(!(strength>0)||this._voices.size>=96)return;
+    const ctx=this.context,now=ctx.currentTime+delay,source=ctx.createOscillator(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();
+    // Midrange harmonics carry the impact on phone speakers as well as a sub.
+    source.type='triangle';source.frequency.setValueAtTime(frequency,now);source.frequency.exponentialRampToValueAtTime(frequency*.4,now+duration);
+    filter.type='lowpass';filter.frequency.setValueAtTime(1900,now);filter.frequency.exponentialRampToValueAtTime(700,now+duration);filter.Q.value=.5;
+    gain.gain.setValueAtTime(0,now);gain.gain.linearRampToValueAtTime(strength,now+.002);gain.gain.setValueAtTime(strength*.72,now+.022);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+    source.connect(filter);filter.connect(gain);const nodes=[filter,gain];this._routeSfx(gain,nodes);
+    source.start(now);source.stop(now+duration+.025);this._trackVoice(source,nodes);
   }
   _metal(strength,frequency=490,duration=.15,delay=0) {
     // Inharmonic body modes distinguish a steel chassis from the tyre thud.
@@ -470,28 +481,33 @@ class TruckAudio {
     if (!this._canPlay()) return;
     const s = TruckAudio.clamp(strength, 0, 1),now=this.context.currentTime;
     if (!s || now - this._lastCollision < 0.09) return;
-    this._lastCollision = now;if(this.music)this.music.duck(.18+s*.2,.5);
-    this._thump(.045+s*.17,105,34,.17+s*.09);
-    this._noiseBurst(.025+s*.105,1600,.09+s*.14,0,'bandpass');
-    this._metal(s*.055,460,.22);
-    this._noiseSweep(s*.028,2800,600,.19,.045);
-    this._thump(s*.028,73,33,.16,.075);
+    this._lastCollision = now;
+    if(s>.22)this._focus(.2+s*.2,.72-s*.4);
+    if(this.music)this.music.duck(.18+s*.26,.7-s*.4);
+    this._thump(.055+s*.28,145,35,.22+s*.13);
+    this._impactBody(.035+s*.2,230,.16+s*.08);
+    this._noiseBurst(.03+s*.19,1500,.09+s*.14,0,'bandpass');
+    this._metal(s*.09,600,.28);
+    this._noiseBurst(s*.055,3400,.06,0,'highpass');
+    this._noiseSweep(s*.04,3300,450,.24,.04);
+    this._thump(s*.055,95,39,.2,.085);
   }
 
   gunshot() {
     if (!this._canPlay()) return;
     const now = this.context.currentTime;
     if (now - this._lastGunshot < 0.15) return;
-    this._lastGunshot = now;this._focus(.6,.35);if(this.music)this.music.duck(.65,.2);
-    // Sharp muzzle crack, chesty blast, barrel ring, bolt, outdoor reflections.
-    this._noiseBurst(.2,1800,.055,0,'highpass');
-    this._noiseBurst(.095,1200,.18);
-    this._thump(.25,136,33,.27);
-    this._metal(.028,720,.13,.012);
-    this._thump(.045,440,160,.07,.045);
-    this._noiseBurst(.035,2400,.065,.085,'bandpass');
-    this._noiseBurst(.028,850,.18,.115);
-    this._noiseBurst(.013,650,.22,.23);
+    this._lastGunshot = now;this._focus(.85,.18);if(this.music)this.music.duck(.9,.12);
+    // Faster crack, sustained body, steel action and two dark outdoor echoes.
+    this._noiseBurst(.36,2000,.065,0,'highpass');
+    this._noiseBurst(.18,1100,.23);
+    this._thump(.42,160,36,.34);
+    this._impactBody(.22,260,.2);
+    this._metal(.055,850,.17,.014);
+    this._thump(.07,520,180,.075,.055);
+    this._noiseBurst(.055,2600,.09,.1,'bandpass');
+    this._noiseBurst(.055,900,.24,.14);
+    this._noiseBurst(.028,650,.3,.28);
   }
 
   _monsterGrowl(strength, duration, delay = 0) {
@@ -518,9 +534,9 @@ class TruckAudio {
     const now = this.context.currentTime;
     if (now - this._lastMonsterHit < 0.12) return;
     this._lastMonsterHit = now;
-    this._focus(.35,.55);if(this.music)this.music.duck(.4,.35);
-    this._thump(.19,155,38,.29);
-    this._noiseBurst(.105,2300,.18,0,'bandpass');
+    this._focus(.5,.35);if(this.music)this.music.duck(.55,.2);
+    this._thump(.27,170,38,.34);this._impactBody(.14,220,.2);
+    this._noiseBurst(.15,2300,.21,0,'bandpass');
     this._noiseBurst(.04,3700,.11,.045,'highpass');
     this._monsterGrowl(.085,.34,.018);
     this._noiseSweep(.04,1400,300,.35,.09);
@@ -531,11 +547,11 @@ class TruckAudio {
     if (!this._canPlay()) return;
     const now = this.context.currentTime;
     if (now - this._lastMonsterCrash < 0.22) return;
-    this._lastMonsterCrash = now;if(this.music)this.music.duck(.5,.25);
-    this._thump(.25,103,27,.32);
+    this._lastMonsterCrash = now;this._focus(.55,.25);if(this.music)this.music.duck(.6,.18);
+    this._thump(.35,130,29,.37);this._impactBody(.19,210,.24);
     this._thump(.085,72,30,.21,.055);
     this._noiseBurst(.15,1450,.23);
-    this._metal(.07,390,.27,.018);
+    this._metal(.095,490,.3,.018);
     this._noiseSweep(.06,2400,410,.33,.065);
     this._monsterGrowl(.085,.28,.025);
   }

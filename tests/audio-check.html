@@ -5,8 +5,8 @@
 <style>body{background:#19221b;color:#d6efb1;font:16px monospace;padding:30px}pre{white-space:pre-wrap}</style>
 <h1>Audio signal validation</h1>
 <pre id="result">Rendering…</pre>
-<script src="../src/music.js?v=5"></script>
-<script src="../src/audio.js?v=7"></script>
+<script src="../src/music.js?v=6"></script>
+<script src="../src/audio.js?v=8"></script>
 <script>
 (async () => {
   const result = document.getElementById('result');
@@ -95,6 +95,15 @@
       finiteAndComfortable(reports[name], name);
       call(allEffects);
     }
+    // Phone-sized speakers need an audible impact body above the sub-bass.
+    for(const cue of ['gunshot','collision']){
+      const audio=createAudio({effectsOnly:true});audio.limiter.disconnect();
+      const high=audio.context.createBiquadFilter(),low=audio.context.createBiquadFilter();high.type='highpass';high.frequency.value=250;low.type='lowpass';low.frequency.value=5000;
+      audio.limiter.connect(high);high.connect(low);low.connect(audio.context.destination);audio[cue](1);
+      reports[cue+'PhoneBand']=stats(await render(audio));assert(reports[cue+'PhoneBand'].rms>.004,'Impact has insufficient midrange energy '+cue);finiteAndComfortable(reports[cue+'PhoneBand'],cue+' phone band');
+    }
+    const softImpact=createAudio({effectsOnly:true});softImpact.collision(.2);reports.softCollision=stats(await render(softImpact));assert(reports.collision.rms>reports.softCollision.rms*2,'Collision weight no longer follows impact strength');
+    passes.push('PASS · Cannon and collision retain strong phone-band energy; harder crashes have more weight.');
     reports.combined = stats(await render(allEffects));
     finiteAndComfortable(reports.combined, 'Combined gameplay effects');
     passes.push('PASS · Fuel, zombie, collision, shotgun, monster-hit/crash, win, and loss cues are audible; stacked effects stay finite and below clipping.');
@@ -141,7 +150,7 @@
     const fullMusic=await musicAtVolume(1),halfMusic=await musicAtVolume(.5);
     assert(Math.abs(halfMusic.rms/fullMusic.rms-.5)<.005,'Music volume is not proportional');
     passes.push('PASS · Complete eight-bar call/answer theme and proportional music volume.');
-    const fullMix=createAudio();fullMix.music.scheduleOffline(1,{mood:'boss',biome:9,playing:true,intensity:1});
+    const fullMix=createAudio();fullMix.setMusicState({mood:'boss',playing:false});fullMix.setVolumes({master:1,music:1,sfx:1});fullMix.music.scheduleOffline(1,{mood:'boss',biome:9,playing:true,intensity:1});
     fullMix.landing(1);fullMix.gunshot();fullMix.monsterHit();fullMix.collision(1);
     reports.fullMix=stats(await render(fullMix));finiteAndComfortable(reports.fullMix,'Music + V8 + heavy impacts');
     passes.push('PASS · Theme, V8 and simultaneous cannon/landing/collision/monster layers stay below clipping.');

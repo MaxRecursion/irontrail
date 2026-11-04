@@ -189,7 +189,7 @@
       bank.projectile=this._worldSprite(ppu,-.85,-.22,1.05,.44,c=>{
         const g=c.createRadialGradient(0,0,.01,0,0,.22);g.addColorStop(0,'#fff7cb');g.addColorStop(.35,'#efcb78bb');g.addColorStop(1,'#efcb7800');c.fillStyle=g;c.fillRect(-.3,-.22,.52,.44);poly(c,[[-.85,-.035],[.08,-.055],[.16,0],[.08,.055],[-.85,.035]],'#f8e5a7');
       });
-      bank.flash=this._worldSprite(ppu,-.1,-.4,1.25,.8,c=>{poly(c,[[0,-.13],[.65,-.31],[.45,-.07],[1.1,0],[.48,.09],[.62,.31],[0,.14]],'#f6da86');poly(c,[[0,-.08],[.55,0],[0,.08]],'#fff7d0');});
+      bank.flash=this._worldSprite(ppu,-.1,-.5,1.65,1,c=>{poly(c,[[0,-.18],[.85,-.43],[.58,-.09],[1.5,0],[.62,.12],[.82,.43],[0,.19]],'#f6da86');poly(c,[[0,-.08],[.55,0],[0,.08]],'#fff7d0');});
       bank.shadow=this._worldSprite(Math.min(ppu,60),-2.6,-.3,5.2,.6,c=>{
         const g=c.createRadialGradient(0,0,.05,0,0,2.5);g.addColorStop(0,'#102a30a3');g.addColorStop(1,'#102a3000');c.save();c.scale(1,.11);c.fillStyle=g;c.fillRect(-2.6,-2.6,5.2,5.2);c.restore();
       });
@@ -420,7 +420,7 @@
         this._cameraY=ty+(dy+jy*dt)*e;this._cameraVY=(this._cameraVY-omega*jy*dt)*e;
       }
       this._trauma=Math.max(0,this._trauma-dt*1.4);this._zoomPunch*=Math.exp(-dt*10);
-      const shake=settings.shake!==false&&!settings.reducedMotion?this._trauma*this._trauma*7:0;
+      const shake=settings.shake!==false&&!settings.reducedMotion?this._trauma*this._trauma*14:0;
       const sx=Math.sin(this._clock*39.7)*Math.cos(this._clock*17.3)*shake,sy=Math.sin(this._clock*31.1+.7)*Math.cos(this._clock*13.7)*shake;
       // Translation is snapped AFTER interpolating the physical pose/camera.
       this._ox=Math.round((this.width*.5-this._cameraX*s+sx)*this.renderScale)/this.renderScale;
@@ -512,7 +512,7 @@
       // physics. Preserve the shot angle during its flash, even after a kill.
       const angle=this._muzzle>0?this._shotAngle:finite(weapon.angle,a);
       this._sprite(this._bank.cannon,mx-Math.cos(angle)*this._kick*.13,my-Math.sin(angle)*this._kick*.13,angle);
-      if(this._muzzle>0){this.ctx.globalAlpha=clamp(this._muzzle/.07,0,1);this._sprite(this._bank.flash,mx+Math.cos(angle)*1.45,my+Math.sin(angle)*1.45,angle);this.ctx.globalAlpha=1;}
+      if(this._muzzle>0){this.ctx.globalAlpha=clamp(this._muzzle/.12,0,1);this._sprite(this._bank.flash,mx+Math.cos(angle)*1.45,my+Math.sin(angle)*1.45,angle);this.ctx.globalAlpha=1;}
       const n=PROJECTILE*3;
       if(state.projectile){const px=Number.isFinite(this._pose[n])?this._pose[n]:state.projectile.x,py=Number.isFinite(this._pose[n+1])?this._pose[n+1]:state.projectile.y;const a=finite(state.projectile.angle);this.ctx.strokeStyle='#f9e9ac';this.ctx.lineWidth=2/this._cameraScale;this.ctx.beginPath();this.ctx.moveTo(px-Math.cos(a)*2,py-Math.sin(a)*2);this.ctx.lineTo(px,py);this.ctx.stroke();this._stats.drawOps++;this._sprite(this._bank.projectile,px,py,a);}
     }
@@ -536,13 +536,13 @@
       if(!event||typeof event.type!=='string')return;
       const x=finite(event.x,finite(state.x)),y=finite(event.y,finite(state.y)),s=clamp(finite(event.strength,.5),0,1);
       switch(event.type){
-        case 'shot':this._kick=1;this._muzzle=.07;this._shotAngle=finite(event.angle,state.weapon?finite(state.weapon.angle):0);this._spawn(x,y,5,1,.6);this._spawn(x,y,4,2,1.2);this.addTrauma(.07);break;
+        case 'shot':this._kick=1.5;this._muzzle=.12;this._shotAngle=finite(event.angle,state.weapon?finite(state.weapon.angle):0);this._spawn(x,y,9,1,.85);this._spawn(x,y,6,2,1.6);this.addTrauma(.16);break;
         case 'land':this._spawn(x,y-1,18+Math.floor(s*14),0,.7+s);this._spawn(x,y-1,Math.floor(s*7),4,s);this.addTrauma(s*.2);break;
         case 'landing':if(event.perfect){this._spawn(x,y-.7,9,2,.8);this._zoomPunch=.55;}if(event.bigAir)this.addTrauma(.14);break;
         case 'takeoff':this._spawn(x,y-.7,6,0,.6);break;
         case 'fuel':this._spawn(x,y,11,2,1.1);this.popup('+'+Math.round(finite(event.amount,32))+' FUEL',x,y+1,'fuel');break;
         case 'zombie':this._spawn(x,y,7,7,.8);this._spawn(x,y+.5,4,3,.65);break;
-        case 'collision':this._spawn(x,y,10+Math.floor(s*12),2,1+s);this._spawn(x,y,7,4,s+1);this.addTrauma(s*.3);break;
+        case 'collision':this._spawn(x,y,18+Math.floor(s*20),2,1.1+s*1.3);this._spawn(x,y,9,4,s+1.2);this.addTrauma(s*.42);break;
         case 'monsterHit':this._impactTime=.6;this._impactX=x;this._impactY=y;this._spawn(x,y,35,7,2.3);this._spawn(x,y,18,2,2);this._spawn(x,y,10,4,2);this.addTrauma(.35);this._zoomPunch=1;this.flash('#f7df9b',.09);break;
         case 'monsterCrash':this._spawn(x,y,28,4,2.2);this._spawn(x,y,25,0,2.5);this._spawn(x,y,14,2,2);this.addTrauma(.85);this.flash('#df8264',.12);break;
         case 'flip':this._spawn(x,y,4,3,.8);break;

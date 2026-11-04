@@ -56,6 +56,15 @@ for(let stage=0;stage<10;stage++){
   renderer.setQuality({renderScale:2,particleScale:1,detail:'high'});
   records.push(`stage${stage+1}=${stageMax}`);
 }
+// A hard impact must visibly displace the camera, and both motion controls
+// must remove that displacement even while trauma is at its maximum.
+const impactPhysics=new TruckPhysics(0,{random:()=>.5}),impactPose=new Float64Array(impactPhysics.poseLength);impactPhysics.getPose(impactPose);renderer.setStage(impactPhysics,0);
+const impactFrame={state:impactPhysics.getState(),pose:impactPose,dt:0,mode:'playing',input:{},layout:{},settings:{shake:true,reducedMotion:false}};
+renderer._clock=.2;renderer._trauma=0;renderer.render(impactFrame);const origin=[renderer._ox,renderer._oy];
+renderer._trauma=1;renderer.render(impactFrame);const displacement=Math.hypot(renderer._ox-origin[0],renderer._oy-origin[1]);assert.ok(displacement>1&&displacement<20,'Hard impacts have bounded visible shake');
+impactFrame.settings.shake=false;renderer.render(impactFrame);assert.deepEqual([renderer._ox,renderer._oy],origin,'Camera Shake off suppresses impact motion');
+impactFrame.settings.shake=true;impactFrame.settings.reducedMotion=true;renderer.render(impactFrame);assert.deepEqual([renderer._ox,renderer._oy],origin,'Reduced Motion suppresses impact motion');
+console.log('PASS stronger bounded impact shake; Camera Shake off and Reduced Motion remove displacement');
 assert.equal(canvases,0,'no hot canvas allocation');assert.equal(gradients,0,'no hot gradient allocation');
 console.log(`PASS ${rendered} real-physics frames across10biomes +effects/ghosts/fallbacks; max${maximum}/220drawOps, ${maxFonts}/3fonts, current caches ${(maxBytes/1048576).toFixed(1)}MiB; no hotcanvas/gradients; retry/adaptive cache reuse`);
 console.log(records.join(' '));

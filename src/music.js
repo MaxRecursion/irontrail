@@ -13,7 +13,7 @@
   class TruckMusic{
     constructor(context,destination){
       this.context=context;this.destination=destination;this.state={biome:0,intensity:.2,mood:'menu',playing:false,timeScale:1};
-      this.volume=1;this.active=false;this._stopped=false;this.timer=null;this.nextTime=0;this.step=0;this._drums=new Set();this._gainParams=[];this._color=-1;this._duckUntil=0;
+      this.volume=1;this.active=false;this._stopped=false;this.timer=null;this.nextTime=0;this.step=0;this._drums=new Set();this._gainParams=[];this._color=-1;this._duckUntil=0;this._duckDepth=1;
       this.output=context.createGain();this.output.gain.value=LEVEL;
       this.tone=context.createBiquadFilter();this.tone.type='lowpass';this.tone.frequency.value=6800;this.tone.Q.value=.5;
       this.output.connect(this.tone);this.tone.connect(destination);
@@ -101,9 +101,9 @@
     }
     duck(seconds=.24,depth=.3){
       if(this.context.state!=='running'||this.volume<=0)return;const t=this.context.currentTime,p=this.output.gain;
-      this._duckUntil=Math.max(this._duckUntil,t+seconds);
+      this._duckDepth=t<this._duckUntil?Math.min(this._duckDepth,depth):depth;this._duckUntil=Math.max(this._duckUntil,t+seconds);
       if(p.cancelAndHoldAtTime)p.cancelAndHoldAtTime(t);else{const value=p.value;p.cancelScheduledValues(t);p.setValueAtTime(value,t);}
-      p.linearRampToValueAtTime(LEVEL*this.volume*depth,t+.008);p.linearRampToValueAtTime(LEVEL*this.volume,this._duckUntil);
+      p.linearRampToValueAtTime(LEVEL*this.volume*this._duckDepth,t+.006);p.setValueAtTime(LEVEL*this.volume*this._duckDepth,t+.04);p.linearRampToValueAtTime(LEVEL*this.volume,this._duckUntil);
     }
     stinger(won=true){
       if(!this.active||this.volume<=0)return;const t=this.context.currentTime,root=won?440:293.66;

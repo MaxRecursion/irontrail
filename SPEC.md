@@ -404,3 +404,8 @@ full trace budgets remain documented verification limits.
 ## 12. Sound pass (3 November 2026)
 
 Original eight-bar “Deadland Run” replaces the sparse score; nine persistent melodic/percussive voices and32bounded live drum sources. Music volume is applied once by musicBus. Slow motion eases the music lowpass/tempo and engine pitch. Engine focus gain supplies brief cannon ducking before master/limiter. Event sound sources cap96 and disconnect onended, including stereo panners. Physics callbacks call setScene(state,event), dispatch the cue, then reset the event position so UI cues stay centered. Flight wind includes vertical velocity; landings/collisions retain strength scaling. All new layers preserve existing mute/pause/zero-volume, cooldown and pre-unlock guards. Expanded browser checks cover the complete score, integrated mix, proportional volume, wind, stereo and voice disposal.
+
+
+## 13. Impact emphasis (4 November 2026)
+
+Cannon and collision audio add midrange impact harmonics and stronger transients/tails. Engine/music duck envelopes preserve the deepest active attenuation through overlapping events. Camera trauma amplitude uses14CSSpixels at full strength (previously7), and remains gated by Camera Shake/Reduced Motion. Muzzle flash and recoil are stronger, with particles still capped by the existing renderer budget. Gameplay physics, one-charge rule and refresh scheduling are unchanged.

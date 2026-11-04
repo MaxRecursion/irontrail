@@ -804,7 +804,7 @@ class TruckAudio {
 
     this.engineBus=ctx.createGain();this.sfxBus=ctx.createGain();this.musicBus=ctx.createGain();
     this.engineBus.gain.value=this.volumes.sfx;this.sfxBus.gain.value=this.volumes.sfx;this.musicBus.gain.value=this.volumes.music;
-    this.engineFocus=ctx.createGain();this.engineFocus.gain.value=1;this._focusUntil=0;
+    this.engineFocus=ctx.createGain();this.engineFocus.gain.value=1;this._focusUntil=0;this._focusDepth=1;
     this.engineBus.connect(this.engineFocus);this.engineFocus.connect(this.master);this.sfxBus.connect(this.master);this.musicBus.connect(this.master);
     for(const bus of [this.engineBus,this.sfxBus,this.musicBus])try{bus.gain.automationRate='k-rate';}catch(_){}
     const exhaust = ctx.createBiquadFilter();
@@ -1122,9 +1122,20 @@ class TruckAudio {
   }
   _focus(seconds=.3,depth=.5) {
     if(this.context.state!=='running')return;
-    const t=this.context.currentTime,p=this.engineFocus.gain;this._focusUntil=Math.max(this._focusUntil,t+seconds);
+    const t=this.context.currentTime,p=this.engineFocus.gain;
+    this._focusDepth=t<this._focusUntil?Math.min(this._focusDepth,depth):depth;this._focusUntil=Math.max(this._focusUntil,t+seconds);
     if(p.cancelAndHoldAtTime)p.cancelAndHoldAtTime(t);else{const value=p.value;p.cancelScheduledValues(t);p.setValueAtTime(value,t);}
-    p.linearRampToValueAtTime(depth,t+.008);p.linearRampToValueAtTime(1,this._focusUntil);
+    p.linearRampToValueAtTime(this._focusDepth,t+.006);p.setValueAtTime(this._focusDepth,t+.04);p.linearRampToValueAtTime(1,this._focusUntil);
+  }
+  _impactBody(strength,frequency,duration,delay=0) {
+    if(!(strength>0)||this._voices.size>=96)return;
+    const ctx=this.context,now=ctx.currentTime+delay,source=ctx.createOscillator(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();
+    // Midrange harmonics carry the impact on phone speakers as well as a sub.
+    source.type='triangle';source.frequency.setValueAtTime(frequency,now);source.frequency.exponentialRampToValueAtTime(frequency*.4,now+duration);
+    filter.type='lowpass';filter.frequency.setValueAtTime(1900,now);filter.frequency.exponentialRampToValueAtTime(700,now+duration);filter.Q.value=.5;
+    gain.gain.setValueAtTime(0,now);gain.gain.linearRampToValueAtTime(strength,now+.002);gain.gain.setValueAtTime(strength*.72,now+.022);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+    source.connect(filter);filter.connect(gain);const nodes=[filter,gain];this._routeSfx(gain,nodes);
+    source.start(now);source.stop(now+duration+.025);this._trackVoice(source,nodes);
   }
   _metal(strength,frequency=490,duration=.15,delay=0) {
     // Inharmonic body modes distinguish a steel chassis from the tyre thud.
@@ -1193,28 +1204,33 @@ class TruckAudio {
     if (!this._canPlay()) return;
     const s = TruckAudio.clamp(strength, 0, 1),now=this.context.currentTime;
     if (!s || now - this._lastCollision < 0.09) return;
-    this._lastCollision = now;if(this.music)this.music.duck(.18+s*.2,.5);
-    this._thump(.045+s*.17,105,34,.17+s*.09);
-    this._noiseBurst(.025+s*.105,1600,.09+s*.14,0,'bandpass');
-    this._metal(s*.055,460,.22);
-    this._noiseSweep(s*.028,2800,600,.19,.045);
-    this._thump(s*.028,73,33,.16,.075);
+    this._lastCollision = now;
+    if(s>.22)this._focus(.2+s*.2,.72-s*.4);
+    if(this.music)this.music.duck(.18+s*.26,.7-s*.4);
+    this._thump(.055+s*.28,145,35,.22+s*.13);
+    this._impactBody(.035+s*.2,230,.16+s*.08);
+    this._noiseBurst(.03+s*.19,1500,.09+s*.14,0,'bandpass');
+    this._metal(s*.09,600,.28);
+    this._noiseBurst(s*.055,3400,.06,0,'highpass');
+    this._noiseSweep(s*.04,3300,450,.24,.04);
+    this._thump(s*.055,95,39,.2,.085);
   }
 
   gunshot() {
     if (!this._canPlay()) return;
     const now = this.context.currentTime;
     if (now - this._lastGunshot < 0.15) return;
-    this._lastGunshot = now;this._focus(.6,.35);if(this.music)this.music.duck(.65,.2);
-    // Sharp muzzle crack, chesty blast, barrel ring, bolt, outdoor reflections.
-    this._noiseBurst(.2,1800,.055,0,'highpass');
-    this._noiseBurst(.095,1200,.18);
-    this._thump(.25,136,33,.27);
-    this._metal(.028,720,.13,.012);
-    this._thump(.045,440,160,.07,.045);
-    this._noiseBurst(.035,2400,.065,.085,'bandpass');
-    this._noiseBurst(.028,850,.18,.115);
-    this._noiseBurst(.013,650,.22,.23);
+    this._lastGunshot = now;this._focus(.85,.18);if(this.music)this.music.duck(.9,.12);
+    // Faster crack, sustained body, steel action and two dark outdoor echoes.
+    this._noiseBurst(.36,2000,.065,0,'highpass');
+    this._noiseBurst(.18,1100,.23);
+    this._thump(.42,160,36,.34);
+    this._impactBody(.22,260,.2);
+    this._metal(.055,850,.17,.014);
+    this._thump(.07,520,180,.075,.055);
+    this._noiseBurst(.055,2600,.09,.1,'bandpass');
+    this._noiseBurst(.055,900,.24,.14);
+    this._noiseBurst(.028,650,.3,.28);
   }
 
   _monsterGrowl(strength, duration, delay = 0) {
@@ -1241,9 +1257,9 @@ class TruckAudio {
     const now = this.context.currentTime;
     if (now - this._lastMonsterHit < 0.12) return;
     this._lastMonsterHit = now;
-    this._focus(.35,.55);if(this.music)this.music.duck(.4,.35);
-    this._thump(.19,155,38,.29);
-    this._noiseBurst(.105,2300,.18,0,'bandpass');
+    this._focus(.5,.35);if(this.music)this.music.duck(.55,.2);
+    this._thump(.27,170,38,.34);this._impactBody(.14,220,.2);
+    this._noiseBurst(.15,2300,.21,0,'bandpass');
     this._noiseBurst(.04,3700,.11,.045,'highpass');
     this._monsterGrowl(.085,.34,.018);
     this._noiseSweep(.04,1400,300,.35,.09);
@@ -1254,11 +1270,11 @@ class TruckAudio {
     if (!this._canPlay()) return;
     const now = this.context.currentTime;
     if (now - this._lastMonsterCrash < 0.22) return;
-    this._lastMonsterCrash = now;if(this.music)this.music.duck(.5,.25);
-    this._thump(.25,103,27,.32);
+    this._lastMonsterCrash = now;this._focus(.55,.25);if(this.music)this.music.duck(.6,.18);
+    this._thump(.35,130,29,.37);this._impactBody(.19,210,.24);
     this._thump(.085,72,30,.21,.055);
     this._noiseBurst(.15,1450,.23);
-    this._metal(.07,390,.27,.018);
+    this._metal(.095,490,.3,.018);
     this._noiseSweep(.06,2400,410,.33,.065);
     this._monsterGrowl(.085,.28,.025);
   }
@@ -1313,7 +1329,7 @@ globalThis.TruckAudio = TruckAudio;
   class TruckMusic{
     constructor(context,destination){
       this.context=context;this.destination=destination;this.state={biome:0,intensity:.2,mood:'menu',playing:false,timeScale:1};
-      this.volume=1;this.active=false;this._stopped=false;this.timer=null;this.nextTime=0;this.step=0;this._drums=new Set();this._gainParams=[];this._color=-1;this._duckUntil=0;
+      this.volume=1;this.active=false;this._stopped=false;this.timer=null;this.nextTime=0;this.step=0;this._drums=new Set();this._gainParams=[];this._color=-1;this._duckUntil=0;this._duckDepth=1;
       this.output=context.createGain();this.output.gain.value=LEVEL;
       this.tone=context.createBiquadFilter();this.tone.type='lowpass';this.tone.frequency.value=6800;this.tone.Q.value=.5;
       this.output.connect(this.tone);this.tone.connect(destination);
@@ -1401,9 +1417,9 @@ globalThis.TruckAudio = TruckAudio;
     }
     duck(seconds=.24,depth=.3){
       if(this.context.state!=='running'||this.volume<=0)return;const t=this.context.currentTime,p=this.output.gain;
-      this._duckUntil=Math.max(this._duckUntil,t+seconds);
+      this._duckDepth=t<this._duckUntil?Math.min(this._duckDepth,depth):depth;this._duckUntil=Math.max(this._duckUntil,t+seconds);
       if(p.cancelAndHoldAtTime)p.cancelAndHoldAtTime(t);else{const value=p.value;p.cancelScheduledValues(t);p.setValueAtTime(value,t);}
-      p.linearRampToValueAtTime(LEVEL*this.volume*depth,t+.008);p.linearRampToValueAtTime(LEVEL*this.volume,this._duckUntil);
+      p.linearRampToValueAtTime(LEVEL*this.volume*this._duckDepth,t+.006);p.setValueAtTime(LEVEL*this.volume*this._duckDepth,t+.04);p.linearRampToValueAtTime(LEVEL*this.volume,this._duckUntil);
     }
     stinger(won=true){
       if(!this.active||this.volume<=0)return;const t=this.context.currentTime,root=won?440:293.66;
@@ -2044,7 +2060,7 @@ globalThis.TruckAudio = TruckAudio;
       bank.projectile=this._worldSprite(ppu,-.85,-.22,1.05,.44,c=>{
         const g=c.createRadialGradient(0,0,.01,0,0,.22);g.addColorStop(0,'#fff7cb');g.addColorStop(.35,'#efcb78bb');g.addColorStop(1,'#efcb7800');c.fillStyle=g;c.fillRect(-.3,-.22,.52,.44);poly(c,[[-.85,-.035],[.08,-.055],[.16,0],[.08,.055],[-.85,.035]],'#f8e5a7');
       });
-      bank.flash=this._worldSprite(ppu,-.1,-.4,1.25,.8,c=>{poly(c,[[0,-.13],[.65,-.31],[.45,-.07],[1.1,0],[.48,.09],[.62,.31],[0,.14]],'#f6da86');poly(c,[[0,-.08],[.55,0],[0,.08]],'#fff7d0');});
+      bank.flash=this._worldSprite(ppu,-.1,-.5,1.65,1,c=>{poly(c,[[0,-.18],[.85,-.43],[.58,-.09],[1.5,0],[.62,.12],[.82,.43],[0,.19]],'#f6da86');poly(c,[[0,-.08],[.55,0],[0,.08]],'#fff7d0');});
       bank.shadow=this._worldSprite(Math.min(ppu,60),-2.6,-.3,5.2,.6,c=>{
         const g=c.createRadialGradient(0,0,.05,0,0,2.5);g.addColorStop(0,'#102a30a3');g.addColorStop(1,'#102a3000');c.save();c.scale(1,.11);c.fillStyle=g;c.fillRect(-2.6,-2.6,5.2,5.2);c.restore();
       });
@@ -2275,7 +2291,7 @@ globalThis.TruckAudio = TruckAudio;
         this._cameraY=ty+(dy+jy*dt)*e;this._cameraVY=(this._cameraVY-omega*jy*dt)*e;
       }
       this._trauma=Math.max(0,this._trauma-dt*1.4);this._zoomPunch*=Math.exp(-dt*10);
-      const shake=settings.shake!==false&&!settings.reducedMotion?this._trauma*this._trauma*7:0;
+      const shake=settings.shake!==false&&!settings.reducedMotion?this._trauma*this._trauma*14:0;
       const sx=Math.sin(this._clock*39.7)*Math.cos(this._clock*17.3)*shake,sy=Math.sin(this._clock*31.1+.7)*Math.cos(this._clock*13.7)*shake;
       // Translation is snapped AFTER interpolating the physical pose/camera.
       this._ox=Math.round((this.width*.5-this._cameraX*s+sx)*this.renderScale)/this.renderScale;
@@ -2367,7 +2383,7 @@ globalThis.TruckAudio = TruckAudio;
       // physics. Preserve the shot angle during its flash, even after a kill.
       const angle=this._muzzle>0?this._shotAngle:finite(weapon.angle,a);
       this._sprite(this._bank.cannon,mx-Math.cos(angle)*this._kick*.13,my-Math.sin(angle)*this._kick*.13,angle);
-      if(this._muzzle>0){this.ctx.globalAlpha=clamp(this._muzzle/.07,0,1);this._sprite(this._bank.flash,mx+Math.cos(angle)*1.45,my+Math.sin(angle)*1.45,angle);this.ctx.globalAlpha=1;}
+      if(this._muzzle>0){this.ctx.globalAlpha=clamp(this._muzzle/.12,0,1);this._sprite(this._bank.flash,mx+Math.cos(angle)*1.45,my+Math.sin(angle)*1.45,angle);this.ctx.globalAlpha=1;}
       const n=PROJECTILE*3;
       if(state.projectile){const px=Number.isFinite(this._pose[n])?this._pose[n]:state.projectile.x,py=Number.isFinite(this._pose[n+1])?this._pose[n+1]:state.projectile.y;const a=finite(state.projectile.angle);this.ctx.strokeStyle='#f9e9ac';this.ctx.lineWidth=2/this._cameraScale;this.ctx.beginPath();this.ctx.moveTo(px-Math.cos(a)*2,py-Math.sin(a)*2);this.ctx.lineTo(px,py);this.ctx.stroke();this._stats.drawOps++;this._sprite(this._bank.projectile,px,py,a);}
     }
@@ -2391,13 +2407,13 @@ globalThis.TruckAudio = TruckAudio;
       if(!event||typeof event.type!=='string')return;
       const x=finite(event.x,finite(state.x)),y=finite(event.y,finite(state.y)),s=clamp(finite(event.strength,.5),0,1);
       switch(event.type){
-        case 'shot':this._kick=1;this._muzzle=.07;this._shotAngle=finite(event.angle,state.weapon?finite(state.weapon.angle):0);this._spawn(x,y,5,1,.6);this._spawn(x,y,4,2,1.2);this.addTrauma(.07);break;
+        case 'shot':this._kick=1.5;this._muzzle=.12;this._shotAngle=finite(event.angle,state.weapon?finite(state.weapon.angle):0);this._spawn(x,y,9,1,.85);this._spawn(x,y,6,2,1.6);this.addTrauma(.16);break;
         case 'land':this._spawn(x,y-1,18+Math.floor(s*14),0,.7+s);this._spawn(x,y-1,Math.floor(s*7),4,s);this.addTrauma(s*.2);break;
         case 'landing':if(event.perfect){this._spawn(x,y-.7,9,2,.8);this._zoomPunch=.55;}if(event.bigAir)this.addTrauma(.14);break;
         case 'takeoff':this._spawn(x,y-.7,6,0,.6);break;
         case 'fuel':this._spawn(x,y,11,2,1.1);this.popup('+'+Math.round(finite(event.amount,32))+' FUEL',x,y+1,'fuel');break;
         case 'zombie':this._spawn(x,y,7,7,.8);this._spawn(x,y+.5,4,3,.65);break;
-        case 'collision':this._spawn(x,y,10+Math.floor(s*12),2,1+s);this._spawn(x,y,7,4,s+1);this.addTrauma(s*.3);break;
+        case 'collision':this._spawn(x,y,18+Math.floor(s*20),2,1.1+s*1.3);this._spawn(x,y,9,4,s+1.2);this.addTrauma(s*.42);break;
         case 'monsterHit':this._impactTime=.6;this._impactX=x;this._impactY=y;this._spawn(x,y,35,7,2.3);this._spawn(x,y,18,2,2);this._spawn(x,y,10,4,2);this.addTrauma(.35);this._zoomPunch=1;this.flash('#f7df9b',.09);break;
         case 'monsterCrash':this._spawn(x,y,28,4,2.2);this._spawn(x,y,25,0,2.5);this._spawn(x,y,14,2,2);this.addTrauma(.85);this.flash('#df8264',.12);break;
         case 'flip':this._spawn(x,y,4,3,.8);break;
