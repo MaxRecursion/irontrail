@@ -8,8 +8,8 @@
   const V = P.Vec2;
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
-  const NAMES = ['Redstone Outbreak', 'Dry Creek', 'Hollow Ridge', 'Graveyard Pass', 'Deadwood Dunes', 'Rust Canyon', 'Bone Valley', 'Ashen Heights', 'Last Refuge', 'Iron Maw Showdown'];
-  const SUBTITLES = ['First contact in the desert', 'Follow the empty riverbed', 'Keep your wheels under you', 'The dead own this road', 'A little less room to breathe', 'Rust, dust and bigger jumps', 'No easy way through', 'High ground. Low reserves.', 'One last road to safety', 'Beat Iron Maw to the line'];
+  const NAMES = ['Ojas Speedway', 'Dry Creek', 'Hollow Ridge', 'Graveyard Pass', 'Deadwood Dunes', 'Rust Canyon', 'Bone Valley', 'Ashen Heights', 'Last Refuge', 'Iron Maw Showdown'];
+  const SUBTITLES = ['Your first super-truck adventure', 'Follow the empty riverbed', 'Keep your wheels under you', 'The dead own this road', 'A little less room to breathe', 'Rust, dust and bigger jumps', 'No easy way through', 'High ground. Low reserves.', 'One last road to safety', 'Beat Iron Maw to the line'];
   const LENGTHS = [220, 250, 285, 320, 355, 390, 425, 465, 510, 560];
   const FUEL_RATES = [5.98, 6.75, 7.90, 8.00, 8.25, 8.30, 8.95, 8.98, 9.25, 9.35];
   const POSE = Object.freeze({ PLAYER: 0, PLAYER_WHEEL_REAR: 1, PLAYER_WHEEL_FRONT: 2, RIVAL: 3,

@@ -168,9 +168,9 @@
       bank.rival=this._worldSprite(ppu,-2.65,-.56,5.3,2.55,c=>this._paintTruck(c,true));
       bank.wheels=[];for(let rival=0;rival<2;rival++)for(let blur=0;blur<2;blur++)bank.wheels.push(this._worldSprite(ppu,-.82,-.82,1.64,1.64,c=>this._paintWheel(c,!!rival,!!blur)));
       bank.cannon=this._worldSprite(ppu,-.4,-.37,2.1,.76,c=>{
-        poly(c,[[-.31,-.2],[.5,-.2],[.63,.17],[-.25,.17]],'#334941',o);
-        poly(c,[[.4,-.11],[1.45,-.11],[1.45,.11],[.4,.11]],'#789287',o);
-        poly(c,[[1.18,-.16],[1.5,-.16],[1.5,.16],[1.18,.16]],'#253c36',o);
+        poly(c,[[-.31,-.2],[.5,-.2],[.63,.17],[-.25,.17]],'#24232d',o);
+        poly(c,[[.4,-.11],[1.45,-.11],[1.45,.11],[.4,.11]],'#55515e',o);
+        poly(c,[[1.18,-.16],[1.5,-.16],[1.5,.16],[1.18,.16]],'#d83149',o);
         line(c,.79,-.1,.79,.1,'#d0d8b3',.07);circle(c,-.05,0,.15,'#4c6550',o);circle(c,-.05,0,.045,'#dce6ab');
       });
       bank.fuel=this._worldSprite(ppu,-1.2,-1.1,2.4,2.5,c=>{
@@ -201,26 +201,26 @@
       for(let i=0;i<kinds.length;i++){const kind=kinds[i];bank.props[kind]=this._worldSprite(Math.min(ppu,60),-1.8,-.08,3.6,4.45,c=>this._paintProp(c,kind));}
       for(let i=0;i<this._signs.length;i++){const sign=this._signs[i];if(!bank.signs[sign.label])bank.signs[sign.label]=this._worldSprite(ppu,-.8,-.05,1.6,2.5,c=>this._paintSign(c,sign.label));}
       for(let i=0;i<this._flags.length;i++)for(let passed=0;passed<2;passed++)bank.flags.push(this._worldSprite(ppu,-.12,-.05,1.45,3.6,c=>{
-        line(c,0,0,0,3.4,'#425d54',.065);poly(c,[[0,3.35],[1.15,3.2],[.95,2.62],[0,2.77]],passed?b.accent:'#8d9c8d',o,.045);this._bakedText(c,i?String(i).padStart(2,'0'):'GO',.47,2.92,.25,o);
+        line(c,0,0,0,3.4,'#425d54',.065);poly(c,[[0,3.35],[1.15,3.2],[.95,2.62],[0,2.77]],passed?'#ed3f53':'#29252f',o,.045);this._bakedText(c,i?String(i).padStart(2,'0'):'OJAS',.47,2.92,i?.25:.19,'#ffede8');
       }));
       bank.finish=this._worldSprite(ppu,-2,-.1,4,5.75,c=>{
         line(c,-1.7,0,-1.7,5.5,o,.13);line(c,1.7,0,1.7,5.5,o,.13);poly(c,[[-1.83,4.65],[1.83,4.65],[1.83,5.55],[-1.83,5.55]],o);
-        for(let i=0;i<16;i++)for(let j=0;j<2;j++){c.fillStyle=(i+j)%2?'#344f47':'#e3e5c4';c.fillRect(-1.76+i*.22,5.05+j*.2,.22,.2);}this._bakedText(c,'FINISH',0,4.8,.29,'#e8edcc');
+        for(let i=0;i<16;i++)for(let j=0;j<2;j++){c.fillStyle=(i+j)%2?'#344f47':'#e3e5c4';c.fillRect(-1.76+i*.22,5.05+j*.2,.22,.2);}this._bakedText(c,'GO OJAS!',0,4.8,.26,'#ffe8e7');
       });
       return bank;
     }
     _paintTruck(c,rival){
-      const b=this._biome,o=b.outline,paint=rival?'#ac4836':b.truckPaint,trim=rival?'#e29a66':'#edbf62',dark='#243b38';
+      const b=this._biome,o=rival?b.outline:'#13151d',paint=rival?'#ac4836':b.truckPaint,trim=rival?'#e29a66':'#151720',dark=rival?'#243b38':'#151720';
       poly(c,[[-2.25,-.39],[2.28,-.39],[2.28,-.17],[-2.25,-.17]],dark,o,.08);
       poly(c,[[-2.18,-.1],[-2.16,.5],[-1.12,.5],[-.83,1.26],[.55,1.26],[1.14,.5],[1.91,.39],[2.2,.15],[2.2,-.15],[1.9,-.3],[-1.92,-.3]],paint,o,.085);
       poly(c,[[-2.13,.35],[-1.08,.35],[-1.08,.51],[-2.13,.51]],'#465746',o,.03);
       poly(c,[[-1.05,.51],[-.76,1.18],[.5,1.18],[1.02,.51]],dark,o,.06);
-      poly(c,[[-.8,.59],[-.66,1.08],[-.1,1.08],[-.1,.59]],'#80adae',o,.045);
-      poly(c,[[.03,.59],[.03,1.08],[.43,1.08],[.84,.59]],'#6c989e',o,.045);
+      poly(c,[[-.8,.59],[-.66,1.08],[-.1,1.08],[-.1,.59]],rival?'#80adae':'#f3e4e1',o,.045);
+      poly(c,[[.03,.59],[.03,1.08],[.43,1.08],[.84,.59]],rival?'#6c989e':'#d5d7e3',o,.045);
       poly(c,[[-.59,.67],[-.51,1.02],[-.25,1.02]],'#c0d6c5');
       poly(c,[[.11,.67],[.11,1.02],[.39,1.02],[.5,.85]],'#b1ccc0');
       poly(c,[[-.9,1.22],[.62,1.22],[.65,1.36],[-.87,1.36]],dark,o,.04);
-      // Amber rescue stripe stays recognizable through every stage palette.
+      // Ojas’s red paint, black stripe and white web stay consistent in every biome.
       poly(c,[[-2.1,.07],[1.93,.07],[2.1,.21],[1.08,.29],[-2.1,.29]],trim,o,.026);
       poly(c,[[-.88,-.15],[.97,-.15],[.97,.07],[-.88,.07]],paint);
       line(c,-.08,-.21,-.08,.48,o,.025);line(c,-.92,-.19,-.92,.49,o,.025);
@@ -234,8 +234,14 @@
       line(c,-1.29,.51,-1.29,1.16,'#304840',.13);line(c,-1.29,1.16,-1.44,1.24,'#304840',.13);line(c,-1.3,.58,-1.3,1.08,'#a9b4a0',.035);
       poly(c,[[-.98,.58],[-1.18,.65],[-1.18,.79],[-.93,.74]],dark,o,.035);
       line(c,-.61,.4,-.37,.4,'#d7d8b0',.035);line(c,.23,.4,.47,.4,'#d7d8b0',.035);
-      this._bakedText(c,rival?'MAW':'IRON',.46,-.12,.29,rival?'#f3d3a0':'#f7e2aa','900');
-      this._bakedText(c,rival?'WARLORD':'TRAILBREAKER',-.47,-.1,.115,'#dce0bb');
+      this._bakedText(c,rival?'MAW':'OJAS',.46,-.12,.29,rival?'#f3d3a0':'#fff1ec','900');
+      this._bakedText(c,rival?'WARLORD':'OJAS-01',-.47,-.1,.115,rival?'#dce0bb':'#fbdde0');
+      if(!rival){
+        for(let i=0;i<4;i++)line(c,-1.9,.46,-1.03+i*.23,.08,'#f5c9d3',.012);
+        line(c,-1.9,.46,-1.04,.46,'#f5c9d3',.012);line(c,-1.65,.46,-1.49,.27,'#f5c9d3',.014);line(c,-1.39,.46,-1.23,.17,'#f5c9d3',.014);
+        circle(c,-.43,.28,.052,'#fff0e8');circle(c,-.43,.38,.033,'#fff0e8');
+        for(let i=0;i<4;i++){const y=.22+i*.045;line(c,-.46,y,-.57-i*.014,y+(i<2?-.08:.08),'#fff0e8',.012);line(c,-.40,y,-.29+i*.014,y+(i<2?-.08:.08),'#fff0e8',.012);}
+      }
       if(rival){for(let i=0;i<4;i++)poly(c,[[-.76+i*.35,1.35],[-.6+i*.35,1.72],[-.46+i*.35,1.35]],'#b77757',o,.045);for(let i=0;i<3;i++)poly(c,[[2.13,-.13+i*.12],[2.52,-.02+i*.12],[2.13,.04+i*.12]],'#b06a4a',o,.04);}
       else {poly(c,[[-1.94,.51],[-1.79,.78],[-1.62,.51]],trim,o,.035);circle(c,-1.79,.68,.055,'#f9e6af');}
     }
@@ -244,7 +250,7 @@
       circle(c,0,0,.77,'#172b2c',o,.065);circle(c,0,0,.66,'#263d3b');circle(c,0,0,.54,'#13272b');
       if(blur){circle(c,0,0,.69,null,'#5a6c5b',.095);circle(c,0,0,.61,null,'#8b9978',.025);}
       else for(let i=0;i<18;i++){c.save();c.rotate(i*TAU/18);poly(c,[[-.11,.62],[.08,.66],[.1,.75],[-.13,.73]],i%2?'#61715b':'#4a6050',null);c.restore();}
-      circle(c,0,0,.42,rival?'#bd7954':'#a8b68c',o,.055);circle(c,0,0,.31,rival?'#dfaa73':'#d2d8aa');
+      circle(c,0,0,.42,rival?'#bd7954':'#e43b50',o,.055);circle(c,0,0,.31,rival?'#dfaa73':'#20232e');
       for(let i=0;i<6;i++){const a=i*TAU/6;circle(c,Math.cos(a)*.235,Math.sin(a)*.235,.055,'#334e43');}
       circle(c,0,0,.115,'#4b6650',o,.025);circle(c,0,0,.045,'#eef0c8');
     }

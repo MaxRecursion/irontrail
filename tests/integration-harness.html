@@ -28,6 +28,7 @@ async function drive(stage,{shoot=true,pad=false,label='stage '+(stage+1)}={}){
   return {mode:game.mode,failed:game.physics.failed,time:game.telemetry.time,fuel:game.telemetry.fuel,gap:game.telemetry.rival?game.telemetry.x-game.telemetry.rival.x:null};
 }
 async function runFlow(){
+  const initialRuns=game.campaign.totals.runs;click('[data-ui="dedication"]');assert(game.mode==='dedication'&&doc.getElementById('screenHeading').textContent.includes('Ojas'),'Dedication opens');click('#playButton');assert(game.mode==='title'&&game.campaign.totals.runs===initialRuns,'Dedication returns without starting a run');log('PASS Ojas dedication opens and returns without changing progress.');
   const before=game.campaign,scrapBefore=before.scrap,runsBefore=before.totals.runs;
   const result=await drive(0,{label:'stage 1 clear'});assert(result.mode==='cleared','Stage 1 failed '+result.failed);assert(game.telemetry.ammo===0&&!game.telemetry.monster.alive,'One shot must clear monster');
   let campaign=game.campaign;assert(campaign.completed.includes(0)&&campaign.totals.runs===runsBefore+1&&campaign.scrap>scrapBefore,'Clear reward/progress');

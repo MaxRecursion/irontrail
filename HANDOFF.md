@@ -178,3 +178,14 @@ Render harness:1,400frames/10biomes,169/220maxdraws,3fonts,57.8MiB current cache
 Temporary ignored comparison page tests/impact-compare-preview.html is developer-only and excluded from dist; its numerical result is retained in /tmp/irontrail-impact-comparison.txt for this session. Production verification follows publication.
 
 Impact release3744e82 pushed to public main, Vercel deployment7JAcnuyoh8HFeF4mtJsYqjHpkZwo succeeded. Both custom and fallback URLs returnHTTP200 with the exact554,153byte tested bundle; live custom-domain gameplay opens successfully.
+
+
+## Ojas’s personalized edition — 4 November 2026
+
+Parent requested a dedication/customization for Ojas Kulkarni, red/black colors and spider-themed monster trucks. Title is now “Ojas’s Monster Rally — IRONTRAIL”, with red/black menu styling, a vector OJAS-01 showcase rolling in with turning wheels, spider emblem and web details. The header heart opens a dedicated “For Ojas Kulkarni” message, which returns through existing navigation. No extra intro blocks starting a run. Reduced Motion suppresses the new CSS animations.
+
+Cached in-game player truck is red across all ten biomes with black trim, white web/spider graphics, OJAS/OJAS-01 labels and red wheel hubs; cannon styling matches. Stage1 display name is Ojas Speedway with a welcoming subtitle, flags cheer OJAS and finish arch says GO OJAS. Garage and result copy are personalized; the animated trophy accompanies “Super driving, Ojas!” and final “Ojas, king of the trail!” Physics, distances, save keys/indexes, progression/rewards, single-shot monster rules, sound and doubled shake remain.
+
+Bundle and source syntax/shot checks pass. Renderer still passes1,400real-physics frames/10biomes at169/220maxdraws,3fonts and57.8MiB current caches, without hot canvases/gradients. UI passes9screens, title/dedication action fit and recovery hit-testing at1440×900,1280×720,390×844 and844×390; portrait iframe and desktop compositions visually inspected. These are browser responsive checks, not a physical iPhone test. Updated integration fixture adds dedication navigation/progress checks; publish the same GitHub/Vercel project after gameplay verification.
+
+Personalized integration flow passes: dedication opens/returns with no run/progress change; Ojas Speedway clears11.91s with one shot/slow motion, rewards, ghost, garage, pause and persistent settings. No runtime warnings/errors. At1280×530,DPR2/≈60Hz, callback mean.646ms/p991.5ms/max2.5ms over788warm frames is an available-browser observation only. Final generated bundle568,125bytes.

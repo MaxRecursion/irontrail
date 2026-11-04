@@ -409,3 +409,8 @@ Original eight-bar “Deadland Run” replaces the sparse score; nine persistent
 ## 13. Impact emphasis (4 November 2026)
 
 Cannon and collision audio add midrange impact harmonics and stronger transients/tails. Engine/music duck envelopes preserve the deepest active attenuation through overlapping events. Camera trauma amplitude uses14CSSpixels at full strength (previously7), and remains gated by Camera Shake/Reduced Motion. Muzzle flash and recoil are stronger, with particles still capped by the existing renderer budget. Gameplay physics, one-charge rule and refresh scheduling are unchanged.
+
+
+## 14. Ojas’s edition (4 November 2026)
+
+Parent-directed personalization replaces the amber signature with red/black OJAS-01 across every biome, with white web/spider details and outline contrast. The UI adds a dedication screen/event routed through existing navigation, an animated vector title showcase and personal trophy/result messages. Stage1 display name becomes Ojas Speedway; numerical stage IDs, track geometry, tuning, storage and gameplay contracts stay the same. The new dedication is revisitable via the heart button, and Reduced Motion disables title/trophy animations. This personalization supersedes earlier amber-paint/old-title wording.

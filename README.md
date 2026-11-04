@@ -1,6 +1,6 @@
-# IRONTRAIL — Deadland Rally
+# IRONTRAIL — Ojas’s Monster Rally
 
-A self-contained 2D monster truck game: ten increasingly demanding routes, physical zombies, depleting fuel, a single-charge cannon, and a final race against Iron Maw.
+A personalized red-and-black monster truck adventure made for Ojas Kulkarni, with love. The self-contained 2D game includes ten increasingly demanding routes, physical zombies, depleting fuel, a single-charge cannon, and a final race against Iron Maw.
 
 Play: https://irontrail.maxrecursion.dev . Vercel fallback: https://irontrail-iota.vercel.app . Source: https://github.com/MaxRecursion/irontrail. Open `index.html` in a modern browser. All physics, graphics, music and effects are inside that one file. No installation or network assets are needed.
 
@@ -31,7 +31,7 @@ Clear stages to unlock the next route. Earn stars for survival, par time and a r
 
 | Stage | Route | Distance | Par |
 | --- | --- | ---: | ---: |
-| 01 | Redstone Outbreak | 220 m | 15 s |
+| 01 | Ojas Speedway | 220 m | 15 s |
 | 02 | Dry Creek | 250 m | 17 s |
 | 03 | Hollow Ridge | 285 m | 20 s |
 | 04 | Graveyard Pass | 320 m | 22 s |
@@ -89,3 +89,7 @@ Vercel builds the portable file with `python3 build.py`, serves `dist/`, and is 
 Audio troubleshooting: Settings → Test sound plays two tones and shows a post-limiter output meter. Click/touch/keyboard activation can retry a suspended or interrupted context. The optional `?audioDebug=1` URL displays local output measurements for live-site QA; it requests no microphone access and sends no recordings.
 
 Impact update: cannon and collision audio have sharper attacks, a stronger midrange body and deeper engine/music ducking. A larger muzzle flash, stronger barrel recoil and more collision sparks reinforce the hit. Camera shake amplitude is doubled; Camera Shake off and Reduced Motion still suppress it.
+
+## Ojas’s edition
+
+The title, dedication, OJAS-01 hero truck, web details and spider emblem, Ojas Speedway, track flags and finish banner, garage, and trophy celebrations are personalized for Ojas. The heart button reopens the dedication. The title truck rolls into view with turning wheels; Reduced Motion disables those animations. In-game truck art stays cached and red/black through all ten biomes. Existing progress, upgrades, ghosts, physics and single-charge encounters carry over.
