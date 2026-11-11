@@ -29,6 +29,7 @@
       checkpoint: 6, monster: 30, slipstreamPerSecond: 6, slam: 25, rivalPerSecond: 8 }) });
   // Local integer hash for deterministic scenery; never consumes options.random.
   const hash = n => { n = Math.imul(n ^ 0x9e3779b9, 0x85ebca6b); n ^= n >>> 13; n = Math.imul(n, 0xc2b2ae35); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; };
+  const ENDLESS = Object.freeze({ chunkLength: 96, ahead: 480, behind: 192, overturnAngle: 1.75, fallDepth: 3, difficultyInterval: 250, fuelDrain: 6.8 });
   const STAGES = Object.freeze(NAMES.map((name, i) => Object.freeze({
     id: i + 1, name, subtitle: SUBTITLES[i], length: LENGTHS[i], difficulty: i + 1,
     boss: i === 9, fuelDrain: FUEL_RATES[i], fuelInterval: 78 + i * 2,
@@ -41,6 +42,7 @@
     static get UPGRADES() { return UPGRADES; }
     static get RIVAL_TUNING() { return RIVAL_TUNING; }
     static get NITRO() { return NITRO; }
+    static get ENDLESS() { return ENDLESS; }
 
     static warmUp(milliseconds = 60) {
       const now = () => typeof performance === 'object' ? performance.now() : Date.now();
@@ -56,7 +58,8 @@
 
     constructor(stageIndex = 0, options = {}) {
       this.stageIndex = clamp(Math.floor(Number(stageIndex) || 0), 0, STAGES.length - 1);
-      this.stage = STAGES[this.stageIndex];
+      this.endless = options.endless === true;
+      this.stage = this.endless ? Object.freeze({ ...STAGES[9], id: 11, name: 'Endless Boss', subtitle: 'No finish line. Stay upright.', endless: true, length: ENDLESS.ahead + ENDLESS.chunkLength, difficulty: 1, fuelDrain: ENDLESS.fuelDrain, zombieCount: 0 }) : STAGES[this.stageIndex];
       this.random = typeof options.random === 'function' ? options.random : Math.random;
       const tuning = options.tuning || {};
       this.tuning = Object.freeze({ engine: clamp(Math.floor(Number(tuning.engine) || 0), 0, 3),
@@ -81,7 +84,7 @@
         segment.xs = new Float64Array(segment.length);
         for (let j = 0; j < segment.length; j++) segment.xs[j] = segment[j].x;
       }
-      this._breakableLayout = this._makeBreakables();
+      this._breakableLayout = this.endless ? [] : this._makeBreakables();
       this.restart();
     }
 
@@ -105,6 +108,7 @@
     }
 
     _makeTrack() {
+      if (this.endless) return this._makeEndlessTrack();
       const d = this.stage.difficulty, startX = 7.5, finishX = startX + this.stage.length;
       const count = 2 + Math.floor((d - 1) / 2), span = (this.stage.length - 25) / count;
       const layouts = [], features = [], canXs = [], checkpoints = [{ x: startX - 1.5, y: 0 }];
@@ -161,6 +165,121 @@
         return out;
       });
       return { segments, checkpoints, startX, finishX, length: this.stage.length, features, canXs };
+    }
+
+    // Stream whole immutable chain arrays. Only a small forward/behind window remains in memory.
+    _makeEndlessTrack() {
+      this._endlessNextChunk = 0;
+      const track = { segments: [], checkpoints: [{ x: 6, y: 0 }], startX: 7.5,
+        finishX: 7.5, length: 0, features: [], canXs: [] };
+      for (let i = 0; i < 6; i++) this._appendEndlessChunk(track);
+      return track;
+    }
+
+    _appendEndlessChunk(track) {
+      const index = this._endlessNextChunk++, start = track.startX + index * ENDLESS.chunkLength;
+      const end = start + ENDLESS.chunkLength, gap = index >= 8 && index % 3 === 2 ? 2.5 + Math.log2(index - 6) * .55 : 0;
+      const surfaceEnd = end - gap, amplitude = .9 + Math.sqrt(index) * .4;
+      const waves = index % 4 === 1 ? 1 : Math.min(4, 1 + Math.floor(index / 12));
+      const first = index === 0 ? -35 : start, segment = [], samples = Math.ceil((surfaceEnd - first) / .65);
+      for (let n = 0; n <= samples; n++) {
+        const x = first + (surfaceEnd - first) * n / samples;
+        const apron = index === 0 ? 30 : 14;
+        const t = clamp((x - start - apron) / Math.max(1, surfaceEnd - start - apron - 14), 0, 1);
+        let y = amplitude * Math.sin(Math.PI * waves * t) ** 2;
+        if (gap && x > surfaceEnd - 14) y = (x - surfaceEnd + 14) / 14 * (2.1 + Math.log2(index) * .35);
+        segment.push({ x, y });
+      }
+      segment.xs = Float64Array.from(segment, point => point.x);
+      segment.chunkIndex = index;
+      track.segments.push(segment); track.canXs.push(start + 40);
+      track.features.push({ kind: gap ? 'ramp' : 'rollers', startX: start + 14, endX: surfaceEnd,
+        height: amplitude, difficulty: 1 + index * ENDLESS.chunkLength / ENDLESS.difficultyInterval });
+      track.finishX = end; track.length = end - track.startX;
+      return segment;
+    }
+
+    _indexEndlessTrack() {
+      this._segmentStarts = Float64Array.from(this.track.segments, segment => segment[0].x);
+    }
+
+    _endlessFixture(segment) {
+      return this.ground.createFixture(new P.Chain(segment.map(point => V(point.x, point.y))), {
+        friction: .95, restitution: .015, filterCategoryBits: 1
+      });
+    }
+
+    _extendEndlessTrack(x) {
+      let changed = false;
+      // Even a developer fixture jumping far ahead cannot allocate all the skipped terrain.
+      if (x - this.track.finishX > ENDLESS.ahead + ENDLESS.behind) {
+        for (const fixture of this._endlessFixtures.values()) this.ground.destroyFixture(fixture);
+        this._endlessFixtures.clear(); this.track.segments.length = 0; this.track.features.length = 0; this.track.canXs.length = 0; this.fuelCans.length = 0;
+        this._endlessNextChunk = Math.max(0, Math.floor((x - ENDLESS.behind - this.track.startX) / ENDLESS.chunkLength));
+        this.track.finishX = this.track.startX + this._endlessNextChunk * ENDLESS.chunkLength;
+        changed = true;
+      }
+      while (this.track.finishX < x + ENDLESS.ahead) {
+        const segment = this._appendEndlessChunk(this.track);
+        this._endlessFixtures.set(segment, this._endlessFixture(segment));
+        const canX = this.track.canXs.at(-1), point = segment.findIndex(p => p.x >= canX), a = segment[point - 1], b = segment[point];
+        const y = a.y + (b.y - a.y) * (canX - a.x) / (b.x - a.x);
+        this.fuelCans.push({ id: segment.chunkIndex, x: canX, y: y + 1.3, collected: false });
+        changed = true;
+      }
+      while (this.track.segments.length > 2 && this.track.segments[0].at(-1).x < x - ENDLESS.behind) {
+        const segment = this.track.segments.shift(), fixture = this._endlessFixtures.get(segment);
+        this.ground.destroyFixture(fixture); this._endlessFixtures.delete(segment); changed = true;
+      }
+      if (changed) {
+        const first = this.track.segments[0][0].x;
+        this.track.features = this.track.features.filter(feature => feature.endX >= first);
+        this.track.canXs = this.track.canXs.filter(canX => canX >= first);
+        this.fuelCans = this.fuelCans.filter(can => can.x >= first);
+        this._indexEndlessTrack(); this.terrainVersion++;
+      }
+    }
+
+    _failEndless() {
+      const p = this.chassis.getPosition(), angle = Math.abs(wrap(this.chassis.getAngle()));
+      const kind = angle >= ENDLESS.overturnAngle ? 'overturn' : p.y < this._heightAt(p.x) - ENDLESS.fallDepth ? 'fall' : '';
+      if (!kind) return false;
+      this.failed = kind; this.finished = false;
+      this.player.boosting = false; this.player.boostTime = 0;
+      this.events.push({ type: 'wreck', kind: kind === 'fall' ? 'fall' : 'roof', x: p.x, y: p.y, strength: 1 });
+      this._capturePose(); return true;
+    }
+
+    _stepEndless(dt, input) {
+      dt = clamp(Number(dt) || 0, 0, 1 / 30);
+      if (!dt || this.failed) return;
+      this.posePrev.set(this.poseCurr);
+      const p = this.chassis.getPosition();
+      this._extendEndlessTrack(Math.max(this.track.startX, p.x));
+      if (this._failEndless()) return;
+      const throttle = clamp(Number(input.throttle) || 0, -1, 1), lean = clamp(Number(input.lean) || 0, -1, 1);
+      const vy = this.chassis.getLinearVelocity().y;
+      this._updateBurn(this.player, !!input.boost && throttle >= -.05 && !input.brake, dt);
+      this._drive(this.player, throttle, !!input.brake, lean);
+      this.world.step(dt, 8, 3); this._elapsed += dt;
+      const position = this.chassis.getPosition(), speed = Math.abs(this.chassis.getLinearVelocity().x);
+      this.stats.topSpeed = Math.max(this.stats.topSpeed, speed);
+      this.distance = Math.max(this.distance, position.x - this.track.startX);
+      const difficulty = 1 + Math.floor(this.distance / ENDLESS.difficultyInterval);
+      if (difficulty > this.difficulty) {
+        this.difficulty = difficulty; this.events.push({ type: 'difficulty', difficulty, x: position.x, y: position.y });
+      }
+      if (this._failEndless()) return;
+      this._updateFlight(this.player, dt, vy, true);
+      this.grounded = this.player.grounded; this.airtime = this.player.airtime; this.airRotation = this.player.airRotation;
+      this.player.stalledTime = Math.abs(throttle) > .05 && this.grounded && speed < .6 ? this.player.stalledTime + dt : 0;
+      this.fuel = Math.max(0, this.fuel - this.stage.fuelDrain * UPGRADES.tank.drain[this.tuning.tank] * (.35 + (this.player.boosting ? 1 : Math.abs(throttle)) * .65) * dt);
+      for (const can of this.fuelCans) if (!can.collected && Math.hypot(position.x - can.x, position.y - can.y) < 3.9) {
+        can.collected = true; const amount = Math.min(32, 100 - this.fuel); this.fuel += amount; this.stats.cans++;
+        this.events.push({ type: 'fuel', x: can.x, y: can.y, amount });
+      }
+      if (this.fuel <= 0) this._failFuel();
+      this._weaponDirty = true; this._capturePose();
     }
 
     _segmentAt(x) {
@@ -282,12 +401,17 @@
     }
 
     restart() {
+      if (this.endless) {
+        this.track = this._makeEndlessTrack(); this._indexEndlessTrack();
+        this.distance = 0; this.difficulty = 1; this.terrainVersion = (this.terrainVersion || 0) + 1;
+        this._endlessFixtures = new Map();
+      }
       this.world = new P.World({ gravity: V(0, -14), allowSleep: true });
       this.ground = this.world.createBody();
       this.ground.setUserData({ type: 'ground' });
-      for (const vertices of this.track.segments) this.ground.createFixture(new P.Chain(vertices.map(p => V(p.x, p.y))), {
+      for (const vertices of this.track.segments) { const fixture = this.ground.createFixture(new P.Chain(vertices.map(p => V(p.x, p.y))), {
         friction: 0.95, restitution: 0.015, filterCategoryBits: 1
-      });
+      }); if (this.endless) this._endlessFixtures.set(vertices, fixture); }
       this.ground.createFixture(new P.Edge(V(-35, -4), V(-35, 12)), { friction: 0.6 });
       this.events = []; this._pendingHits = new Set(); this._pendingCollision = 0;
       this._lastCollisionTime = -100; this._elapsed = 0;
@@ -300,7 +424,7 @@
       this.checkpointIndex = 0;
       this.player = null;
       this._spawnPlayer(0);
-      this.rival = this.stage.boss ? this._createTruck(this.track.startX - RIVAL_TUNING.startGap, 'rival') : null;
+      this.rival = this.stage.boss && !this.endless ? this._createTruck(this.track.startX - RIVAL_TUNING.startGap, 'rival') : null;
       this.zombies = [];
       for (let i = 0; i < this.stage.zombieCount; i++) {
         const rawX = this.track.startX + 25 + i * (this.stage.length - 45) / this.stage.zombieCount;
@@ -319,11 +443,12 @@
         const x = this.track.canXs[i];
         this.fuelCans.push({ id: i, x, y: this._heightAt(x) + 1.3, collected: false });
       }
-      if (this.stage.boss) {
+      if (this.stage.boss && !this.endless) {
         const x = this.track.startX + 35;
         this.fuelCans.unshift({ id: -1, x, y: this._heightAt(x) + 1.3, collected: false });
       }
-      this.monster = this._createMonster();
+      this.monster = this.endless ? { x: 0, y: 0, width: 3, height: 4.8, weakpoint: { x: 0, y: 2.85 }, alive: false, hit: false, timeSinceHit: 0 } : this._createMonster();
+      if (this.endless) this.ammo = 0;
       this.breakables = this._breakableLayout;
       for (const prop of this.breakables) { prop.broken = false; prop.active = Math.abs(prop.x - this.monster.x) >= 7; }
       this.world.on('begin-contact', contact => {
@@ -392,6 +517,7 @@
     }
 
     reset(checkpointIndex = 0) {
+      if (this.endless) return false;
       if (this.failed || this.winner) return false;
       this.fuel = Math.max(0, this.fuel - 12);
       if (this.fuel <= 0) { this._failFuel(); return false; }
@@ -582,6 +708,7 @@
     }
 
     step(dt, input = {}) {
+      if (this.endless) return this._stepEndless(dt, input);
       this.posePrev.set(this.poseCurr);
       dt = clamp(Number(dt) || 0, 0, 1 / 30);
       if (!dt || this.failed || this.winner) return;
@@ -737,6 +864,7 @@
     // After the run is decided the runtime may let the world roll on for a short outro.
     // No rules run here: fuel, nitro, pickups, checkpoints, results and stats are frozen.
     coast(dt) {
+      if (this.endless) return false;
       if (!this.failed && !this.winner) return false;
       this.posePrev.set(this.poseCurr);
       dt = clamp(Number(dt) || 0, 0, 1 / 30);
@@ -798,6 +926,7 @@
 
     getState() {
       const state = this._snapshot(this.player, this._state); this._state = state;
+      if (this.endless) { state.endless = true; state.distance = this.distance; state.difficulty = this.difficulty; state.terrainVersion = this.terrainVersion; }
       state.rival = this.rival ? this._snapshot(this.rival, state.rival) : null;
       state.fuel = this.fuel; state.cleared = this.cleared; state.totalZombies = this.zombies.length;
       state.racePosition = state.rival && state.rival.x > state.x ? 2 : 1; state.ammo = this.ammo;

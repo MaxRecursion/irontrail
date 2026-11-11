@@ -133,6 +133,7 @@
   }
   function defaults() {
     return { version: 3, unlocked: 1, completed: [], best: {}, selected: 0, stars: {}, bestScore: {}, scrap: 0,
+      endless: { bestDistance: 0, bestTime: 0, runs: 0 },
       upgrades: { engine: 0, tyres: 0, suspension: 0, tank: 0 },
       settings: { master: .9, music: .55, sfx: .9, quality: 'auto', shake: true, showFps: false, reducedMotion: false, haptics: true, autoNitro: false },
       totals: { runs: 0, clears: 0, zombies: 0, flips: 0, cans: 0, scrapEarned: 0, smashes: 0, slams: 0 } };
@@ -151,6 +152,7 @@
       else if (out.completed.includes(i)) out.stars[i] = [true, false, false];
     }
     out.scrap = integer(raw.scrap, 0, 10000000);
+    out.endless = endlessRecord(raw.endless);
     for (const track of KEYS) out.upgrades[track] = integer(raw.upgrades?.[track], 0, 3);
     const settings = raw.settings && typeof raw.settings === 'object' ? raw.settings : {};
     for (const volume of ['master', 'music', 'sfx']) if (Number.isFinite(Number(settings[volume]))) out.settings[volume] = clamp(settings[volume], 0, 1);
@@ -161,6 +163,22 @@
   }
   function load(storage) { try { const s = storage || global.localStorage; return migrate(s?.getItem('irontrail-campaign-v1')); } catch (_) { return defaults(); } }
   function save(storage, data) { try { const s = storage || global.localStorage; if (!s) return false; s.setItem('irontrail-campaign-v1', JSON.stringify(migrate(data))); return true; } catch (_) { return false; } }
+  // Survival records are separate from campaign rewards and do not create an eleventh stage.
+  const endlessResults = new WeakMap();
+  function endlessRecord(value) {
+    return { bestDistance: clamp(value?.bestDistance, 0, 1000000000), bestTime: clamp(value?.bestTime, 0, 1000000000), runs: integer(value?.runs, 0, 1000000000) };
+  }
+  function recordEndless(data, summary) {
+    if (!data || typeof data !== 'object' || Array.isArray(data) || !summary || typeof summary !== 'object' || Array.isArray(summary)) return { applied: false };
+    let recorded = endlessResults.get(data);
+    if (!recorded) { recorded = new WeakSet(); endlessResults.set(data, recorded); }
+    if (recorded.has(summary)) return { applied: false };
+    recorded.add(summary);
+    const prior = endlessRecord(data.endless), distance = clamp(summary.distance, 0, 1000000000), time = clamp(summary.time, 0, 1000000000);
+    const newBest = distance > prior.bestDistance || distance === prior.bestDistance && time > prior.bestTime;
+    data.endless = { bestDistance: newBest ? distance : prior.bestDistance, bestTime: newBest ? time : prior.bestTime, runs: Math.min(1000000000, prior.runs + 1) };
+    return { applied: true, newBest, distance, time, bestDistance: data.endless.bestDistance, bestTime: data.endless.bestTime };
+  }
   function buyUpgrade(data, track) {
     if (!data || !KEYS.includes(track)) return { ok: false, reason: 'invalid' };
     const level = integer(data.upgrades?.[track], 0, 3), cost = upgradeCost(track, level);
@@ -191,5 +209,5 @@
   }
   global.IronRules = Object.freeze({ PAR_TIMES, CHALLENGES, UPGRADE_COSTS, UPGRADE_META, UPGRADES: EFFECTS,
     createRun, onEvent, tick, finish, upgradeCost, upgradeInfo, buyUpgrade,
-    Save: Object.freeze({ KEY: 'irontrail-campaign-v1', defaults, load, save, migrate, recordResult }), recordResult });
+    Save: Object.freeze({ KEY: 'irontrail-campaign-v1', defaults, load, save, migrate, recordResult, recordEndless }), recordResult });
 })(globalThis);

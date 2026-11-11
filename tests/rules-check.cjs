@@ -67,4 +67,34 @@ assert.equal(R.UPGRADES.tank.drain[3],.79);assert.equal(R.UPGRADES.engine.torque
   assert.equal(data.totals.smashes, 4); assert.equal(data.totals.slams, 1);
   console.log('PASS Redline rules: smash chain/multiplier, rival smashes ignored, slam, nitro-burn bonus, awards, new settings/totals and migration');
 }
+// Endless survival records never award campaign scrap, stars or stage clears.
+{
+  const defaults = R.Save.defaults(), independent = R.Save.defaults();
+  assert.deepEqual(defaults.endless, { bestDistance: 0, bestTime: 0, runs: 0 });
+  defaults.endless.runs = 3; assert.equal(independent.endless.runs, 0, 'endless defaults do not share state');
+  const old = R.Save.migrate({ unlocked: 10, completed: [0, 9], best: { 9: 29.07 } });
+  assert.deepEqual(old.endless, { bestDistance: 0, bestTime: 0, runs: 0 }); assert.equal(old.best[9], 29.07);
+  const corrupt = R.Save.migrate({ endless: { bestDistance: Infinity, bestTime: -1, runs: 'bad' } });
+  assert.deepEqual(corrupt.endless, { bestDistance: 0, bestTime: 0, runs: 0 });
+  const capped = R.Save.migrate({ endless: { bestDistance: 1e15, bestTime: 1e15, runs: 1e15 }, completed: [9, 10], unlocked: 11 });
+  assert.deepEqual(capped.endless, { bestDistance: 1e9, bestTime: 1e9, runs: 1e9 }); assert.deepEqual(capped.completed, [9]); assert.equal(capped.unlocked, 10);
+  const campaign = R.Save.migrate({ unlocked: 10, completed: [0, 9], selected: 9, scrap: 360, stars: { 9: [true, true, false] }, best: { 9: 29.07 }, totals: { runs: 12, clears: 10 } });
+  const campaignOnly = value => { const { endless, ...rest } = value; return JSON.stringify(rest); };
+  const before = campaignOnly(campaign), first = Object.freeze({ distance: 680.5, time: 43.25 });
+  assert.deepEqual(R.Save.recordEndless(campaign, first), { applied: true, newBest: true, distance: 680.5, time: 43.25, bestDistance: 680.5, bestTime: 43.25 });
+  assert.equal(R.Save.recordEndless(campaign, first).applied, false); assert.equal(campaign.endless.runs, 1, 'same run summary records once');
+  R.Save.recordEndless(campaign, { distance: 500, time: 100 }); assert.equal(campaign.endless.bestDistance, 680.5); assert.equal(campaign.endless.bestTime, 43.25, 'time belongs to the best-distance run');
+  R.Save.recordEndless(campaign, { distance: 680.5, time: 45 }); assert.equal(campaign.endless.bestTime, 45, 'longer survival breaks an equal-distance tie');
+  R.Save.recordEndless(campaign, { distance: 800, time: 40 }); assert.equal(campaign.endless.bestDistance, 800); assert.equal(campaign.endless.bestTime, 40, 'a farther run replaces its paired survival time');
+  R.Save.recordEndless(campaign, { distance: NaN, time: Infinity }); assert.equal(campaign.endless.runs, 5); assert.equal(campaign.endless.bestDistance, 800);
+  assert.equal(campaignOnly(campaign), before, 'endless attempts do not change any campaign progress, records, totals, upgrades or scrap');
+  assert.equal(R.Save.recordEndless(null, first).applied, false); assert.equal(R.Save.recordEndless(campaign, null).applied, false);
+  assert.equal(R.Save.recordEndless(independent, first).applied, true, 'identity guards belong to each save, not unrelated players');
+  const locked = R.Save.defaults(); R.Save.recordEndless(locked, { distance: 1000, time: 60 });
+  assert.equal(locked.unlocked, 1); assert.deepEqual(locked.completed, [], 'a record cannot unlock the campaign or the boss round');
+  const store = { value: null, setItem(key, value) { this.value = value; }, getItem() { return this.value; } };
+  assert.equal(R.Save.save(store, campaign), true); assert.deepEqual(R.Save.load(store), campaign, 'endless records persist with existing campaign data');
+  assert.equal(R.Save.save(bad, campaign), false); assert.deepEqual(R.Save.load(bad).endless, { bestDistance: 0, bestTime: 0, runs: 0 }, 'denied storage remains playable');
+  console.log('PASS endless records: independent defaults, old/corrupt save migration, paired distance/time best, bounded values, idempotence, persistence and no campaign rewards/unlocks');
+}
 console.log('PASS rules: combo decay, landed scoring, stars/challenges, scrap, upgrade costs, v2 migration, corrupt/denied storage, idempotent result rewards');

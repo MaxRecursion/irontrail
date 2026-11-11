@@ -292,3 +292,12 @@ Shooting implementation and functional validation complete. GitHub repo and Verc
 - [x] Challenge progress ring and fuel threshold mark; scene pictures on stage cards and brief; picture goals; result ticks and crosses.
 - [x] Animated control demos; drive, tilt and low-fuel cues; icon-led settings.
 - [x] Reviewed boss balance with nitro: left as is (see HANDOFF).
+
+
+## Endless Boss — 12 November 2026
+
+- [x] Unlock a separate endless survival round after stage10, with title/track-select access.
+- [x] Stream harder terrain indefinitely with bounded world/renderer caches.
+- [x] Preserve fuel depletion and reachable streamed cans; make fall/overturn/fuel terminal without recovery.
+- [x] Save survival records separately; keep campaign rewards and ghost data unchanged.
+- [x] Add physics, renderer, rules, UI and browser integration coverage; document the contract in SPEC §18.

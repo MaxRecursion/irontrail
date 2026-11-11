@@ -48,6 +48,41 @@ async function runFailures(){
   game.qa.start(0);game.physics.fuel=.001;await waitFor(()=>game.mode==='failed',2500,'fuel failure');assert(game.physics.failed==='fuel','Empty fuel failure');click('#playButton');await waitFor(()=>game.mode==='playing',4500,'fuel retry');assert(game.telemetry.fuel>98&&game.telemetry.ammo===1,'Fuel retry refills/reloads');log('PASS fuel failure and both retry paths restore full attempt.');
 }
 async function runBoss(){const result=await drive(9,{label:'boss actual physics'});assert(result.mode==='victory'&&game.physics.finished,'Clean boss race must win '+JSON.stringify(result));assert(game.physics.rival?.chassis&&game.physics.rival.wheels.length===2,'Rival has physical chassis and wheels');assert(game.campaign.completed.includes(9),'Boss completion saved');log('PASS Iron Maw race '+result.time.toFixed(2)+'s, player lead '+result.gap.toFixed(2)+'m; campaign victory.');}
+// The post-campaign round streams indefinitely and records survival separately from campaign rewards.
+async function runEndless(){
+  current='Endless Boss survival';resetPad();
+  assert(game.mode==='victory'&&game.campaign.completed.includes(9),'Stage10 victory unlocks endless');
+  assert(doc.getElementById('playButton').getAttribute('aria-label').includes('endless'),'Stage10 continues to the endless round');
+  click('#playButton');assert(game.mode==='endlessBrief'&&game.stage===11,'Boss continuation opens its own briefing');
+  click('[data-ui="garage"]');click('#playButton');assert(game.mode==='endlessBrief','Garage returns to endless briefing');
+  const before=game.campaign,campaignDigest=s=>JSON.stringify({completed:s.completed,stars:s.stars,best:s.best,bestScore:s.bestScore,scrap:s.scrap,totals:s.totals}),campaignBefore=campaignDigest(before),runs=before.endless.runs;
+  click('#playButton');await waitFor(()=>game.mode==='playing',4500,'endless countdown');key('KeyW');
+  const initialVersion=game.telemetry.terrainVersion;let minimumFuel=100,pickups=0,lastCans=0;
+  const stop=performance.now()+65000;
+  while(game.mode==='playing'&&game.telemetry.distance<620&&performance.now()<stop){
+    minimumFuel=Math.min(minimumFuel,game.telemetry.fuel);if(game.telemetry.stats.cans>lastCans){pickups++;lastCans=game.telemetry.stats.cans;}await delay(20);
+  }
+  key('KeyW',false);assert(game.mode==='playing'&&game.telemetry.distance>=620,'Endless continues past the old560m finish: '+game.physics.failed);
+  assert(game.telemetry.difficulty>=3&&game.telemetry.terrainVersion>initialVersion,'Terrain grows harder and streams forward');
+  assert(minimumFuel<95&&pickups>2&&game.telemetry.fuel>0,'Fuel drains and reachable cans sustain the run');
+  assert(game.physics.track.segments[0][0].x>game.physics.track.startX&&game.physics.track.segments.length<=10,'Old terrain pruned and active window bounded');
+  assert(!doc.getElementById('survivalHud').hidden&&doc.getElementById('fuelHud').checkVisibility()&&!doc.getElementById('weaponHud').checkVisibility()&&doc.getElementById('recoverButton').hidden,'Survival HUD keeps fuel and removes cannon/recovery');
+  key('KeyP');key('KeyP',false);const paused=JSON.stringify([game.telemetry.time,game.telemetry.distance,game.telemetry.fuel]);await delay(300);assert(JSON.stringify([game.telemetry.time,game.telemetry.distance,game.telemetry.fuel])===paused,'Endless pause freezes time, distance and fuel');key('KeyP');key('KeyP',false);
+  key('KeyC');key('KeyC',false);assert(game.telemetry.recoveries===0,'Keyboard cannot recover in survival');
+  // Fixture setup exercises genuine failure detection in the next normal game-loop step.
+  const p=game.physics;for(const body of [p.chassis,...p.wheels]){const q=body.getPosition();body.setTransform(win.planck.Vec2(q.x,q.y-15),0);}
+  await waitFor(()=>game.mode==='failed',1000,'fall ends endless immediately');assert(game.physics.failed==='fall'&&!game.outro,'Fall has no recovery or coasting grace');
+  assert(game.campaign.endless.runs===runs+1&&game.campaign.endless.bestDistance>=620,'Distance record saved once');
+  assert(campaignDigest(game.campaign)===campaignBefore,'Survival failure does not change campaign economy or records');
+  const terminal=JSON.stringify([game.telemetry.time,game.telemetry.distance,game.telemetry.fuel,game.telemetry.x,game.telemetry.y]);await delay(250);assert(JSON.stringify([game.telemetry.time,game.telemetry.distance,game.telemetry.fuel,game.telemetry.x,game.telemetry.y])===terminal,'Terminal survival state freezes');
+  click('[data-ui="stages"]');assert(doc.querySelector('.endless-entry'),'Unlocked survival remains in track select');key('Escape');key('Escape',false);assert(game.mode==='failed'&&game.campaign.endless.runs===runs+1,'Returning to failure does not duplicate record');
+  click('#playButton');await waitFor(()=>game.mode==='playing',4500,'endless retry');assert(game.telemetry.endless&&game.telemetry.distance<1&&game.telemetry.difficulty===1&&game.telemetry.fuel>98,'Retry starts a fresh endless course and tank');
+  game.physics.fuel=.001;await waitFor(()=>game.mode==='failed',1000,'endless fuel failure');assert(game.physics.failed==='fuel'&&doc.getElementById('screenHeading').textContent.includes('out of fuel'),'Fuel depletion ends survival');
+  click('#playButton');await waitFor(()=>game.mode==='playing',4500,'second endless retry');const q=game.physics.chassis.getPosition();game.physics.chassis.setTransform(win.planck.Vec2(q.x,q.y),Math.PI);
+  await waitFor(()=>game.mode==='failed',1000,'overturn ends endless immediately');assert(game.physics.failed==='overturn'&&!game.outro&&game.campaign.endless.runs===runs+3,'Overturn has no self-right/recovery grace and records once');
+  assert(campaignDigest(game.campaign)===campaignBefore,'All survival endings remain outside campaign rewards');
+  log('PASS Endless Boss: stage10 unlock/brief/garage,620m real driving with fuel/cans, difficulty/streaming/pruning, pause, no recovery, immediate fall/overturn/fuel endings, frozen results, independent best distance and retry.');
+}
 async function runPad(){
   resetPad();game.qa.start(0);perfStart('gamepad stage 1');win.__qaPad.connected=true;setButton(7,1);await delay(650);assert(game.telemetry.x>game.physics.track.startX+.1,'Gamepad RT drives');assert(doc.querySelector('#fireButton .keycap').textContent==='A'&&doc.querySelector('#recoverButton .keycap').textContent==='X'&&doc.getElementById('nitroHint').textContent==='RB','Actual gamepad updates gameplay hints');await edgeButton(9);assert(game.mode==='paused','Gamepad Start pauses');const t=game.telemetry.time,f=game.telemetry.fuel;await delay(300);assert(game.telemetry.time===t&&game.telemetry.fuel===f,'Gamepad pause freezes');await edgeButton(9);assert(game.mode==='playing','Gamepad Start resumes');
   setButton(7,1);let fired=false,sawSlow=false,sawImpact=false;const stop=performance.now()+30000;while(game.mode==='playing'&&performance.now()<stop){if(!fired&&game.telemetry.weapon.canHit){await edgeButton(0);fired=true;}await delay(12);}resetPad();perfEnd('gamepad stage 1');assert(game.mode==='cleared'&&fired&&game.telemetry.ammo===0,'Gamepad A fires one shot and clears');log('PASS synthetic gamepad RT, Start pause/resume and A cannon complete stage 1.');
@@ -98,7 +133,7 @@ async function runGoals(){
 }
 async function run(){
   if(running)return;running=true;button.disabled=true;document.title='RUNNING — IRONTRAIL integration validation';lines.length=0;log('RUN '+phase+' · isolated QA campaign '+campaignKey);frame.contentWindow.focus();game.audio.prime();reportTimer=setInterval(()=>{const t=game.telemetry;status.textContent=current+' · '+game.mode+' · '+t.time.toFixed(2)+'s · fuel '+Math.ceil(t.fuel)+'% · ammo '+t.ammo;},500);
-  try{await waitFor(()=>game.qa.warm,4000,'warm-up');if(phase==='all'||phase==='flow')await runFlow();if(phase==='all'||phase==='failures')await runFailures();if(phase==='all'||phase==='boss')await runBoss();if(phase==='all'||phase==='gamepad')await runPad();if(phase==='all'||phase==='redline')await runRedline();if(phase==='all'||phase==='goals')await runGoals();assert(['all','flow','failures','boss','gamepad','redline','goals'].includes(phase),'Unknown phase '+phase);key('KeyW',false);resetPad();if(game.mode==='playing'){key('KeyP');key('KeyP',false);}log('PASS integration '+phase+'; production storage untouched.');document.title='PASS — IRONTRAIL integration validation';status.textContent='PASS · '+phase+' · see exact checks and callback metrics below.';globalThis.irontrailIntegration={phase,lines:lines.slice(),metrics,campaignKey,ghostPrefix};}
+  try{await waitFor(()=>game.qa.warm,4000,'warm-up');if(phase==='all'||phase==='flow')await runFlow();if(phase==='all'||phase==='failures')await runFailures();if(phase==='all'||phase==='boss'||phase==='endless')await runBoss();if(phase==='all'||phase==='endless')await runEndless();if(phase==='all'||phase==='gamepad')await runPad();if(phase==='all'||phase==='redline')await runRedline();if(phase==='all'||phase==='goals')await runGoals();assert(['all','flow','failures','boss','gamepad','redline','goals','endless'].includes(phase),'Unknown phase '+phase);key('KeyW',false);resetPad();if(game.mode==='playing'){key('KeyP');key('KeyP',false);}log('PASS integration '+phase+'; production storage untouched.');document.title='PASS — IRONTRAIL integration validation';status.textContent='PASS · '+phase+' · see exact checks and callback metrics below.';globalThis.irontrailIntegration={phase,lines:lines.slice(),metrics,campaignKey,ghostPrefix};}
   catch(error){log('FAIL '+error.stack);document.title='FAIL — IRONTRAIL integration validation';status.textContent='FAIL · '+current;key('KeyW',false);resetPad();}
   finally{clearInterval(reportTimer);running=false;button.textContent='Reload for another run';button.disabled=false;button.onclick=()=>location.reload();}
 }

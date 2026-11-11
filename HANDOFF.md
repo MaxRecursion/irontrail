@@ -1,3 +1,38 @@
+# Endless Boss handoff — 12 November 2026
+
+## Current addition
+
+Winning campaign stage10 now unlocks **Endless Boss**, a separate terrain-survival round. Stage10 results offer ∞; track select gains an endless entry, and title GO starts survival once the campaign is complete. The original ten stage definitions, campaign saves, stars, scraps and best ghosts remain. Prior one-charge/mandatory-giant and race finish rules apply to the campaign; the new survival round has no cannon/giant/rival finish gate.
+
+Terrain streams in96m chunks with increasing height, tighter rollers and later widening ravines. There is no finish or victory state. A fall below the course, either-direction overturn or empty fuel stops the run immediately with no recovery, automatic checkpoint rescue, self-righting grace or coasting outro. Retry resets the round/tank/distance/difficulty. Pause freezes everything.
+
+**Fuel depletion is retained at the user’s explicit request.** It drains at6.8points/s at full throttle,35% of that at idle, with the existing tank upgrade multiplier. Nitro burn uses the full rate. Each chunk has a reachable can near+40m restoring up to32points/capped100. Generation never refills the tank and pruned cans never return. The survival HUD keeps fuel/nitro/driving inputs and shows ∞ distance plus terrain tier, replacing finite-race route/goals/cannon.
+
+Best survival distance/time and attempt count persist under `save.endless`; `Rules.Save.recordEndless(save,summary)` is idempotent per summary object. Survival never credits campaign scrap, stars, stage records or totals. Existing browser saves migrate with zeroed survival records; completing stage10 previously also unlocks the round.
+
+## Implementation contract
+
+- `new TruckPhysics(9,{endless:true,tuning})`; campaign `STAGES` remains10. Runtime QA uses `irontrail.qa.start(10)`; production entry checks completed stage9 (zero-based).
+- Telemetry: `endless`, peak `distance`, `difficulty=1+floor(distance/250)`, `terrainVersion`. The regular pose/state/audio/input contracts remain.
+- Keep at least480m ahead, prune past192m behind. At most9active chains/cans/features,4bodies/2joints in tested streaming. Segment arrays are immutable; renderer reuses paths/banks and prunes old geometry on terrainVersion. No accumulating sign textures or offscreen entities.
+- Overturn threshold is1.75rad wrapped chassis angle; fall threshold is3m below local terrain. Normal airborne driving is allowed.
+- New UI screens: `endlessBrief` and `endlessFailed`. Existing compact results and icon controls remain; endless stage10 continuation event is `endless`.
+- Sources: physics/render/rules/game/ui/shell. New `tests/endless-check.cjs`, extended renderer/rules/UI/integration tests. Rebuild using `python3 build.py`; keep identical root/dist outputs and no QA assets in dist.
+
+## Verified locally
+
+- New physics suite passes60/120Hz and base/max upgrades: hands-off throttle drives2.75/2.94/3.35/3.19km with streamed supplies. Fuel idle/throttle/economy, pickup cap/conservation, both overturn directions, falling, pause, terminal freeze, recovery rejection and retry pass. Existing campaign smoke/baseline hashes pass unchanged.
+- Streaming fixture audit reaches120km plus a billion-metre developer jump with bounded physics structures. This is a generated-window stress check, not a claim of a human driving those distances.
+- Renderer stress reaches120km/3,750fixture frames, max33paths/215props and bounded cans;1,251cached fuel sprite draws, unchanged banks and no hot canvas/gradient allocations. Campaign/Redline bounds remain162/179 of220draws.
+- Rules, shot/director and pacing checks pass. UI harness passes11screens, unlock/actions/records/fuel/HUD restoration and original compact results at desktop/phone/landscape sizes. New screens fit at1440×900,1280×720,390×844 and844×390.
+- Browser `phase=all` also passes all campaign, progression, gamepad, Redline and new survival assertions (stage1 11.91s, boss29.07s). Bundle:685,303bytes, nine inline scripts/121IDs, identical output SHA-256 `fcb78d2bf223eb11e357f20cb79528fb6dd88df29f27a92d4db4d515e5950327`.
+- Browser `phase=endless` passes actual stage10 win29.76s, ∞ continuation/brief/garage,620m real survival driving with fuel/cans, difficulty/streaming, pause, no recovery, immediate fall/overturn/fuel endings, frozen results, independent record/idempotence and fresh retries.
+- Phone brief/gameplay screenshots inspected: `/tmp/irontrail-endless-brief-phone.png`, `/tmp/irontrail-endless-playing-phone.png`. QA previews are ignored. No physical-phone/controller/120Hz certification is implied.
+
+To reproduce: run the README Node suites including `tests/endless-check.cjs`; serve localhost4173 and run `tests/page-check.mjs` on UI and `tests/integration-harness.html?phase=endless` (Start button;180s budget), or `phase=all` (360s). Existing production remains the same GitHub/Vercel project and custom domain. Do not change DNS or host identity.
+
+---
+
 ## Mobile results simplification — 12 November 2026
 
 The mobile results screen now shows only three stars, score, scrap earned and the primary Next/stages action. It removes the header/dedication, trophy, crown, goal badges and always-visible stat tiles from this view. One closed “•••” disclosure contains star explanations, driving awards, score breakdown and replay/garage/stage buttons. Desktop also keeps optional stats/actions in this disclosure. Nothing is deleted from the run summary or rewards.

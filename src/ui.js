@@ -97,6 +97,8 @@
     _marker(id,value){this._hidden(id,value===null||value===undefined||!Number.isFinite(Number(value)));if(value==null)return;const n=Math.round(clamp(value,0,1)*1000)/10,key=`marker:${id}`;if(this.values[key]!==n){this.values[key]=n;this.nodes[id].style.transform=`translateX(${n}%)`;}}
     _rot(id,degrees){const n=Math.round(degrees/2)*2,key=`rot:${id}`;if(this.values[key]!==n){this.values[key]=n;if(this.nodes[id])this.nodes[id].style.transform=`rotate(${n}deg)`;}}
     _updateHUD(v){
+      if(v.endless!==undefined){const active=!!v.endless;if(this._endless!==active){this._endless=active;this.app.classList.toggle('endless-run',active);}this._hidden('survivalHud',!active);}
+      if(this._endless){if(v.distance!==undefined)this._text('hudSurvivalDistance',scoreText(v.distance)+' m');if(v.difficulty!==undefined){this._text('hudSurvivalTier',v.difficulty);this._attr('survivalHud','aria-label',`Endless boss: ${Math.floor(v.distance||0)} metres, terrain difficulty ${v.difficulty}`);}}
       if(v.stageIndex!==undefined)this._text('hudStageNumber',`Stage ${Number(v.stageIndex)+1} of 10`);
       if(v.stageName!==undefined)this._text('hudStageName',v.stageName);
       if(v.progress!==undefined){this._bar('hudProgressFill',v.progress);this._marker('hudTruckMarker',v.progress);}
@@ -170,7 +172,7 @@
       let html='',primary='Continue',primaryIcon='ic-play',primaryWord='',action='back',args=[],secondary='';
       if(name==='title'){
         html=`${HERO_WEB}<div class="ojas-title-copy"><p class="menu-eyebrow hero-dedication">Made for Ojas Kulkarni, with love.</p><h1 id="screenHeading" class="attract-title ojas-title">OJAS’S<span>MONSTER<br>RALLY.</span></h1></div><div class="hero-showcase">${heroTruck()}</div>`;
-        primary=this.save.completed?.length?'Let’s race again, Ojas!':'Let’s race, Ojas!';primaryWord='GO';action='play';secondary=this._button('Tracks','stages','ic-grid')+this._button('Garage','garage','ic-wrench')+this._button('Settings','settings','ic-gear');
+        primary=this.save.completed?.includes(9)?'Enter the endless boss round':this.save.completed?.length?'Let’s race again, Ojas!':'Let’s race, Ojas!';primaryWord='GO';action='play';secondary=this._button('Tracks','stages','ic-grid')+this._button('Garage','garage','ic-wrench')+this._button('Settings','settings','ic-gear');
       }else if(name==='dedication'){
         html=`<div class="dedication-card"><div class="dedication-emblem">${HERO_SPIDER}</div><p class="menu-eyebrow">A GAME MADE JUST FOR YOU</p><h1 id="screenHeading" class="menu-title">For Ojas Kulkarni.</h1><p class="dedication-message">Big dreams. Brave heart.<br>Monster adventures.</p><p class="dedication-love">Keep exploring, little hero.<br>Made for you, with love. <span aria-hidden="true">♥</span></p><div class="dedication-truck">${heroTruck()}</div></div>`;
         primary='Let’s go, Ojas!';primaryWord='GO';action='back';secondary='';
@@ -181,7 +183,7 @@
           const locked=n>=(this.save.unlocked||1),stars=this.save.stars?.[n]||[false,false,false],biome=this.biomes[n]||{};
           html+=`<button type="button" class="stage-card${locked?' locked':''}${n===(this.save.selected||0)?' current':''}" style="--card-accent:${esc(biome.accent||'#ff5a68')}" data-ui="selectStage" data-stage="${n}" aria-label="Stage ${n+1}: ${esc(this._stageName(n))}${locked?', locked':''}${this.save.best?.[n]?', best time '+timeText(this.save.best[n]):''}" ${locked?'disabled':''}>${scene(biome,'s'+n)}${locked?use('ic-lock','stage-pic'):n===9?use('ic-rival','stage-pic'):''}<b class="stage-num">${n+1}</b><span class="stage-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${this._stars(stars)}</span><span class="stage-name">${esc(this._stageName(n))}</span></button>`;
         }
-        html+='</div>';primary='Continue selected route';action='selectStage';args=[this.save.selected||0];secondary=this._button('Garage','garage','ic-wrench')+this._button('Title','title','ic-home');
+        html+='</div>';if(this.save.completed?.includes(9))html+=`<button class="endless-entry" data-ui="endless" aria-label="Endless Boss. Increasing terrain difficulty. Falling or overturning ends the run.">${use('ic-infinity')}<span>ENDLESS BOSS</span>${use('ic-mountain')}</button>`;primary='Continue selected route';action='selectStage';args=[this.save.selected||0];secondary=this._button('Garage','garage','ic-wrench')+this._button('Title','title','ic-home');
       }else if(name==='garage'){
         html=`<h1 id="screenHeading" class="sr-only">Build your super truck. Upgrades apply to your next run.</h1><div class="campaign-summary"><span class="sum-chip scrap" role="img" aria-label="${scoreText(this.save.scrap)} scrap available">◆ <b>${scoreText(this.save.scrap)}</b></span></div><div class="garage-grid">`;
         for(const track of ['engine','tyres','suspension','tank']){
@@ -204,6 +206,12 @@
         const goals=[[use('ic-flag'),'Finish the stage'],[`${use('ic-clock')}<b>${Math.round(par)}</b>`,`Beat the clock: ${timeText(par)} or faster`],[goalPic,`Challenge: ${challenge}`]];
         html=`<div class="brief-kid" style="--card-accent:${esc(accent)}"><div class="brief-hero">${scene(this.biomes[i],'b'+i)}<div class="brief-top"><div class="brief-badge" aria-hidden="true">${i+1}${i===9?use('ic-rival'):''}</div><h1 id="screenHeading" class="brief-name"><span class="sr-only">Stage ${i+1} of 10${i===9?', final boss':''}: </span>${esc(d.name||stage.name||this._stageName(i))}<span class="sr-only">. ${esc(d.description||stage.subtitle||'')} ${d.length||stage.length||0} metres. ${best?'Best time '+timeText(best)+'.':''}</span></h1></div></div><div class="goal-row">${goals.map((g,k)=>`<div class="goal-card${have[k]?' earned':''}" role="img" aria-label="${esc(g[1])}${have[k]?' (earned)':''}"><span class="big-star" aria-hidden="true">★</span><span class="goal-pic">${g[0]}</span></div>`).join('')}</div>${this._onboarding()}</div>`;
         primary=i===9?'Challenge Iron Maw':'Start this run';primaryWord='GO';action='play';secondary=this._button('Stage select','stages','ic-grid')+this._button('Garage','garage','ic-wrench');
+      }else if(name==='endlessBrief'){
+        html=`<div class="endless-card"><div class="endless-emblem" aria-hidden="true">∞</div><h1 id="screenHeading" class="endless-title">ENDLESS BOSS</h1><div class="endless-rules"><span role="img" aria-label="Terrain gets harder the farther you drive">${use('ic-mountain')}</span><span role="img" aria-label="Fuel keeps draining. Collect fuel cans to keep going.">${use('ic-can')}</span><span class="out" role="img" aria-label="Falling or overturning ends your run. No recovery.">${use('ic-truck','turned')}${use('cue-miss','rule-cross')}</span></div>${d.bestDistance>0?`<div class="endless-best" role="img" aria-label="Best distance ${Math.floor(d.bestDistance)} metres">${use('ic-crown')}<b>${scoreText(d.bestDistance)} m</b></div>`:''}<p class="sr-only">No finish line or recovery. Fuel keeps draining; collect cans and survive as far as you can.</p></div>`;
+        primary='Start endless survival';primaryWord='GO';action='play';secondary=this._button('Stage select','stages','ic-grid')+this._button('Garage','garage','ic-wrench');
+      }else if(name==='endlessFailed'){
+        html=`<div class="endless-card"><h1 id="screenHeading" class="sr-only">Endless Boss: ${d.reason==='fuel'?'out of fuel':d.reason==='overturn'?'truck overturned':'fell off the course'}. ${Math.floor(d.distance||0)} metres survived.</h1><div class="endless-out" aria-hidden="true">${use(d.reason==='fuel'?'ic-can':'ic-truck',d.reason==='fuel'?'':d.reason==='overturn'?'turned':'fallen')}${use('cue-miss','rule-cross')}</div><div class="endless-distance">${scoreText(d.distance)}<small>m</small></div><div class="endless-best" role="img" aria-label="${d.newBest?'New best. ':''}Best distance ${Math.floor(d.bestDistance||0)} metres">${use('ic-crown')}<b>${scoreText(d.bestDistance)} m</b></div></div>`;
+        primary='Retry endless boss';primaryIcon='cue-recover';action='retry';secondary=this._button('Stage select','stages','ic-grid');
       }else if(name==='pause'){
         html=`<div class="pause-kid"><h1 id="screenHeading" class="sr-only">Paused. ${esc(d.stageName||this._stageName(this.save.selected||0))}, ${timeText(d.time||0)}, fuel ${Math.ceil(d.fuel??100)}%.</h1><div class="pause-pic">${use('ic-pause')}</div></div>`;
         primary='Back to the trail';action='resume';secondary=this._button('Retry stage','retry','cue-recover')+this._button('Settings','settings','ic-gear')+this._button('Stage select','stages','ic-grid');
@@ -228,7 +236,7 @@
             </div>
           </details>
         </div>`;
-        const next=d.nextAvailable!==false&&i<9;primary=next?`Continue to stage ${String(i+2).padStart(2,'0')}`:'Back to the stages';primaryIcon=next?'ic-next':'ic-grid';action=next?'next':'stages';
+        const boss=!!d.endlessUnlocked,next=d.nextAvailable!==false&&i<9;primary=boss?'Enter the endless boss round':next?`Continue to stage ${String(i+2).padStart(2,'0')}`:'Back to the stages';primaryIcon=boss?'ic-infinity':next?'ic-next':'ic-grid';action=boss?'endless':next?'next':'stages';
       }else if(name==='failed'){
         const reason=d.reason||'fuel',fire=this._inputMode==='touch'?'tap the target button':this._inputMode==='gamepad'?'press A':'press X or J',tips={fuel:'Collect the amber cans.',monster:`Wait for the green crosshair, then ${fire} to fire.`,rival:'Keep your speed through the jumps.'};
         const pict={fuel:['ic-can','ic-can','','<b class="fp-plus" aria-hidden="true">+</b>'],monster:['ic-giant','cue-target','',this._controlKey('fire')],rival:['ic-rival','cue-bolt',' fill',this._controlKey('nitro')]}[reason]||['ic-can','ic-can','',''];

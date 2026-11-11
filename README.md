@@ -1,6 +1,6 @@
 # IRONTRAIL — Ojas’s Monster Rally
 
-A personalized red-and-black monster truck adventure made for Ojas Kulkarni, with love. The self-contained 2D game includes ten increasingly demanding routes, physical zombies, depleting fuel, a single-charge cannon, and a final race against Iron Maw.
+A personalized red-and-black monster truck adventure made for Ojas Kulkarni, with love. The self-contained 2D game includes ten increasingly demanding routes, physical zombies, depleting fuel, a single-charge cannon, a race against Iron Maw, and an unlockable endless boss round.
 
 Play: https://irontrail.maxrecursion.dev . Vercel fallback: https://irontrail-iota.vercel.app . Source: https://github.com/MaxRecursion/irontrail. Open `index.html` in a modern browser. All physics, graphics, music and effects are inside that one file. No installation or network assets are needed.
 
@@ -49,6 +49,12 @@ If nobody presses go after the start lights, a picture prompt appears and the ga
 
 Reduced Motion keeps reward badges visible without animation and shows final result totals immediately. Score details work with Tab, Enter/Space and gamepad A. Touch pedals and FIRE have at least 44 px hit areas in the checked portrait and landscape layouts.
 
+## Endless Boss
+
+Clear stage 10, then use the ∞ action to enter Endless Boss. It stays available from track select and the title after the campaign is complete. There is no finish line: hills, slopes and ravines get harder as you travel. The HUD shows distance and terrain difficulty, and your best distance is saved separately from campaign stars and rewards.
+
+Fuel still drains, including at idle. Collect streamed cans for up to 32 fuel, capped at 100; fuel upgrades still help. Falling below the course, overturning the truck or running dry ends the attempt immediately. There is no checkpoint recovery or cannon in this survival round. Retry starts a fresh course and full tank. Pause freezes terrain, fuel and distance.
+
 ## Campaign
 
 | Stage | Route | Distance | Par |
@@ -80,6 +86,7 @@ No npm dependencies are required. Python and Node are development tools only.
 python3 build.py
 python3 tests/bundle-check.py
 node tests/physics-smoke.cjs
+node tests/endless-check.cjs
 node tests/rules-check.cjs
 node tests/pacing-check.cjs
 node tests/render-check.cjs

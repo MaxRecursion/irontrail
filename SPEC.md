@@ -623,3 +623,13 @@ Optional additions; every one degrades to the §16 behaviour when absent.
 - Runtime tilt prompt: airborne longer than 0.25 s, |chassis angle| between 0.4 and 1.5 rad, and lean input not already opposing it. At most five tilt badges per attempt, three seconds apart; the pedal nudge follows the condition. It never changes input.
 - Renderer: while `state.fuel < 35`, each visible uncollected can draws one filled arrow (one draw op each).
 - Stage scenes are inline SVG built from biome data in `src/ui.js`; they add no hot-path work and no element IDs outside menu markup.
+
+
+## 18. Endless Boss (12 November 2026)
+
+- The ten campaign stages and their physics/rewards stay unchanged. Winning stage10 unlocks a separate survival round via results ∞, stage select and title. `TruckPhysics(9,{endless:true,tuning})` / `qa.start(10)` select it; the production UI checks `save.completed.includes(9)`.
+- Terrain-only survival: no rival finish gate or mandatory cannon target. Distance is peak forward travel from start. No finish, victory, recovery, self-righting grace or post-terminal coasting. A wrapped chassis angle of at least1.75rad in either direction ends as `overturn`; chassis more than3m below local surface ends as `fall`. Ordinary jumps remain allowed. Empty fuel ends as `fuel`.
+- Fuel drains at6.8points/s × tank economy × (.35+.65×abs(throttle)); burning nitro uses full-throttle drain. One reachable can per96m chunk gives up to32points, capped100. Chunk generation never refills fuel, and collected cans cannot replenish twice.
+- Generate96m chunks at least480m ahead; prune geometry/cans/features over192m behind. Height increases with chunk index; later stretches add more rollers and widening ravines. Arrays/Planck fixtures and renderer paths stay bounded; retained segment arrays are immutable. `terrainVersion` signals append/prune; renderer refreshes only terrain/layout and reuses sprite banks and retained paths. No finish arch/cannon/giant in this mode.
+- Telemetry adds `endless`, `distance`, `difficulty` (1+floor(distance/250)) and `terrainVersion`. Campaign save adds `endless:{bestDistance,bestTime,runs}` with paired distance/time and idempotent `Save.recordEndless(save,summary)`; no campaign scrap/stars/unlocks are credited by survival.
+- HUD keeps current fuel, nitro, speed and inputs; replaces finite route/goals with ∞ distance and terrain tier. End screen reports distance/best and Retry. Existing compact campaign results remain.

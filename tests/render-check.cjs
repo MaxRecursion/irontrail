@@ -94,6 +94,42 @@ console.log('PASS stronger bounded impact shake; Camera Shake off and Reduced Mo
   for(const type of ['nitro','escalate','smash','slam','wreck','unknown'])renderer.onEvent({type},{});
   console.log(`PASS Redline worst case: both trucks burning + slipstream + letterbox + smashes/slam/wreck/popups/ghost; max${worst}/220drawOps; reduced motion ${full}->${calm} ops; kicks and flashes gated`);
 }
+// Endless streaming retains only the loaded window and reuses the unchanged terrain/sprite caches.
+{
+  const physics=new TruckPhysics(9,{endless:true}),pose=new Float64Array(physics.poseLength);
+  assert.equal(physics.endless,true);renderer.setStage(physics,9);physics.getPose(pose);
+  const banks=renderer._banks,bytes=renderer.stats.spriteBytes;
+  const frame={state:physics.getState(),pose,dt:.1,worldDt:0,mode:'playing',input:{},layout:{},settings:{shake:false,reducedMotion:true}};
+  const originalSprite=renderer._sprite;let maxChunks=0,maxProps=0,frames=0,fuelDraws=0;
+  renderer._sprite=function(sprite,...args){if(this._banks.some(bank=>sprite===bank.fuel))fuelDraws++;assert.ok(!this._banks.some(bank=>sprite===bank.finish||sprite===bank.monster||sprite===bank.cannon),'survival has no finish, giant or cannon');return originalSprite.call(this,sprite,...args);};
+  renderer.render(frame);
+  for(let hop=1;hop<=1250;hop++){
+    const previous=new Map(renderer._terrainSegments),x=physics.track.startX+hop*96+5;
+    physics._extendEndlessTrack(x);
+    // QA teleports skip pickup opportunities: keep the rendering fixture fuelled, without changing production drain.
+    physics.fuel=100;
+    const dx=x-physics.chassis.getPosition().x,dy=physics._heightAt(x)+1.43-physics.chassis.getPosition().y;
+    for(const body of [physics.chassis,...physics.wheels]){const p=body.getPosition();body.setTransform(planck.Vec2(p.x+dx,p.y+dy),0);body.setLinearVelocity(planck.Vec2(0,0));body.setAngularVelocity(0);}
+    physics._capturePose();physics.getPose(pose);frame.state=physics.getState();
+    for(let n=0;n<3;n++){tracking=true;ops=0;renderer.render(frame);tracking=false;assert.equal(renderer.stats.drawOps,ops);assert.ok(ops<=220,'endless draw budget');frames++;}
+    assert.equal(renderer._banks,banks,'rolling updates retain sprite banks');assert.equal(renderer.stats.spriteBytes,bytes,'rolling creates no additional sprite textures');
+    assert.equal(renderer._terrainVersion,physics.terrainVersion,'renderer follows each loaded window');
+    assert.equal(renderer._terrainSegments.size,physics.track.segments.length,'evicted paths leave the segment cache');
+    for(const [segment,chunks]of previous)if(physics.track.segments.includes(segment))assert.equal(renderer._terrainSegments.get(segment),chunks,'unchanged segment paths are reused');
+    assert.ok(renderer._chunks.length<=40&&renderer._props.length<250&&renderer._signs.length<10,'geometry/layout arrays stay bounded');
+    assert.ok(physics.fuelCans.length>0&&physics.fuelCans.length<=physics.track.segments.length,'streamed fuel cans remain available and bounded');
+    assert.ok(physics.fuelCans.every(can=>can.x>=physics.track.segments[0][0].x),'old fuel cans leave the active window');
+    assert.equal(renderer._flags.length,0);assert.ok(renderer._signs.every(sign=>sign.label==='JUMP'),'no growing per-distance sign textures');
+    assert.ok(banks.every(bank=>Object.keys(bank.signs).length===1),'one reusable warning texture per bank');
+    assert.ok(renderer._chunks.some(chunk=>chunk.left<=renderer.camera.x&&chunk.right>=renderer.camera.x),'camera keeps rendering the loaded terrain');
+    maxChunks=Math.max(maxChunks,renderer._chunks.length);maxProps=Math.max(maxProps,renderer._props.length);
+  }
+  assert.ok(fuelDraws>0,'streamed fuel pickups are drawn using the existing cached sprite');
+  renderer._sprite=originalSprite;
+  const endlessBanks=renderer._banks;renderer.setStage(new TruckPhysics(9,{random:()=>.5}),9);
+  assert.notEqual(renderer._banks,endlessBanks,'returning to campaign restores its sign/flag bank');assert.ok(renderer._flags.length>0&&renderer._banks.every(bank=>bank.flags.length>0));
+  console.log(`PASS endless rolling terrain over120km/${frames}frames: max${maxChunks}chunks/${maxProps}props, evicted paths pruned, unchanged paths/banks reused, bounded warnings/fuel cans, ${fuelDraws}cached fuel draws, no finish/giant/cannon`);
+}
 assert.equal(canvases,0,'no hot canvas allocation');assert.equal(gradients,0,'no hot gradient allocation');
 console.log(`PASS ${rendered} real-physics frames across10biomes +effects/ghosts/fallbacks; max${maximum}/220drawOps, ${maxFonts}/3fonts, current caches ${(maxBytes/1048576).toFixed(1)}MiB; no hotcanvas/gradients; retry/adaptive cache reuse`);
 console.log(records.join(' '));

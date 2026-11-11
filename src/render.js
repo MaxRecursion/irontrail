@@ -26,7 +26,7 @@
       if(!canvas||!canvas.getContext)throw new TypeError('IronRenderer needs a canvas');
       this.canvas=canvas;this.ctx=canvas.getContext('2d',{alpha:false});this.biomes=options.biomes||global.IRON_BIOMES;
       this.width=960;this.height=540;this.renderScale=1;this.particleScale=1;this.detail='high';this._detail=2;
-      this._physics=null;this._track=null;this._stageIndex=-1;this._biome=null;this._chunks=[];this._gaps=[];this._props=[];this._signs=[];this._flags=[];
+      this._physics=null;this._track=null;this._stageIndex=-1;this._biome=null;this._chunks=[];this._gaps=[];this._props=[];this._signs=[];this._flags=[];this._endless=false;this._terrainVersion=-1;this._terrainSegments=new Map();
       this._banks=[];this._bank=null;this._spriteBytes=0;this._screenBytes=0;this._baseScale=32;this._cachePPU=0;
       this._cameraX=0;this._cameraY=0;this._cameraScale=32;this._cameraVX=0;this._cameraVY=0;this._snap=true;
       this._ox=0;this._oy=0;this._left=0;this._right=0;this._top=0;this._bottom=0;
@@ -46,11 +46,12 @@
     get stats(){return this._stats;}
     setStage(physics,stageIndex=0){
       if(!physics||!physics.track)return;
-      const index=clamp(Math.floor(stageIndex),0,9),sameTrack=this._track===physics.track,sameBiome=index===this._stageIndex;
-      this._physics=physics;this._track=physics.track;this._stageIndex=index;this._biome=this.biomes[index]||this.biomes[0];
-      if(!sameTrack)this._buildTerrain();
+      const index=clamp(Math.floor(stageIndex),0,9),sameTrack=this._track===physics.track,sameBiome=index===this._stageIndex,endless=!!(physics.endless||physics.stage?.endless),sameMode=endless===this._endless;
+      this._physics=physics;this._track=physics.track;this._stageIndex=index;this._biome=this.biomes[index]||this.biomes[0];this._endless=endless;
+      if(!sameTrack){this._terrainSegments.clear();this._buildTerrain();}
+      this._terrainVersion=finite(physics.terrainVersion);
       if(!sameTrack||!sameBiome)this._buildLayout();
-      if(!sameBiome||!this._banks.length)this._buildAssets();
+      if(!sameBiome||!sameMode||!this._banks.length)this._buildAssets();
       const length=Math.max(21,finite(physics.poseLength,3*(7+(physics.zombies?physics.zombies.length:0))));
       if(this._fallbackPose.length<length)this._fallbackPose=new Float64Array(length);
       this._particles.fill(0);this._popupData.fill(0);this._particleCount=0;this._dustClock=0;this._exhaustClock=0;this._weatherClock=0;
@@ -107,26 +108,31 @@
       this._chunks=[];this._gaps=[];const segments=this._track.segments;
       for(let s=0;s<segments.length;s++){
         const segment=segments[s];if(segment.length<2)continue;
-        let begin=0;
-        while(begin<segment.length-1){
-          let end=begin+1;while(end<segment.length-1&&segment[end].x-segment[begin].x<30)end++;
-          const points=segment.slice(begin,end+1),first=points[0],last=points[points.length-1],body=new Path2D();
-          body.moveTo(first.x,first.y);let maxY=first.y;
-          for(let i=1;i<points.length;i++){body.lineTo(points[i].x,points[i].y);maxY=Math.max(maxY,points[i].y);}
-          body.lineTo(last.x,-80);body.lineTo(first.x,-80);body.closePath();
-          const bands=[];for(let i=0;i<4;i++)bands.push(this._ribbon(points,.45+i*.85,.3+i*.03,.08));
-          const specks=[new Path2D(),new Path2D()],grass=new Path2D();
-          for(let n=Math.ceil(first.x*3);n<last.x*3;n++){
-            const x=n/3+hash(n+17)*.2,y=this._heightAt(x)-.25-hash(n+23)*6,size=.025+hash(n+29)*.045;
-            specks[n&1].rect(x,y,size*1.5,size);
+        let chunks=this._terrainSegments.get(segment);
+        if(!chunks){
+          chunks=[];let begin=0;
+          while(begin<segment.length-1){
+            let end=begin+1;while(end<segment.length-1&&segment[end].x-segment[begin].x<30)end++;
+            const points=segment.slice(begin,end+1),first=points[0],last=points[points.length-1],body=new Path2D();
+            body.moveTo(first.x,first.y);let maxY=first.y;
+            for(let i=1;i<points.length;i++){body.lineTo(points[i].x,points[i].y);maxY=Math.max(maxY,points[i].y);}
+            body.lineTo(last.x,-80);body.lineTo(first.x,-80);body.closePath();
+            const bands=[];for(let i=0;i<4;i++)bands.push(this._ribbon(points,.45+i*.85,.3+i*.03,.08));
+            const specks=[new Path2D(),new Path2D()],grass=new Path2D();
+            for(let n=Math.ceil(first.x*3);n<last.x*3;n++){
+              const x=n/3+hash(n+17)*.2,y=this._heightAt(x)-.25-hash(n+23)*6,size=.025+hash(n+29)*.045;
+              specks[n&1].rect(x,y,size*1.5,size);
+            }
+            for(let n=Math.ceil(first.x*1.5);n<last.x*1.5;n++){
+              if(hash(n+71)<.44)continue;const x=n/1.5,y=this._heightAt(x),h=.055+hash(n+72)*.12;
+              grass.moveTo(x-.05,y-.01);grass.lineTo(x-.08,y+h);grass.lineTo(x,y+.025);grass.lineTo(x+.045,y+h*1.3);grass.lineTo(x+.055,y-.01);grass.closePath();
+            }
+            chunks.push({left:first.x,right:last.x,maxY,body,bands,specks,grass,top:this._ribbon(points,0,.17),rim:this._ribbon(points,-.035,.055)});
+            begin=end;
           }
-          for(let n=Math.ceil(first.x*1.5);n<last.x*1.5;n++){
-            if(hash(n+71)<.44)continue;const x=n/1.5,y=this._heightAt(x),h=.055+hash(n+72)*.12;
-            grass.moveTo(x-.05,y-.01);grass.lineTo(x-.08,y+h);grass.lineTo(x,y+.025);grass.lineTo(x+.045,y+h*1.3);grass.lineTo(x+.055,y-.01);grass.closePath();
-          }
-          this._chunks.push({left:first.x,right:last.x,maxY,body,bands,specks,grass,top:this._ribbon(points,0,.17),rim:this._ribbon(points,-.035,.055)});
-          begin=end;
+          this._terrainSegments.set(segment,chunks);
         }
+        for(const chunk of chunks)this._chunks.push(chunk);
         if(s<segments.length-1){
           const a=segment[segment.length-1],b=segments[s+1][0],left=new Path2D(),right=new Path2D();
           if(b.x>a.x+.05){
@@ -136,6 +142,14 @@
           }
         }
       }
+      // Evicted physics segments release their paths; the rolling cache never retains the travelled course.
+      for(const segment of this._terrainSegments.keys())if(!segments.includes(segment))this._terrainSegments.delete(segment);
+    }
+    _syncTerrain(){
+      if(!this._endless)return;
+      const version=finite(this._physics.terrainVersion,finite(this._state.terrainVersion));
+      if(version===this._terrainVersion)return;
+      this._track=this._physics.track;this._buildTerrain();this._buildLayout();this._terrainVersion=version;
     }
     _buildLayout(){
       this._props=[];this._signs=[];this._flags=[];const biome=this._biome,track=this._track;
@@ -145,7 +159,8 @@
       this._breakKinds=['crate','barrel','cone',small[0]||'crate',small[1]||'barrel','crate',small[2]||small[0]||'cone','barrel'];
       let totalWeight=0;for(let i=0;i<biome.props.length;i++)totalWeight+=biome.props[i].weight;
       const spacing=4.8/biome.propDensity;
-      for(let x=-25,i=0;x<track.finishX+20;x+=spacing,i++){
+      const first=this._endless?Math.max(0,Math.floor((track.segments[0][0].x+25)/spacing)):0;
+      for(let i=first,x=-25+first*spacing;x<track.finishX+20;x+=spacing,i++){
         const px=x+hash(i+831)*spacing*.7;let onTrack=false;
         for(let j=0;j<track.segments.length;j++){const s=track.segments[j];if(px>s[0].x+1&&px<s[s.length-1].x-1){onTrack=true;break;}}
         if(!onTrack)continue;let pick=hash(i+197)*totalWeight,kind=biome.props[0].kind;
@@ -153,9 +168,9 @@
         let crowded=false;for(let j=0;j<this._breakables.length;j++)if(Math.abs(this._breakables[j].x-px)<2.5){crowded=true;break;}if(crowded)continue;
         this._props.push({x:px,y:this._heightAt(px),kind,scale:.7+hash(i+191)*.6,flip:hash(i+198)>.5?-1:1,detail:i%3});
       }
-      for(let d=50;d<track.length;d+=100){const x=track.startX+d;this._signs.push({x,y:this._heightAt(x),label:String(d),jump:false});}
-      for(let i=0;i<track.segments.length-1;i++){const s=track.segments[i],x=s[s.length-1].x-5;this._signs.push({x,y:this._heightAt(x),label:'JUMP',jump:true});}
-      for(let i=0;i<track.checkpoints.length;i++){const cp=track.checkpoints[i];this._flags.push({x:cp.x,y:finite(cp.y,this._heightAt(cp.x)),index:i});}
+      for(let d=50;!this._endless&&d<track.length;d+=100){const x=track.startX+d;this._signs.push({x,y:this._heightAt(x),label:String(d),jump:false});}
+      for(let i=0;i<track.segments.length-1;i++){const s=track.segments[i];if(this._endless&&track.segments[i+1][0].x<=s[s.length-1].x+.05)continue;const x=s[s.length-1].x-5;this._signs.push({x,y:this._heightAt(x),label:'JUMP',jump:true});}
+      for(let i=0;!this._endless&&i<track.checkpoints.length;i++){const cp=track.checkpoints[i];this._flags.push({x:cp.x,y:finite(cp.y,this._heightAt(cp.x)),index:i});}
     }
     _worldSprite(ppu,left,bottom,w,h,draw){
       const canvas=makeCanvas(Math.ceil(w*ppu),Math.ceil(h*ppu)),c=canvas.getContext('2d');
@@ -214,6 +229,7 @@
       bank.glow=this._worldSprite(Math.min(ppu,40),-2.4,-2.4,4.8,4.8,c=>{const g=c.createRadialGradient(0,0,.1,0,0,2.4);g.addColorStop(0,'#4fd6ff66');g.addColorStop(.5,'#1f8fff2e');g.addColorStop(1,'#1f8fff00');c.fillStyle=g;c.fillRect(-2.4,-2.4,4.8,4.8);});
       for(let i=0;i<kinds.length;i++){const kind=kinds[i];bank.props[kind]=this._worldSprite(Math.min(ppu,60),-1.8,-.08,3.6,4.45,c=>this._paintProp(c,kind));}
       for(let i=0;i<this._signs.length;i++){const sign=this._signs[i];if(!bank.signs[sign.label])bank.signs[sign.label]=this._worldSprite(ppu,-.8,-.05,1.6,2.5,c=>this._paintSign(c,sign.label));}
+      if(this._endless&&!bank.signs.JUMP)bank.signs.JUMP=this._worldSprite(ppu,-.8,-.05,1.6,2.5,c=>this._paintSign(c,'JUMP'));
       for(let i=0;i<this._flags.length;i++)for(let passed=0;passed<2;passed++)bank.flags.push(this._worldSprite(ppu,-.12,-.05,1.45,3.6,c=>{
         line(c,0,0,0,3.4,'#425d54',.065);poly(c,[[0,3.35],[1.15,3.2],[.95,2.62],[0,2.77]],passed?'#ed3f53':'#29252f',o,.045);this._bakedText(c,i?String(i).padStart(2,'0'):'OJAS',.47,2.92,i?.25:.19,'#ffede8');
       }));
@@ -455,8 +471,8 @@
         ty+=(centerY+(safeCenter-this.height*.73)/s-ty)*focus;
       }
       if(frame.mode==='title'){
-        const track=this._track,travel=track?Math.max(1,track.length-35):100;
-        tx=(track?track.startX:0)+12+(this._clock*2.1)%travel;ty=this._heightAt(tx)-.25;
+        const track=this._track,start=track?(this._endless?track.segments[0][0].x:track.startX):0,travel=track?Math.max(1,track.finishX-start-35):100;
+        tx=start+12+(this._clock*2.1)%travel;ty=this._heightAt(tx)-.25;
       }
       if(this._snap){this._cameraX=tx;this._cameraY=ty;this._snap=false;}
       else if(dt>0){
@@ -511,7 +527,7 @@
       const breakables=this._breakables;for(let i=0;i<breakables.length;i++){const p=breakables[i];if(p.broken||p.active===false||p.x<left-1||p.x>right+1)continue;this._sprite(bank.props[this._breakKinds[p.variant&7]]||bank.props.crate,p.x,p.y,0,.82);}
       const cp=finite(this._state.checkpointIndex,finite(this._physics.checkpointIndex));
       for(let i=0;i<this._flags.length;i++){const p=this._flags[i];if(p.x>=left-1&&p.x<=right+1)this._sprite(bank.flags[i*2+(cp>=i?1:0)],p.x,p.y);}
-      if(this._track.finishX>=left-3&&this._track.finishX<=right+3)this._sprite(bank.finish,this._track.finishX,this._heightAt(this._track.finishX));
+      if(!this._endless&&this._track.finishX>=left-3&&this._track.finishX<=right+3)this._sprite(bank.finish,this._track.finishX,this._heightAt(this._track.finishX));
     }
     _drawTruck(pose,offset,rival=false,ghost=false){
       const x=pose[offset],y=pose[offset+1],angle=finite(pose[offset+2]);if(!Number.isFinite(x)||x<this._left-4||x>this._right+4)return;
@@ -563,13 +579,13 @@
         const walk=z.hit?0:((Math.floor(this._worldClock*5+i)&1));this._sprite(bank.zombies[(i%3)*2+walk],x,y,(Number.isFinite(pose[n+2])?pose[n+2]:finite(z.angle))+spin);
       }
       c.globalAlpha=1;const m=state.monster;
-      if(m&&m.x>=this._left-3&&m.x<=this._right+3&&(m.alive||finite(m.timeSinceHit)<1.2)){
+      if(!this._endless&&m&&m.x>=this._left-3&&m.x<=this._right+3&&(m.alive||finite(m.timeSinceHit)<1.2)){
         const t=finite(m.timeSinceHit);c.globalAlpha=m.alive?1:clamp(1-t/1.2,0,1);this._sprite(bank.monster,m.x,m.y,m.alive?0:-Math.min(1.3,t*1.7),m.alive&&this._motion?1+Math.sin(this._clock*2.3)*.014:1);c.globalAlpha=1;
         if(m.alive){const tx=m.weakpoint?m.weakpoint.x:m.x,ty=m.weakpoint?m.weakpoint.y:m.y+2.85,locked=state.weapon&&state.weapon.canHit;c.globalAlpha=locked?1:.55;this._sprite(bank.target,tx,ty,Math.sin(this._clock)*.07);if(locked){const radius=Math.max(.65,18/this._cameraScale)*(1+Math.sin(this._clock*6)*.08);c.strokeStyle='#e4f5ab';c.lineWidth=2/this._cameraScale;c.beginPath();for(let i=0;i<4;i++)c.arc(tx,ty,radius,i*Math.PI/2+.14,i*Math.PI/2+1.1);c.stroke();this._stats.drawOps++;}c.globalAlpha=1;}
       }
     }
     _drawCannon(){
-      const state=this._state,weapon=state.weapon;if(!weapon||!this._pose)return;
+      const state=this._state,weapon=state.weapon;if(this._endless||!weapon||!this._pose)return;
       const p=this._pose,x=p[0],y=p[1],a=finite(p[2]),cos=Math.cos(a),sin=Math.sin(a),mx=x+cos*.2-sin*1.4,my=y+sin*.2+cos*1.4;
       // Interpolate the mount with the chassis; aim is a world angle supplied by
       // physics. Preserve the shot angle during its flash, even after a kill.
@@ -712,7 +728,7 @@
     render(frame=EMPTY){
       const start=performance.now();this._stats.drawOps=0;
       if(!this._biome||!this._banks.length){this.ctx.fillStyle='#152a2d';this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);this._stats.drawOps=1;this._stats.renderMs=performance.now()-start;return;}
-      this._frame=frame;this._state=frame.state||EMPTY;this._input=frame.input||EMPTY;
+      this._frame=frame;this._state=frame.state||EMPTY;this._input=frame.input||EMPTY;this._syncTerrain();
       const dt=clamp(finite(frame.dt),0,.1);this._clock+=dt;this._worldClock+=Number.isFinite(frame.worldDt)?frame.worldDt:dt;this._kick*=Math.exp(-dt*19);this._muzzle=Math.max(0,this._muzzle-dt);
       const settings=frame.settings||EMPTY,rival=this._state.rival;this._motion=!settings.reducedMotion;
       this._boost+=((this._state.boosting?1:0)-this._boost)*(1-Math.exp(-dt*(this._state.boosting?14:7)));this._rivalBoost+=((rival&&rival.boosting?1:0)-this._rivalBoost)*(1-Math.exp(-dt*10));

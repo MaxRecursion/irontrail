@@ -583,6 +583,33 @@ html,body{touch-action:pan-x pan-y;overscroll-behavior:none}
 .screen-results .menu-actions{margin-top:16px}
 .screen-results .primary-button{min-height:56px}
 }
+
+/* Endless survival has distance and difficulty in place of finite-race resources/goals. */
+.hud-survival{left:24px;right:24px;top:22px;display:flex;align-items:center;gap:10px;color:#ffd257;font:900 italic 27px/1 Arial,sans-serif;text-shadow:0 2px 7px #0008}
+.hud-survival>svg{width:32px;height:32px}
+.survival-difficulty{margin-left:auto;display:flex;align-items:center;gap:6px;color:#ff7b88;font-size:20px}
+.survival-difficulty svg{width:26px;height:26px}
+.endless-run .hud-route,.endless-run .hud-goals,.endless-run .hud-cannon,.endless-run .recover-slot{display:none}
+.endless-run .zombie-head,.endless-run .zombie-track{display:none}
+.endless-entry{width:100%;margin-top:18px;min-height:62px;padding:12px 18px;display:flex;align-items:center;gap:14px;border:2px solid #ff738870;border-radius:16px;background:linear-gradient(120deg,#4a1d32,#1b1929);color:#ffe0e7;font-weight:900;letter-spacing:1px}
+.endless-entry svg{width:30px;height:30px;color:#ff8298}.endless-entry svg:last-child{margin-left:auto}
+.endless-card{display:grid;justify-items:center;text-align:center;gap:22px;padding:8px 0}
+.endless-emblem{font:900 100px/.8 Arial,sans-serif;color:#ffd257}
+.endless-title{font:900 italic 32px/1 Arial,sans-serif;margin:0;letter-spacing:-1px;color:#fff0e8}
+.endless-rules{display:flex;align-items:center;justify-content:center;gap:16px}
+.endless-rules>span{position:relative;display:grid;place-items:center;width:70px;height:70px;color:#ffd257}
+.endless-rules svg{width:46px;height:46px}.endless-rules .out{color:#ff7b88}
+.turned{transform:rotate(180deg)}.fallen{transform:rotate(35deg)}
+.endless-rules .rule-cross,.endless-out .rule-cross{position:absolute;right:0;bottom:0;width:28px;height:28px;padding:4px;border-radius:50%;background:#ff5a68;color:#15141a;stroke-width:3}
+.endless-best{display:flex;align-items:center;gap:8px;color:#ffd257;font:700 italic 20px Arial,sans-serif}
+.endless-best svg{width:24px;height:24px}
+.endless-out{position:relative;width:90px;height:75px;display:grid;place-items:center;color:#ff7b88}
+.endless-out>svg{width:74px;height:64px}
+.endless-distance{color:#fff0e8;font:900 italic 54px/1 Arial,sans-serif;letter-spacing:-1px}
+.endless-distance small{font-size:22px;margin-left:6px;color:#c5b6c5}
+.screen-endlessBrief.menu-panel,.screen-endlessFailed.menu-panel{width:min(540px,100%)}
+@media(max-width:600px){.hud-survival{left:15px;right:15px;top:15px;font-size:24px}.endless-title{font-size:28px}.endless-card{gap:18px}.endless-entry{font-size:12px}}
+@media(max-height:520px){.endless-card{gap:10px;padding:0}.endless-emblem{font-size:64px}.endless-rules>span{height:48px}.endless-rules svg{height:42px}.endless-title{font-size:24px}.hud-survival{top:10px;font-size:22px}.endless-distance{font-size:40px}}
 </style><!-- Planck.js 1.5.0 license:
 The MIT License
 Copyright (c) Erin Catto, Ali Shakiba
@@ -609,6 +636,7 @@ SOFTWARE.
 </head><body><div id="app">
 <canvas id="gameCanvas" tabindex="-1" role="img" aria-label="Ojas’s Monster Rally driving game. Arrow keys or WASD drive and balance, Space brakes, X or J fires your one cannon charge, C recovers for 12 fuel."></canvas>
 <div id="gameHud" class="hud" hidden>
+  <div id="survivalHud" class="hud-block hud-survival" role="img" aria-label="Endless boss distance and difficulty" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-infinity"/></svg><strong id="hudSurvivalDistance">0 m</strong><span class="survival-difficulty" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#ic-mountain"/></svg><b id="hudSurvivalTier">1</b></span></div>
   <div class="hud-block hud-route" role="img" aria-label="Route progress"><div class="route-track"><div id="hudProgressFill" class="bar-fill"></div><div id="hudCheckpointTicks"></div><div id="hudMonsterMarker" class="route-marker giant"><i><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-giant"/></svg></i></div><div id="hudRivalMarker" class="route-marker rival" hidden><i><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-rival"/></svg></i></div><div id="hudTruckMarker" class="route-marker me"><i><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-truck"/></svg></i></div></div><svg class="route-flag" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-flag"/></svg><span class="sr-only"><span id="hudStageNumber">Stage 1 of 10</span> <span id="hudStageName">Redstone Outbreak</span> <span id="hudDistance"></span> <span id="hudStageStatus"></span></span></div>
   <div class="hud-block hud-goals"><div id="hudGhost" class="race-chip" role="img" aria-label="Ghost race" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-ghost"/></svg><i></i></div><div id="hudGap" class="race-chip" role="img" aria-label="Iron Maw race" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-rival"/></svg><i></i></div><div id="hudClock" class="goal-star" role="img" aria-label="Beat the clock star"><svg class="goal-art" viewBox="0 0 48 48" aria-hidden="true"><circle class="goal-ring-bg" cx="24" cy="24" r="21"/><circle id="hudClockRing" class="goal-ring" cx="24" cy="24" r="21" pathLength="100"/><use href="#cue-star" x="10" y="10" width="28" height="28"/></svg><svg class="goal-tag" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-clock"/></svg></div><div id="hudGoal" class="goal-star" role="img" aria-label="Challenge star"><svg class="goal-art" viewBox="0 0 48 48" aria-hidden="true"><circle class="goal-ring-bg" cx="24" cy="24" r="21"/><circle id="hudGoalRing" class="goal-ring" cx="24" cy="24" r="21" pathLength="100"/><use href="#cue-star" x="10" y="10" width="28" height="28"/></svg><svg class="goal-tag" viewBox="0 0 24 24" aria-hidden="true"><use id="hudGoalGlyph" href="#ic-zombie"/></svg><b id="hudGoalTarget" class="goal-target" aria-hidden="true"></b></div><span class="sr-only"><span id="hudTime">00:00.00</span> <span id="hudScore">0</span> <span id="hudGhostText"></span> <span id="hudGapText"></span></span></div>
   <div class="hud-block hud-tools"><button id="pauseButton" class="icon-button" aria-label="Pause game" title="Pause (P / Escape)"><svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg></button><button id="restartButton" class="icon-button" aria-label="Restart stage" title="Retry (R)"><svg viewBox="0 0 24 24"><path d="M5 8a8 8 0 1 1-1 7M5 3v6h6"/></svg></button><button id="soundButton" class="icon-button" aria-label="Mute sound" title="Sound (M)"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM17 8q4 4 0 8M20 5q7 7 0 14"/></svg></button><button id="fullscreenButton" class="icon-button" aria-label="Enter fullscreen" title="Fullscreen (F)"><svg viewBox="0 0 24 24"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M8 20H4v-4"/></svg></button></div>
@@ -621,7 +649,7 @@ SOFTWARE.
   <div id="fpsPanel" class="fps-panel" hidden></div>
   <div class="touch-controls"><div class="touch-group lean-group"><button class="pedal nitro" data-input="nitro" aria-label="Nitro boost"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#cue-bolt"/></svg></button><button class="pedal lean" data-input="left" aria-label="Lean nose up"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#cue-trick"/></svg></button><button class="pedal lean" data-input="right" aria-label="Lean nose down"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#cue-trick"/></svg></button></div><div class="touch-group"><button class="pedal" data-input="reverse" aria-label="Reverse"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-back"/></svg></button><button class="pedal" data-input="brake" aria-label="Brake">■</button><button class="pedal gas" data-input="gas" aria-label="Accelerate"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-play"/></svg></button></div></div>
 </div>
-<svg class="sr-only" aria-hidden="true"><defs><symbol id="cue-target" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M12 1v6M12 17v6M1 12h6M17 12h6"/></symbol><symbol id="cue-shot" viewBox="0 0 24 24"><path d="M3 12h16M14 6l6 6-6 6"/></symbol><symbol id="cue-hit" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></symbol><symbol id="cue-miss" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></symbol><symbol id="cue-fuel" viewBox="0 0 24 24"><path d="M5 21V4h9v17M4 21h12M5 9h9M16 5l3 3v9c0 2 3 2 3 0v-5l-3-3"/></symbol><symbol id="cue-checkpoint" viewBox="0 0 24 24"><path d="M5 22V3m0 1h14l-3 4 3 4H5"/></symbol><symbol id="cue-recover" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v7h7"/></symbol><symbol id="cue-trick" viewBox="0 0 24 24"><path d="M5 7a8 8 0 1 1-1 9M5 2v6h6"/></symbol><symbol id="cue-success" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></symbol><symbol id="cue-error" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 9v5M12 17v1"/></symbol><symbol id="cue-upgrade" viewBox="0 0 24 24"><path d="M12 21V3M5 10l7-7 7 7"/></symbol><symbol id="cue-tilt" viewBox="0 0 24 24"><path d="M5 7a8 8 0 1 1-1 9M5 2v6h6"/></symbol><symbol id="ic-speaker" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM17 8q4 4 0 8M20 5q7 7 0 14"/></symbol><symbol id="ic-note" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5" fill="currentColor"/><circle cx="17.5" cy="16" r="2.5" fill="currentColor"/></symbol><symbol id="ic-spark" viewBox="0 0 24 24"><path d="M12 2l2.5 7.500L22 12l-7.500 2.500L12 22l-2.500-7.500L2 12l7.500-2.500z"/></symbol><symbol id="ic-shake" viewBox="0 0 24 24"><path d="M7 7h10v10H7zM2 9l2 3-2 3M22 9l-2 3 2 3"/></symbol><symbol id="ic-calm" viewBox="0 0 24 24"><path d="M2 9q5-4.500 10 0t10 0M2 15q5-4.500 10 0t10 0"/></symbol><symbol id="ic-rumble" viewBox="0 0 24 24"><path d="M8 4h8v16H8zM4.500 8v8M19.500 8v8M1.500 10v4M22.500 10v4"/></symbol><symbol id="cue-drive" viewBox="0 0 24 24"><path fill="currentColor" stroke-width="2.5" d="M7 4.500l12 7.500-12 7.500z"/></symbol><symbol id="cue-bolt" viewBox="0 0 24 24"><path d="M13 2L5 14h6l-1 8 9-13h-6z"/></symbol><symbol id="cue-burst" viewBox="0 0 24 24"><path d="M12 2l2.2 6.2L20 5l-3.2 5.8L23 12l-6.2 1.2L20 19l-5.8-3.2L12 22l-2.2-6.2L4 19l3.2-5.8L1 12l6.2-1.2L4 5l5.8 3.2z"/></symbol><symbol id="cue-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.800 6.300.800-4.600 4.400 1.200 6.300L12 17.200 6.400 20.300l1.200-6.300L3 9.600l6.300-.800z"/></symbol><symbol id="cue-air" viewBox="0 0 24 24"><path d="M3 17q5-13 18-10M21 7l-5-1M21 7l-2 5M4 21h16"/></symbol><symbol id="ic-flag" viewBox="0 0 24 24"><path d="M5 22V3M5 4h15v10H5z"/><path fill="currentColor" stroke="none" d="M5 4h5v5H5zM15 4h5v5h-5zM10 9h5v5h-5z"/></symbol><symbol id="ic-truck" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M1.500 13.500V9.500h6.200l2-4.200h6.200l2.600 4.200h3c.6 0 1 .4 1 1v3z"/><circle cx="6.500" cy="17" r="4"/><circle cx="17.500" cy="17" r="4"/></g></symbol><symbol id="ic-rival" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M1.500 13.500V7l2.600 2.500L5.500 5l2.200 4 2.300-4.500 2 4h4.200l2.600 2.500 2.200-2.500v5z"/><circle cx="6.500" cy="17" r="4"/><circle cx="17.500" cy="17" r="4"/></g></symbol><symbol id="ic-giant" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M2.500 1.500l5.500 4.500h8l5.500-4.500-1.500 8V16l-3.500 6.500h-9L4 16V9.500z"/><path stroke="#15141a" stroke-width="2" d="M7.500 11l3 1.500M16.500 11l-3 1.500M9 17.500h6"/></symbol><symbol id="ic-zombie" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 2.500c5 0 8.500 3.600 8.500 8.300 0 3-1.300 5.200-3.200 6.700V21.500H6.700v-4c-1.900-1.500-3.200-3.700-3.200-6.700 0-4.700 3.500-8.300 8.500-8.300z"/><g stroke="#15141a" stroke-width="2"><path d="M7.300 10.300l2.700 2.700M10 10.300l-2.700 2.700M9 17.500h6"/><circle cx="15.200" cy="11.700" r="1.200" fill="#15141a"/></g></symbol><symbol id="ic-can" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M6 7.500l3-4.500h5.500v2.500H11l-1 2h8c.8 0 1.500.7 1.500 1.500v11c0 .8-.7 1.500-1.500 1.500H6.500c-.8 0-1.500-.7-1.500-1.500V9z"/><path fill="#15141a" stroke="none" d="M12 10.500c2.200 2.700 3.300 4.300 3.300 5.800a3.300 3.300 0 0 1-6.600 0c0-1.500 1.100-3.100 3.300-5.800z"/></symbol><symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.500 2"/></symbol><symbol id="ic-ghost" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M5 21.500V10a7 7 0 0 1 14 0v11.500l-2.500-2.500-2.200 2.500L12 19l-2.300 2.500L7.500 19z"/><g fill="#15141a" stroke="none"><circle cx="9.500" cy="10.500" r="1.500"/><circle cx="14.500" cy="10.500" r="1.500"/></g></symbol><symbol id="ic-play" viewBox="0 0 24 24"><path fill="currentColor" stroke-width="2.500" d="M7 4.500l12 7.500-12 7.500z"/></symbol><symbol id="ic-next" viewBox="0 0 24 24"><path fill="currentColor" stroke-width="2" d="M3.500 5.500l8 6.500-8 6.500zM12.500 5.500l8 6.500-8 6.500z"/></symbol><symbol id="ic-back" viewBox="0 0 24 24"><path fill="currentColor" stroke-width="2" d="M20.500 5.500l-8 6.500 8 6.500zM11.500 5.500l-8 6.500 8 6.500z"/></symbol><symbol id="ic-grid" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></symbol><symbol id="ic-wrench" viewBox="0 0 24 24"><path d="M14.700 6.300a1 1 0 0 0 0 1.400l1.600 1.600a1 1 0 0 0 1.400 0l3.770-3.770a6 6 0 0 1-7.940 7.940l-6.910 6.910a2.120 2.120 0 0 1-3-3l6.910-6.910a6 6 0 0 1 7.940-7.940l-3.760 3.760z"/></symbol><symbol id="ic-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.200"/><circle cx="12" cy="12" r="7.200"/><path d="M12 1.800v3M12 19.200v3M1.800 12h3M19.200 12h3M4.800 4.800l2.100 2.100M17.100 17.100l2.100 2.100M4.800 19.200l2.100-2.100M17.100 6.900l2.100-2.100"/></symbol><symbol id="ic-home" viewBox="0 0 24 24"><path d="M3 11.500l9-8.500 9 8.500M5.500 10v10.500h4.500v-6h4v6h4.500V10"/></symbol><symbol id="ic-lock" viewBox="0 0 24 24"><path fill="currentColor" d="M5.500 11h13v10.500h-13z"/><path d="M8 11V7.500a4 4 0 0 1 8 0V11"/></symbol><symbol id="ic-crate" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 4l16 16M20 4L4 20"/></symbol><symbol id="ic-gauge" viewBox="0 0 24 24"><path d="M3 18a9 9 0 0 1 18 0M12 18l4.500-7"/></symbol><symbol id="ic-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol><symbol id="ic-crown" viewBox="0 0 24 24"><path fill="currentColor" d="M3.500 18.500h17l1.500-11-5.500 4L12 4.500l-4.500 7-5.500-4z"/></symbol><symbol id="ic-trophy" viewBox="0 0 24 24"><path fill="currentColor" d="M7 3h10v6.500c0 4-2.500 6-5 6s-5-2-5-6z"/><path d="M7 5H3.500v2.500c0 3 2.500 4 4 4M17 5h3.500v2.500c0 3-2.500 4-4 4M12 15.500V20M8 21h8"/></symbol><symbol id="ic-norecover" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v7h7"/><path stroke-width="2.600" d="M3 21L21 3"/></symbol><symbol id="ic-touch" viewBox="0 0 24 24"><path d="M9 12V4a2 2 0 0 1 4 0v6l2-1 5 3v5l-3 5H9l-6-8a2 2 0 0 1 3-2l3 3z"/></symbol><symbol id="ic-more" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><circle cx="5" cy="12" r="2.200"/><circle cx="12" cy="12" r="2.200"/><circle cx="19" cy="12" r="2.200"/></g></symbol></defs></svg><div class="feedback-layer"><div id="hudCue" class="hud-cue" role="status" hidden><svg aria-hidden="true" viewBox="0 0 24 24"><use id="cueGlyph" href="#cue-target"/></svg><strong id="cueValue"></strong><span id="cueLabel" class="sr-only"></span></div><div id="hudAwards" class="hud-awards" aria-live="polite"><div class="award-slab"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#cue-star"/></svg><span class="award-label sr-only"></span><b class="award-value"></b></div><div class="award-slab"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#cue-star"/></svg><span class="award-label sr-only"></span><b class="award-value"></b></div><div class="award-slab"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#cue-star"/></svg><span class="award-label sr-only"></span><b class="award-value"></b></div></div><div id="hudToast" class="hud-toast" role="status" aria-live="polite"></div><div id="hudBanner" class="hud-banner" aria-live="polite"><span class="banner-lights" aria-hidden="true"><i></i><i></i><i></i></span><svg class="banner-icon" aria-hidden="true" viewBox="0 0 24 24"><use id="bannerGlyph" href="#ic-flag"/></svg><span id="bannerText" class="banner-text"></span></div></div>
+<svg class="sr-only" aria-hidden="true"><defs><symbol id="ic-infinity" viewBox="0 0 24 24"><path d="M12 12c-2-3-3-5-6-5a5 5 0 0 0 0 10c3 0 4-2 6-5s3-5 6-5a5 5 0 0 1 0 10c-3 0-4-2-6-5Z"/></symbol><symbol id="ic-mountain" viewBox="0 0 24 24"><path d="M2 20 9 5l5 10 3-7 5 12H2M6 12l3 2 3-2"/></symbol><symbol id="cue-target" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M12 1v6M12 17v6M1 12h6M17 12h6"/></symbol><symbol id="cue-shot" viewBox="0 0 24 24"><path d="M3 12h16M14 6l6 6-6 6"/></symbol><symbol id="cue-hit" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></symbol><symbol id="cue-miss" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></symbol><symbol id="cue-fuel" viewBox="0 0 24 24"><path d="M5 21V4h9v17M4 21h12M5 9h9M16 5l3 3v9c0 2 3 2 3 0v-5l-3-3"/></symbol><symbol id="cue-checkpoint" viewBox="0 0 24 24"><path d="M5 22V3m0 1h14l-3 4 3 4H5"/></symbol><symbol id="cue-recover" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v7h7"/></symbol><symbol id="cue-trick" viewBox="0 0 24 24"><path d="M5 7a8 8 0 1 1-1 9M5 2v6h6"/></symbol><symbol id="cue-success" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></symbol><symbol id="cue-error" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 9v5M12 17v1"/></symbol><symbol id="cue-upgrade" viewBox="0 0 24 24"><path d="M12 21V3M5 10l7-7 7 7"/></symbol><symbol id="cue-tilt" viewBox="0 0 24 24"><path d="M5 7a8 8 0 1 1-1 9M5 2v6h6"/></symbol><symbol id="ic-speaker" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM17 8q4 4 0 8M20 5q7 7 0 14"/></symbol><symbol id="ic-note" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5" fill="currentColor"/><circle cx="17.5" cy="16" r="2.5" fill="currentColor"/></symbol><symbol id="ic-spark" viewBox="0 0 24 24"><path d="M12 2l2.5 7.500L22 12l-7.500 2.500L12 22l-2.500-7.500L2 12l7.500-2.500z"/></symbol><symbol id="ic-shake" viewBox="0 0 24 24"><path d="M7 7h10v10H7zM2 9l2 3-2 3M22 9l-2 3 2 3"/></symbol><symbol id="ic-calm" viewBox="0 0 24 24"><path d="M2 9q5-4.500 10 0t10 0M2 15q5-4.500 10 0t10 0"/></symbol><symbol id="ic-rumble" viewBox="0 0 24 24"><path d="M8 4h8v16H8zM4.500 8v8M19.500 8v8M1.500 10v4M22.500 10v4"/></symbol><symbol id="cue-drive" viewBox="0 0 24 24"><path fill="currentColor" stroke-width="2.5" d="M7 4.500l12 7.500-12 7.500z"/></symbol><symbol id="cue-bolt" viewBox="0 0 24 24"><path d="M13 2L5 14h6l-1 8 9-13h-6z"/></symbol><symbol id="cue-burst" viewBox="0 0 24 24"><path d="M12 2l2.2 6.2L20 5l-3.2 5.8L23 12l-6.2 1.2L20 19l-5.8-3.2L12 22l-2.2-6.2L4 19l3.2-5.8L1 12l6.2-1.2L4 5l5.8 3.2z"/></symbol><symbol id="cue-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.800 6.300.800-4.600 4.400 1.200 6.300L12 17.200 6.400 20.300l1.200-6.300L3 9.600l6.300-.800z"/></symbol><symbol id="cue-air" viewBox="0 0 24 24"><path d="M3 17q5-13 18-10M21 7l-5-1M21 7l-2 5M4 21h16"/></symbol><symbol id="ic-flag" viewBox="0 0 24 24"><path d="M5 22V3M5 4h15v10H5z"/><path fill="currentColor" stroke="none" d="M5 4h5v5H5zM15 4h5v5h-5zM10 9h5v5h-5z"/></symbol><symbol id="ic-truck" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M1.500 13.500V9.500h6.200l2-4.200h6.200l2.600 4.200h3c.6 0 1 .4 1 1v3z"/><circle cx="6.500" cy="17" r="4"/><circle cx="17.500" cy="17" r="4"/></g></symbol><symbol id="ic-rival" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M1.500 13.500V7l2.600 2.500L5.500 5l2.200 4 2.300-4.500 2 4h4.200l2.600 2.500 2.200-2.500v5z"/><circle cx="6.500" cy="17" r="4"/><circle cx="17.500" cy="17" r="4"/></g></symbol><symbol id="ic-giant" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M2.500 1.500l5.500 4.500h8l5.500-4.500-1.500 8V16l-3.500 6.500h-9L4 16V9.500z"/><path stroke="#15141a" stroke-width="2" d="M7.500 11l3 1.500M16.500 11l-3 1.500M9 17.500h6"/></symbol><symbol id="ic-zombie" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 2.500c5 0 8.500 3.600 8.500 8.300 0 3-1.300 5.200-3.200 6.700V21.500H6.700v-4c-1.900-1.500-3.200-3.700-3.200-6.700 0-4.700 3.500-8.300 8.500-8.300z"/><g stroke="#15141a" stroke-width="2"><path d="M7.300 10.300l2.700 2.700M10 10.300l-2.700 2.700M9 17.500h6"/><circle cx="15.200" cy="11.700" r="1.200" fill="#15141a"/></g></symbol><symbol id="ic-can" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M6 7.500l3-4.500h5.500v2.500H11l-1 2h8c.8 0 1.500.7 1.500 1.500v11c0 .8-.7 1.500-1.500 1.500H6.500c-.8 0-1.500-.7-1.500-1.500V9z"/><path fill="#15141a" stroke="none" d="M12 10.500c2.200 2.700 3.300 4.300 3.300 5.800a3.300 3.300 0 0 1-6.600 0c0-1.500 1.100-3.100 3.300-5.800z"/></symbol><symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.500 2"/></symbol><symbol id="ic-ghost" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M5 21.500V10a7 7 0 0 1 14 0v11.500l-2.500-2.500-2.200 2.500L12 19l-2.300 2.500L7.500 19z"/><g fill="#15141a" stroke="none"><circle cx="9.500" cy="10.500" r="1.500"/><circle cx="14.500" cy="10.500" r="1.500"/></g></symbol><symbol id="ic-play" viewBox="0 0 24 24"><path fill="currentColor" stroke-width="2.500" d="M7 4.500l12 7.500-12 7.500z"/></symbol><symbol id="ic-next" viewBox="0 0 24 24"><path fill="currentColor" stroke-width="2" d="M3.500 5.500l8 6.500-8 6.500zM12.500 5.500l8 6.500-8 6.500z"/></symbol><symbol id="ic-back" viewBox="0 0 24 24"><path fill="currentColor" stroke-width="2" d="M20.500 5.500l-8 6.500 8 6.500zM11.500 5.500l-8 6.500 8 6.500z"/></symbol><symbol id="ic-grid" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></symbol><symbol id="ic-wrench" viewBox="0 0 24 24"><path d="M14.700 6.300a1 1 0 0 0 0 1.400l1.600 1.600a1 1 0 0 0 1.400 0l3.770-3.770a6 6 0 0 1-7.940 7.940l-6.910 6.910a2.120 2.120 0 0 1-3-3l6.910-6.910a6 6 0 0 1 7.940-7.940l-3.760 3.760z"/></symbol><symbol id="ic-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.200"/><circle cx="12" cy="12" r="7.200"/><path d="M12 1.800v3M12 19.200v3M1.800 12h3M19.200 12h3M4.800 4.800l2.100 2.100M17.100 17.100l2.100 2.100M4.800 19.200l2.100-2.100M17.100 6.900l2.100-2.100"/></symbol><symbol id="ic-home" viewBox="0 0 24 24"><path d="M3 11.500l9-8.500 9 8.500M5.500 10v10.500h4.500v-6h4v6h4.500V10"/></symbol><symbol id="ic-lock" viewBox="0 0 24 24"><path fill="currentColor" d="M5.500 11h13v10.500h-13z"/><path d="M8 11V7.500a4 4 0 0 1 8 0V11"/></symbol><symbol id="ic-crate" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 4l16 16M20 4L4 20"/></symbol><symbol id="ic-gauge" viewBox="0 0 24 24"><path d="M3 18a9 9 0 0 1 18 0M12 18l4.500-7"/></symbol><symbol id="ic-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol><symbol id="ic-crown" viewBox="0 0 24 24"><path fill="currentColor" d="M3.500 18.500h17l1.500-11-5.500 4L12 4.500l-4.500 7-5.500-4z"/></symbol><symbol id="ic-trophy" viewBox="0 0 24 24"><path fill="currentColor" d="M7 3h10v6.500c0 4-2.500 6-5 6s-5-2-5-6z"/><path d="M7 5H3.500v2.500c0 3 2.500 4 4 4M17 5h3.500v2.500c0 3-2.500 4-4 4M12 15.500V20M8 21h8"/></symbol><symbol id="ic-norecover" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v7h7"/><path stroke-width="2.600" d="M3 21L21 3"/></symbol><symbol id="ic-touch" viewBox="0 0 24 24"><path d="M9 12V4a2 2 0 0 1 4 0v6l2-1 5 3v5l-3 5H9l-6-8a2 2 0 0 1 3-2l3 3z"/></symbol><symbol id="ic-more" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><circle cx="5" cy="12" r="2.200"/><circle cx="12" cy="12" r="2.200"/><circle cx="19" cy="12" r="2.200"/></g></symbol></defs></svg><div class="feedback-layer"><div id="hudCue" class="hud-cue" role="status" hidden><svg aria-hidden="true" viewBox="0 0 24 24"><use id="cueGlyph" href="#cue-target"/></svg><strong id="cueValue"></strong><span id="cueLabel" class="sr-only"></span></div><div id="hudAwards" class="hud-awards" aria-live="polite"><div class="award-slab"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#cue-star"/></svg><span class="award-label sr-only"></span><b class="award-value"></b></div><div class="award-slab"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#cue-star"/></svg><span class="award-label sr-only"></span><b class="award-value"></b></div><div class="award-slab"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#cue-star"/></svg><span class="award-label sr-only"></span><b class="award-value"></b></div></div><div id="hudToast" class="hud-toast" role="status" aria-live="polite"></div><div id="hudBanner" class="hud-banner" aria-live="polite"><span class="banner-lights" aria-hidden="true"><i></i><i></i><i></i></span><svg class="banner-icon" aria-hidden="true" viewBox="0 0 24 24"><use id="bannerGlyph" href="#ic-flag"/></svg><span id="bannerText" class="banner-text"></span></div></div>
 <div id="screenLayer" class="screen-layer"><section id="menuPanel" class="menu-panel screen-title" role="dialog" aria-modal="true" aria-labelledby="screenHeading"><header class="menu-header"><div class="brand"><span class="brand-mark" aria-hidden="true"></span>IRONTRAIL</div><div id="menuCrumb" class="menu-crumb"></div><button class="dedication-button" data-ui="dedication" aria-label="Read the dedication for Ojas" title="Made for Ojas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg></button></header><div id="menuBody"></div><footer class="menu-actions"><button id="playButton" class="primary-button" aria-label="Start"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-play"/></svg><b>GO</b></button><div id="secondaryActions" class="secondary-actions"></div></footer><div id="menuHint" class="menu-hint"></div></section></div>
 </div>
 <script>
@@ -682,6 +710,7 @@ SOFTWARE.
       checkpoint: 6, monster: 30, slipstreamPerSecond: 6, slam: 25, rivalPerSecond: 8 }) });
   // Local integer hash for deterministic scenery; never consumes options.random.
   const hash = n => { n = Math.imul(n ^ 0x9e3779b9, 0x85ebca6b); n ^= n >>> 13; n = Math.imul(n, 0xc2b2ae35); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; };
+  const ENDLESS = Object.freeze({ chunkLength: 96, ahead: 480, behind: 192, overturnAngle: 1.75, fallDepth: 3, difficultyInterval: 250, fuelDrain: 6.8 });
   const STAGES = Object.freeze(NAMES.map((name, i) => Object.freeze({
     id: i + 1, name, subtitle: SUBTITLES[i], length: LENGTHS[i], difficulty: i + 1,
     boss: i === 9, fuelDrain: FUEL_RATES[i], fuelInterval: 78 + i * 2,
@@ -694,6 +723,7 @@ SOFTWARE.
     static get UPGRADES() { return UPGRADES; }
     static get RIVAL_TUNING() { return RIVAL_TUNING; }
     static get NITRO() { return NITRO; }
+    static get ENDLESS() { return ENDLESS; }
 
     static warmUp(milliseconds = 60) {
       const now = () => typeof performance === 'object' ? performance.now() : Date.now();
@@ -709,7 +739,8 @@ SOFTWARE.
 
     constructor(stageIndex = 0, options = {}) {
       this.stageIndex = clamp(Math.floor(Number(stageIndex) || 0), 0, STAGES.length - 1);
-      this.stage = STAGES[this.stageIndex];
+      this.endless = options.endless === true;
+      this.stage = this.endless ? Object.freeze({ ...STAGES[9], id: 11, name: 'Endless Boss', subtitle: 'No finish line. Stay upright.', endless: true, length: ENDLESS.ahead + ENDLESS.chunkLength, difficulty: 1, fuelDrain: ENDLESS.fuelDrain, zombieCount: 0 }) : STAGES[this.stageIndex];
       this.random = typeof options.random === 'function' ? options.random : Math.random;
       const tuning = options.tuning || {};
       this.tuning = Object.freeze({ engine: clamp(Math.floor(Number(tuning.engine) || 0), 0, 3),
@@ -734,7 +765,7 @@ SOFTWARE.
         segment.xs = new Float64Array(segment.length);
         for (let j = 0; j < segment.length; j++) segment.xs[j] = segment[j].x;
       }
-      this._breakableLayout = this._makeBreakables();
+      this._breakableLayout = this.endless ? [] : this._makeBreakables();
       this.restart();
     }
 
@@ -758,6 +789,7 @@ SOFTWARE.
     }
 
     _makeTrack() {
+      if (this.endless) return this._makeEndlessTrack();
       const d = this.stage.difficulty, startX = 7.5, finishX = startX + this.stage.length;
       const count = 2 + Math.floor((d - 1) / 2), span = (this.stage.length - 25) / count;
       const layouts = [], features = [], canXs = [], checkpoints = [{ x: startX - 1.5, y: 0 }];
@@ -814,6 +846,121 @@ SOFTWARE.
         return out;
       });
       return { segments, checkpoints, startX, finishX, length: this.stage.length, features, canXs };
+    }
+
+    // Stream whole immutable chain arrays. Only a small forward/behind window remains in memory.
+    _makeEndlessTrack() {
+      this._endlessNextChunk = 0;
+      const track = { segments: [], checkpoints: [{ x: 6, y: 0 }], startX: 7.5,
+        finishX: 7.5, length: 0, features: [], canXs: [] };
+      for (let i = 0; i < 6; i++) this._appendEndlessChunk(track);
+      return track;
+    }
+
+    _appendEndlessChunk(track) {
+      const index = this._endlessNextChunk++, start = track.startX + index * ENDLESS.chunkLength;
+      const end = start + ENDLESS.chunkLength, gap = index >= 8 && index % 3 === 2 ? 2.5 + Math.log2(index - 6) * .55 : 0;
+      const surfaceEnd = end - gap, amplitude = .9 + Math.sqrt(index) * .4;
+      const waves = index % 4 === 1 ? 1 : Math.min(4, 1 + Math.floor(index / 12));
+      const first = index === 0 ? -35 : start, segment = [], samples = Math.ceil((surfaceEnd - first) / .65);
+      for (let n = 0; n <= samples; n++) {
+        const x = first + (surfaceEnd - first) * n / samples;
+        const apron = index === 0 ? 30 : 14;
+        const t = clamp((x - start - apron) / Math.max(1, surfaceEnd - start - apron - 14), 0, 1);
+        let y = amplitude * Math.sin(Math.PI * waves * t) ** 2;
+        if (gap && x > surfaceEnd - 14) y = (x - surfaceEnd + 14) / 14 * (2.1 + Math.log2(index) * .35);
+        segment.push({ x, y });
+      }
+      segment.xs = Float64Array.from(segment, point => point.x);
+      segment.chunkIndex = index;
+      track.segments.push(segment); track.canXs.push(start + 40);
+      track.features.push({ kind: gap ? 'ramp' : 'rollers', startX: start + 14, endX: surfaceEnd,
+        height: amplitude, difficulty: 1 + index * ENDLESS.chunkLength / ENDLESS.difficultyInterval });
+      track.finishX = end; track.length = end - track.startX;
+      return segment;
+    }
+
+    _indexEndlessTrack() {
+      this._segmentStarts = Float64Array.from(this.track.segments, segment => segment[0].x);
+    }
+
+    _endlessFixture(segment) {
+      return this.ground.createFixture(new P.Chain(segment.map(point => V(point.x, point.y))), {
+        friction: .95, restitution: .015, filterCategoryBits: 1
+      });
+    }
+
+    _extendEndlessTrack(x) {
+      let changed = false;
+      // Even a developer fixture jumping far ahead cannot allocate all the skipped terrain.
+      if (x - this.track.finishX > ENDLESS.ahead + ENDLESS.behind) {
+        for (const fixture of this._endlessFixtures.values()) this.ground.destroyFixture(fixture);
+        this._endlessFixtures.clear(); this.track.segments.length = 0; this.track.features.length = 0; this.track.canXs.length = 0; this.fuelCans.length = 0;
+        this._endlessNextChunk = Math.max(0, Math.floor((x - ENDLESS.behind - this.track.startX) / ENDLESS.chunkLength));
+        this.track.finishX = this.track.startX + this._endlessNextChunk * ENDLESS.chunkLength;
+        changed = true;
+      }
+      while (this.track.finishX < x + ENDLESS.ahead) {
+        const segment = this._appendEndlessChunk(this.track);
+        this._endlessFixtures.set(segment, this._endlessFixture(segment));
+        const canX = this.track.canXs.at(-1), point = segment.findIndex(p => p.x >= canX), a = segment[point - 1], b = segment[point];
+        const y = a.y + (b.y - a.y) * (canX - a.x) / (b.x - a.x);
+        this.fuelCans.push({ id: segment.chunkIndex, x: canX, y: y + 1.3, collected: false });
+        changed = true;
+      }
+      while (this.track.segments.length > 2 && this.track.segments[0].at(-1).x < x - ENDLESS.behind) {
+        const segment = this.track.segments.shift(), fixture = this._endlessFixtures.get(segment);
+        this.ground.destroyFixture(fixture); this._endlessFixtures.delete(segment); changed = true;
+      }
+      if (changed) {
+        const first = this.track.segments[0][0].x;
+        this.track.features = this.track.features.filter(feature => feature.endX >= first);
+        this.track.canXs = this.track.canXs.filter(canX => canX >= first);
+        this.fuelCans = this.fuelCans.filter(can => can.x >= first);
+        this._indexEndlessTrack(); this.terrainVersion++;
+      }
+    }
+
+    _failEndless() {
+      const p = this.chassis.getPosition(), angle = Math.abs(wrap(this.chassis.getAngle()));
+      const kind = angle >= ENDLESS.overturnAngle ? 'overturn' : p.y < this._heightAt(p.x) - ENDLESS.fallDepth ? 'fall' : '';
+      if (!kind) return false;
+      this.failed = kind; this.finished = false;
+      this.player.boosting = false; this.player.boostTime = 0;
+      this.events.push({ type: 'wreck', kind: kind === 'fall' ? 'fall' : 'roof', x: p.x, y: p.y, strength: 1 });
+      this._capturePose(); return true;
+    }
+
+    _stepEndless(dt, input) {
+      dt = clamp(Number(dt) || 0, 0, 1 / 30);
+      if (!dt || this.failed) return;
+      this.posePrev.set(this.poseCurr);
+      const p = this.chassis.getPosition();
+      this._extendEndlessTrack(Math.max(this.track.startX, p.x));
+      if (this._failEndless()) return;
+      const throttle = clamp(Number(input.throttle) || 0, -1, 1), lean = clamp(Number(input.lean) || 0, -1, 1);
+      const vy = this.chassis.getLinearVelocity().y;
+      this._updateBurn(this.player, !!input.boost && throttle >= -.05 && !input.brake, dt);
+      this._drive(this.player, throttle, !!input.brake, lean);
+      this.world.step(dt, 8, 3); this._elapsed += dt;
+      const position = this.chassis.getPosition(), speed = Math.abs(this.chassis.getLinearVelocity().x);
+      this.stats.topSpeed = Math.max(this.stats.topSpeed, speed);
+      this.distance = Math.max(this.distance, position.x - this.track.startX);
+      const difficulty = 1 + Math.floor(this.distance / ENDLESS.difficultyInterval);
+      if (difficulty > this.difficulty) {
+        this.difficulty = difficulty; this.events.push({ type: 'difficulty', difficulty, x: position.x, y: position.y });
+      }
+      if (this._failEndless()) return;
+      this._updateFlight(this.player, dt, vy, true);
+      this.grounded = this.player.grounded; this.airtime = this.player.airtime; this.airRotation = this.player.airRotation;
+      this.player.stalledTime = Math.abs(throttle) > .05 && this.grounded && speed < .6 ? this.player.stalledTime + dt : 0;
+      this.fuel = Math.max(0, this.fuel - this.stage.fuelDrain * UPGRADES.tank.drain[this.tuning.tank] * (.35 + (this.player.boosting ? 1 : Math.abs(throttle)) * .65) * dt);
+      for (const can of this.fuelCans) if (!can.collected && Math.hypot(position.x - can.x, position.y - can.y) < 3.9) {
+        can.collected = true; const amount = Math.min(32, 100 - this.fuel); this.fuel += amount; this.stats.cans++;
+        this.events.push({ type: 'fuel', x: can.x, y: can.y, amount });
+      }
+      if (this.fuel <= 0) this._failFuel();
+      this._weaponDirty = true; this._capturePose();
     }
 
     _segmentAt(x) {
@@ -935,12 +1082,17 @@ SOFTWARE.
     }
 
     restart() {
+      if (this.endless) {
+        this.track = this._makeEndlessTrack(); this._indexEndlessTrack();
+        this.distance = 0; this.difficulty = 1; this.terrainVersion = (this.terrainVersion || 0) + 1;
+        this._endlessFixtures = new Map();
+      }
       this.world = new P.World({ gravity: V(0, -14), allowSleep: true });
       this.ground = this.world.createBody();
       this.ground.setUserData({ type: 'ground' });
-      for (const vertices of this.track.segments) this.ground.createFixture(new P.Chain(vertices.map(p => V(p.x, p.y))), {
+      for (const vertices of this.track.segments) { const fixture = this.ground.createFixture(new P.Chain(vertices.map(p => V(p.x, p.y))), {
         friction: 0.95, restitution: 0.015, filterCategoryBits: 1
-      });
+      }); if (this.endless) this._endlessFixtures.set(vertices, fixture); }
       this.ground.createFixture(new P.Edge(V(-35, -4), V(-35, 12)), { friction: 0.6 });
       this.events = []; this._pendingHits = new Set(); this._pendingCollision = 0;
       this._lastCollisionTime = -100; this._elapsed = 0;
@@ -953,7 +1105,7 @@ SOFTWARE.
       this.checkpointIndex = 0;
       this.player = null;
       this._spawnPlayer(0);
-      this.rival = this.stage.boss ? this._createTruck(this.track.startX - RIVAL_TUNING.startGap, 'rival') : null;
+      this.rival = this.stage.boss && !this.endless ? this._createTruck(this.track.startX - RIVAL_TUNING.startGap, 'rival') : null;
       this.zombies = [];
       for (let i = 0; i < this.stage.zombieCount; i++) {
         const rawX = this.track.startX + 25 + i * (this.stage.length - 45) / this.stage.zombieCount;
@@ -972,11 +1124,12 @@ SOFTWARE.
         const x = this.track.canXs[i];
         this.fuelCans.push({ id: i, x, y: this._heightAt(x) + 1.3, collected: false });
       }
-      if (this.stage.boss) {
+      if (this.stage.boss && !this.endless) {
         const x = this.track.startX + 35;
         this.fuelCans.unshift({ id: -1, x, y: this._heightAt(x) + 1.3, collected: false });
       }
-      this.monster = this._createMonster();
+      this.monster = this.endless ? { x: 0, y: 0, width: 3, height: 4.8, weakpoint: { x: 0, y: 2.85 }, alive: false, hit: false, timeSinceHit: 0 } : this._createMonster();
+      if (this.endless) this.ammo = 0;
       this.breakables = this._breakableLayout;
       for (const prop of this.breakables) { prop.broken = false; prop.active = Math.abs(prop.x - this.monster.x) >= 7; }
       this.world.on('begin-contact', contact => {
@@ -1045,6 +1198,7 @@ SOFTWARE.
     }
 
     reset(checkpointIndex = 0) {
+      if (this.endless) return false;
       if (this.failed || this.winner) return false;
       this.fuel = Math.max(0, this.fuel - 12);
       if (this.fuel <= 0) { this._failFuel(); return false; }
@@ -1235,6 +1389,7 @@ SOFTWARE.
     }
 
     step(dt, input = {}) {
+      if (this.endless) return this._stepEndless(dt, input);
       this.posePrev.set(this.poseCurr);
       dt = clamp(Number(dt) || 0, 0, 1 / 30);
       if (!dt || this.failed || this.winner) return;
@@ -1390,6 +1545,7 @@ SOFTWARE.
     // After the run is decided the runtime may let the world roll on for a short outro.
     // No rules run here: fuel, nitro, pickups, checkpoints, results and stats are frozen.
     coast(dt) {
+      if (this.endless) return false;
       if (!this.failed && !this.winner) return false;
       this.posePrev.set(this.poseCurr);
       dt = clamp(Number(dt) || 0, 0, 1 / 30);
@@ -1451,6 +1607,7 @@ SOFTWARE.
 
     getState() {
       const state = this._snapshot(this.player, this._state); this._state = state;
+      if (this.endless) { state.endless = true; state.distance = this.distance; state.difficulty = this.difficulty; state.terrainVersion = this.terrainVersion; }
       state.rival = this.rival ? this._snapshot(this.rival, state.rival) : null;
       state.fuel = this.fuel; state.cleared = this.cleared; state.totalZombies = this.zombies.length;
       state.racePosition = state.rival && state.rival.x > state.x ? 2 : 1; state.ammo = this.ammo;
@@ -2413,6 +2570,7 @@ globalThis.TruckAudio = TruckAudio;
   }
   function defaults() {
     return { version: 3, unlocked: 1, completed: [], best: {}, selected: 0, stars: {}, bestScore: {}, scrap: 0,
+      endless: { bestDistance: 0, bestTime: 0, runs: 0 },
       upgrades: { engine: 0, tyres: 0, suspension: 0, tank: 0 },
       settings: { master: .9, music: .55, sfx: .9, quality: 'auto', shake: true, showFps: false, reducedMotion: false, haptics: true, autoNitro: false },
       totals: { runs: 0, clears: 0, zombies: 0, flips: 0, cans: 0, scrapEarned: 0, smashes: 0, slams: 0 } };
@@ -2431,6 +2589,7 @@ globalThis.TruckAudio = TruckAudio;
       else if (out.completed.includes(i)) out.stars[i] = [true, false, false];
     }
     out.scrap = integer(raw.scrap, 0, 10000000);
+    out.endless = endlessRecord(raw.endless);
     for (const track of KEYS) out.upgrades[track] = integer(raw.upgrades?.[track], 0, 3);
     const settings = raw.settings && typeof raw.settings === 'object' ? raw.settings : {};
     for (const volume of ['master', 'music', 'sfx']) if (Number.isFinite(Number(settings[volume]))) out.settings[volume] = clamp(settings[volume], 0, 1);
@@ -2441,6 +2600,22 @@ globalThis.TruckAudio = TruckAudio;
   }
   function load(storage) { try { const s = storage || global.localStorage; return migrate(s?.getItem('irontrail-campaign-v1')); } catch (_) { return defaults(); } }
   function save(storage, data) { try { const s = storage || global.localStorage; if (!s) return false; s.setItem('irontrail-campaign-v1', JSON.stringify(migrate(data))); return true; } catch (_) { return false; } }
+  // Survival records are separate from campaign rewards and do not create an eleventh stage.
+  const endlessResults = new WeakMap();
+  function endlessRecord(value) {
+    return { bestDistance: clamp(value?.bestDistance, 0, 1000000000), bestTime: clamp(value?.bestTime, 0, 1000000000), runs: integer(value?.runs, 0, 1000000000) };
+  }
+  function recordEndless(data, summary) {
+    if (!data || typeof data !== 'object' || Array.isArray(data) || !summary || typeof summary !== 'object' || Array.isArray(summary)) return { applied: false };
+    let recorded = endlessResults.get(data);
+    if (!recorded) { recorded = new WeakSet(); endlessResults.set(data, recorded); }
+    if (recorded.has(summary)) return { applied: false };
+    recorded.add(summary);
+    const prior = endlessRecord(data.endless), distance = clamp(summary.distance, 0, 1000000000), time = clamp(summary.time, 0, 1000000000);
+    const newBest = distance > prior.bestDistance || distance === prior.bestDistance && time > prior.bestTime;
+    data.endless = { bestDistance: newBest ? distance : prior.bestDistance, bestTime: newBest ? time : prior.bestTime, runs: Math.min(1000000000, prior.runs + 1) };
+    return { applied: true, newBest, distance, time, bestDistance: data.endless.bestDistance, bestTime: data.endless.bestTime };
+  }
   function buyUpgrade(data, track) {
     if (!data || !KEYS.includes(track)) return { ok: false, reason: 'invalid' };
     const level = integer(data.upgrades?.[track], 0, 3), cost = upgradeCost(track, level);
@@ -2471,7 +2646,7 @@ globalThis.TruckAudio = TruckAudio;
   }
   global.IronRules = Object.freeze({ PAR_TIMES, CHALLENGES, UPGRADE_COSTS, UPGRADE_META, UPGRADES: EFFECTS,
     createRun, onEvent, tick, finish, upgradeCost, upgradeInfo, buyUpgrade,
-    Save: Object.freeze({ KEY: 'irontrail-campaign-v1', defaults, load, save, migrate, recordResult }), recordResult });
+    Save: Object.freeze({ KEY: 'irontrail-campaign-v1', defaults, load, save, migrate, recordResult, recordEndless }), recordResult });
 })(globalThis);
 
 </script>
@@ -2575,6 +2750,8 @@ globalThis.TruckAudio = TruckAudio;
     _marker(id,value){this._hidden(id,value===null||value===undefined||!Number.isFinite(Number(value)));if(value==null)return;const n=Math.round(clamp(value,0,1)*1000)/10,key=`marker:${id}`;if(this.values[key]!==n){this.values[key]=n;this.nodes[id].style.transform=`translateX(${n}%)`;}}
     _rot(id,degrees){const n=Math.round(degrees/2)*2,key=`rot:${id}`;if(this.values[key]!==n){this.values[key]=n;if(this.nodes[id])this.nodes[id].style.transform=`rotate(${n}deg)`;}}
     _updateHUD(v){
+      if(v.endless!==undefined){const active=!!v.endless;if(this._endless!==active){this._endless=active;this.app.classList.toggle('endless-run',active);}this._hidden('survivalHud',!active);}
+      if(this._endless){if(v.distance!==undefined)this._text('hudSurvivalDistance',scoreText(v.distance)+' m');if(v.difficulty!==undefined){this._text('hudSurvivalTier',v.difficulty);this._attr('survivalHud','aria-label',`Endless boss: ${Math.floor(v.distance||0)} metres, terrain difficulty ${v.difficulty}`);}}
       if(v.stageIndex!==undefined)this._text('hudStageNumber',`Stage ${Number(v.stageIndex)+1} of 10`);
       if(v.stageName!==undefined)this._text('hudStageName',v.stageName);
       if(v.progress!==undefined){this._bar('hudProgressFill',v.progress);this._marker('hudTruckMarker',v.progress);}
@@ -2648,7 +2825,7 @@ globalThis.TruckAudio = TruckAudio;
       let html='',primary='Continue',primaryIcon='ic-play',primaryWord='',action='back',args=[],secondary='';
       if(name==='title'){
         html=`${HERO_WEB}<div class="ojas-title-copy"><p class="menu-eyebrow hero-dedication">Made for Ojas Kulkarni, with love.</p><h1 id="screenHeading" class="attract-title ojas-title">OJAS’S<span>MONSTER<br>RALLY.</span></h1></div><div class="hero-showcase">${heroTruck()}</div>`;
-        primary=this.save.completed?.length?'Let’s race again, Ojas!':'Let’s race, Ojas!';primaryWord='GO';action='play';secondary=this._button('Tracks','stages','ic-grid')+this._button('Garage','garage','ic-wrench')+this._button('Settings','settings','ic-gear');
+        primary=this.save.completed?.includes(9)?'Enter the endless boss round':this.save.completed?.length?'Let’s race again, Ojas!':'Let’s race, Ojas!';primaryWord='GO';action='play';secondary=this._button('Tracks','stages','ic-grid')+this._button('Garage','garage','ic-wrench')+this._button('Settings','settings','ic-gear');
       }else if(name==='dedication'){
         html=`<div class="dedication-card"><div class="dedication-emblem">${HERO_SPIDER}</div><p class="menu-eyebrow">A GAME MADE JUST FOR YOU</p><h1 id="screenHeading" class="menu-title">For Ojas Kulkarni.</h1><p class="dedication-message">Big dreams. Brave heart.<br>Monster adventures.</p><p class="dedication-love">Keep exploring, little hero.<br>Made for you, with love. <span aria-hidden="true">♥</span></p><div class="dedication-truck">${heroTruck()}</div></div>`;
         primary='Let’s go, Ojas!';primaryWord='GO';action='back';secondary='';
@@ -2659,7 +2836,7 @@ globalThis.TruckAudio = TruckAudio;
           const locked=n>=(this.save.unlocked||1),stars=this.save.stars?.[n]||[false,false,false],biome=this.biomes[n]||{};
           html+=`<button type="button" class="stage-card${locked?' locked':''}${n===(this.save.selected||0)?' current':''}" style="--card-accent:${esc(biome.accent||'#ff5a68')}" data-ui="selectStage" data-stage="${n}" aria-label="Stage ${n+1}: ${esc(this._stageName(n))}${locked?', locked':''}${this.save.best?.[n]?', best time '+timeText(this.save.best[n]):''}" ${locked?'disabled':''}>${scene(biome,'s'+n)}${locked?use('ic-lock','stage-pic'):n===9?use('ic-rival','stage-pic'):''}<b class="stage-num">${n+1}</b><span class="stage-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${this._stars(stars)}</span><span class="stage-name">${esc(this._stageName(n))}</span></button>`;
         }
-        html+='</div>';primary='Continue selected route';action='selectStage';args=[this.save.selected||0];secondary=this._button('Garage','garage','ic-wrench')+this._button('Title','title','ic-home');
+        html+='</div>';if(this.save.completed?.includes(9))html+=`<button class="endless-entry" data-ui="endless" aria-label="Endless Boss. Increasing terrain difficulty. Falling or overturning ends the run.">${use('ic-infinity')}<span>ENDLESS BOSS</span>${use('ic-mountain')}</button>`;primary='Continue selected route';action='selectStage';args=[this.save.selected||0];secondary=this._button('Garage','garage','ic-wrench')+this._button('Title','title','ic-home');
       }else if(name==='garage'){
         html=`<h1 id="screenHeading" class="sr-only">Build your super truck. Upgrades apply to your next run.</h1><div class="campaign-summary"><span class="sum-chip scrap" role="img" aria-label="${scoreText(this.save.scrap)} scrap available">◆ <b>${scoreText(this.save.scrap)}</b></span></div><div class="garage-grid">`;
         for(const track of ['engine','tyres','suspension','tank']){
@@ -2682,6 +2859,12 @@ globalThis.TruckAudio = TruckAudio;
         const goals=[[use('ic-flag'),'Finish the stage'],[`${use('ic-clock')}<b>${Math.round(par)}</b>`,`Beat the clock: ${timeText(par)} or faster`],[goalPic,`Challenge: ${challenge}`]];
         html=`<div class="brief-kid" style="--card-accent:${esc(accent)}"><div class="brief-hero">${scene(this.biomes[i],'b'+i)}<div class="brief-top"><div class="brief-badge" aria-hidden="true">${i+1}${i===9?use('ic-rival'):''}</div><h1 id="screenHeading" class="brief-name"><span class="sr-only">Stage ${i+1} of 10${i===9?', final boss':''}: </span>${esc(d.name||stage.name||this._stageName(i))}<span class="sr-only">. ${esc(d.description||stage.subtitle||'')} ${d.length||stage.length||0} metres. ${best?'Best time '+timeText(best)+'.':''}</span></h1></div></div><div class="goal-row">${goals.map((g,k)=>`<div class="goal-card${have[k]?' earned':''}" role="img" aria-label="${esc(g[1])}${have[k]?' (earned)':''}"><span class="big-star" aria-hidden="true">★</span><span class="goal-pic">${g[0]}</span></div>`).join('')}</div>${this._onboarding()}</div>`;
         primary=i===9?'Challenge Iron Maw':'Start this run';primaryWord='GO';action='play';secondary=this._button('Stage select','stages','ic-grid')+this._button('Garage','garage','ic-wrench');
+      }else if(name==='endlessBrief'){
+        html=`<div class="endless-card"><div class="endless-emblem" aria-hidden="true">∞</div><h1 id="screenHeading" class="endless-title">ENDLESS BOSS</h1><div class="endless-rules"><span role="img" aria-label="Terrain gets harder the farther you drive">${use('ic-mountain')}</span><span role="img" aria-label="Fuel keeps draining. Collect fuel cans to keep going.">${use('ic-can')}</span><span class="out" role="img" aria-label="Falling or overturning ends your run. No recovery.">${use('ic-truck','turned')}${use('cue-miss','rule-cross')}</span></div>${d.bestDistance>0?`<div class="endless-best" role="img" aria-label="Best distance ${Math.floor(d.bestDistance)} metres">${use('ic-crown')}<b>${scoreText(d.bestDistance)} m</b></div>`:''}<p class="sr-only">No finish line or recovery. Fuel keeps draining; collect cans and survive as far as you can.</p></div>`;
+        primary='Start endless survival';primaryWord='GO';action='play';secondary=this._button('Stage select','stages','ic-grid')+this._button('Garage','garage','ic-wrench');
+      }else if(name==='endlessFailed'){
+        html=`<div class="endless-card"><h1 id="screenHeading" class="sr-only">Endless Boss: ${d.reason==='fuel'?'out of fuel':d.reason==='overturn'?'truck overturned':'fell off the course'}. ${Math.floor(d.distance||0)} metres survived.</h1><div class="endless-out" aria-hidden="true">${use(d.reason==='fuel'?'ic-can':'ic-truck',d.reason==='fuel'?'':d.reason==='overturn'?'turned':'fallen')}${use('cue-miss','rule-cross')}</div><div class="endless-distance">${scoreText(d.distance)}<small>m</small></div><div class="endless-best" role="img" aria-label="${d.newBest?'New best. ':''}Best distance ${Math.floor(d.bestDistance||0)} metres">${use('ic-crown')}<b>${scoreText(d.bestDistance)} m</b></div></div>`;
+        primary='Retry endless boss';primaryIcon='cue-recover';action='retry';secondary=this._button('Stage select','stages','ic-grid');
       }else if(name==='pause'){
         html=`<div class="pause-kid"><h1 id="screenHeading" class="sr-only">Paused. ${esc(d.stageName||this._stageName(this.save.selected||0))}, ${timeText(d.time||0)}, fuel ${Math.ceil(d.fuel??100)}%.</h1><div class="pause-pic">${use('ic-pause')}</div></div>`;
         primary='Back to the trail';action='resume';secondary=this._button('Retry stage','retry','cue-recover')+this._button('Settings','settings','ic-gear')+this._button('Stage select','stages','ic-grid');
@@ -2706,7 +2889,7 @@ globalThis.TruckAudio = TruckAudio;
             </div>
           </details>
         </div>`;
-        const next=d.nextAvailable!==false&&i<9;primary=next?`Continue to stage ${String(i+2).padStart(2,'0')}`:'Back to the stages';primaryIcon=next?'ic-next':'ic-grid';action=next?'next':'stages';
+        const boss=!!d.endlessUnlocked,next=d.nextAvailable!==false&&i<9;primary=boss?'Enter the endless boss round':next?`Continue to stage ${String(i+2).padStart(2,'0')}`:'Back to the stages';primaryIcon=boss?'ic-infinity':next?'ic-next':'ic-grid';action=boss?'endless':next?'next':'stages';
       }else if(name==='failed'){
         const reason=d.reason||'fuel',fire=this._inputMode==='touch'?'tap the target button':this._inputMode==='gamepad'?'press A':'press X or J',tips={fuel:'Collect the amber cans.',monster:`Wait for the green crosshair, then ${fire} to fire.`,rival:'Keep your speed through the jumps.'};
         const pict={fuel:['ic-can','ic-can','','<b class="fp-plus" aria-hidden="true">+</b>'],monster:['ic-giant','cue-target','',this._controlKey('fire')],rival:['ic-rival','cue-bolt',' fill',this._controlKey('nitro')]}[reason]||['ic-can','ic-can','',''];
@@ -2845,7 +3028,7 @@ globalThis.TruckAudio = TruckAudio;
       if(!canvas||!canvas.getContext)throw new TypeError('IronRenderer needs a canvas');
       this.canvas=canvas;this.ctx=canvas.getContext('2d',{alpha:false});this.biomes=options.biomes||global.IRON_BIOMES;
       this.width=960;this.height=540;this.renderScale=1;this.particleScale=1;this.detail='high';this._detail=2;
-      this._physics=null;this._track=null;this._stageIndex=-1;this._biome=null;this._chunks=[];this._gaps=[];this._props=[];this._signs=[];this._flags=[];
+      this._physics=null;this._track=null;this._stageIndex=-1;this._biome=null;this._chunks=[];this._gaps=[];this._props=[];this._signs=[];this._flags=[];this._endless=false;this._terrainVersion=-1;this._terrainSegments=new Map();
       this._banks=[];this._bank=null;this._spriteBytes=0;this._screenBytes=0;this._baseScale=32;this._cachePPU=0;
       this._cameraX=0;this._cameraY=0;this._cameraScale=32;this._cameraVX=0;this._cameraVY=0;this._snap=true;
       this._ox=0;this._oy=0;this._left=0;this._right=0;this._top=0;this._bottom=0;
@@ -2865,11 +3048,12 @@ globalThis.TruckAudio = TruckAudio;
     get stats(){return this._stats;}
     setStage(physics,stageIndex=0){
       if(!physics||!physics.track)return;
-      const index=clamp(Math.floor(stageIndex),0,9),sameTrack=this._track===physics.track,sameBiome=index===this._stageIndex;
-      this._physics=physics;this._track=physics.track;this._stageIndex=index;this._biome=this.biomes[index]||this.biomes[0];
-      if(!sameTrack)this._buildTerrain();
+      const index=clamp(Math.floor(stageIndex),0,9),sameTrack=this._track===physics.track,sameBiome=index===this._stageIndex,endless=!!(physics.endless||physics.stage?.endless),sameMode=endless===this._endless;
+      this._physics=physics;this._track=physics.track;this._stageIndex=index;this._biome=this.biomes[index]||this.biomes[0];this._endless=endless;
+      if(!sameTrack){this._terrainSegments.clear();this._buildTerrain();}
+      this._terrainVersion=finite(physics.terrainVersion);
       if(!sameTrack||!sameBiome)this._buildLayout();
-      if(!sameBiome||!this._banks.length)this._buildAssets();
+      if(!sameBiome||!sameMode||!this._banks.length)this._buildAssets();
       const length=Math.max(21,finite(physics.poseLength,3*(7+(physics.zombies?physics.zombies.length:0))));
       if(this._fallbackPose.length<length)this._fallbackPose=new Float64Array(length);
       this._particles.fill(0);this._popupData.fill(0);this._particleCount=0;this._dustClock=0;this._exhaustClock=0;this._weatherClock=0;
@@ -2926,26 +3110,31 @@ globalThis.TruckAudio = TruckAudio;
       this._chunks=[];this._gaps=[];const segments=this._track.segments;
       for(let s=0;s<segments.length;s++){
         const segment=segments[s];if(segment.length<2)continue;
-        let begin=0;
-        while(begin<segment.length-1){
-          let end=begin+1;while(end<segment.length-1&&segment[end].x-segment[begin].x<30)end++;
-          const points=segment.slice(begin,end+1),first=points[0],last=points[points.length-1],body=new Path2D();
-          body.moveTo(first.x,first.y);let maxY=first.y;
-          for(let i=1;i<points.length;i++){body.lineTo(points[i].x,points[i].y);maxY=Math.max(maxY,points[i].y);}
-          body.lineTo(last.x,-80);body.lineTo(first.x,-80);body.closePath();
-          const bands=[];for(let i=0;i<4;i++)bands.push(this._ribbon(points,.45+i*.85,.3+i*.03,.08));
-          const specks=[new Path2D(),new Path2D()],grass=new Path2D();
-          for(let n=Math.ceil(first.x*3);n<last.x*3;n++){
-            const x=n/3+hash(n+17)*.2,y=this._heightAt(x)-.25-hash(n+23)*6,size=.025+hash(n+29)*.045;
-            specks[n&1].rect(x,y,size*1.5,size);
+        let chunks=this._terrainSegments.get(segment);
+        if(!chunks){
+          chunks=[];let begin=0;
+          while(begin<segment.length-1){
+            let end=begin+1;while(end<segment.length-1&&segment[end].x-segment[begin].x<30)end++;
+            const points=segment.slice(begin,end+1),first=points[0],last=points[points.length-1],body=new Path2D();
+            body.moveTo(first.x,first.y);let maxY=first.y;
+            for(let i=1;i<points.length;i++){body.lineTo(points[i].x,points[i].y);maxY=Math.max(maxY,points[i].y);}
+            body.lineTo(last.x,-80);body.lineTo(first.x,-80);body.closePath();
+            const bands=[];for(let i=0;i<4;i++)bands.push(this._ribbon(points,.45+i*.85,.3+i*.03,.08));
+            const specks=[new Path2D(),new Path2D()],grass=new Path2D();
+            for(let n=Math.ceil(first.x*3);n<last.x*3;n++){
+              const x=n/3+hash(n+17)*.2,y=this._heightAt(x)-.25-hash(n+23)*6,size=.025+hash(n+29)*.045;
+              specks[n&1].rect(x,y,size*1.5,size);
+            }
+            for(let n=Math.ceil(first.x*1.5);n<last.x*1.5;n++){
+              if(hash(n+71)<.44)continue;const x=n/1.5,y=this._heightAt(x),h=.055+hash(n+72)*.12;
+              grass.moveTo(x-.05,y-.01);grass.lineTo(x-.08,y+h);grass.lineTo(x,y+.025);grass.lineTo(x+.045,y+h*1.3);grass.lineTo(x+.055,y-.01);grass.closePath();
+            }
+            chunks.push({left:first.x,right:last.x,maxY,body,bands,specks,grass,top:this._ribbon(points,0,.17),rim:this._ribbon(points,-.035,.055)});
+            begin=end;
           }
-          for(let n=Math.ceil(first.x*1.5);n<last.x*1.5;n++){
-            if(hash(n+71)<.44)continue;const x=n/1.5,y=this._heightAt(x),h=.055+hash(n+72)*.12;
-            grass.moveTo(x-.05,y-.01);grass.lineTo(x-.08,y+h);grass.lineTo(x,y+.025);grass.lineTo(x+.045,y+h*1.3);grass.lineTo(x+.055,y-.01);grass.closePath();
-          }
-          this._chunks.push({left:first.x,right:last.x,maxY,body,bands,specks,grass,top:this._ribbon(points,0,.17),rim:this._ribbon(points,-.035,.055)});
-          begin=end;
+          this._terrainSegments.set(segment,chunks);
         }
+        for(const chunk of chunks)this._chunks.push(chunk);
         if(s<segments.length-1){
           const a=segment[segment.length-1],b=segments[s+1][0],left=new Path2D(),right=new Path2D();
           if(b.x>a.x+.05){
@@ -2955,6 +3144,14 @@ globalThis.TruckAudio = TruckAudio;
           }
         }
       }
+      // Evicted physics segments release their paths; the rolling cache never retains the travelled course.
+      for(const segment of this._terrainSegments.keys())if(!segments.includes(segment))this._terrainSegments.delete(segment);
+    }
+    _syncTerrain(){
+      if(!this._endless)return;
+      const version=finite(this._physics.terrainVersion,finite(this._state.terrainVersion));
+      if(version===this._terrainVersion)return;
+      this._track=this._physics.track;this._buildTerrain();this._buildLayout();this._terrainVersion=version;
     }
     _buildLayout(){
       this._props=[];this._signs=[];this._flags=[];const biome=this._biome,track=this._track;
@@ -2964,7 +3161,8 @@ globalThis.TruckAudio = TruckAudio;
       this._breakKinds=['crate','barrel','cone',small[0]||'crate',small[1]||'barrel','crate',small[2]||small[0]||'cone','barrel'];
       let totalWeight=0;for(let i=0;i<biome.props.length;i++)totalWeight+=biome.props[i].weight;
       const spacing=4.8/biome.propDensity;
-      for(let x=-25,i=0;x<track.finishX+20;x+=spacing,i++){
+      const first=this._endless?Math.max(0,Math.floor((track.segments[0][0].x+25)/spacing)):0;
+      for(let i=first,x=-25+first*spacing;x<track.finishX+20;x+=spacing,i++){
         const px=x+hash(i+831)*spacing*.7;let onTrack=false;
         for(let j=0;j<track.segments.length;j++){const s=track.segments[j];if(px>s[0].x+1&&px<s[s.length-1].x-1){onTrack=true;break;}}
         if(!onTrack)continue;let pick=hash(i+197)*totalWeight,kind=biome.props[0].kind;
@@ -2972,9 +3170,9 @@ globalThis.TruckAudio = TruckAudio;
         let crowded=false;for(let j=0;j<this._breakables.length;j++)if(Math.abs(this._breakables[j].x-px)<2.5){crowded=true;break;}if(crowded)continue;
         this._props.push({x:px,y:this._heightAt(px),kind,scale:.7+hash(i+191)*.6,flip:hash(i+198)>.5?-1:1,detail:i%3});
       }
-      for(let d=50;d<track.length;d+=100){const x=track.startX+d;this._signs.push({x,y:this._heightAt(x),label:String(d),jump:false});}
-      for(let i=0;i<track.segments.length-1;i++){const s=track.segments[i],x=s[s.length-1].x-5;this._signs.push({x,y:this._heightAt(x),label:'JUMP',jump:true});}
-      for(let i=0;i<track.checkpoints.length;i++){const cp=track.checkpoints[i];this._flags.push({x:cp.x,y:finite(cp.y,this._heightAt(cp.x)),index:i});}
+      for(let d=50;!this._endless&&d<track.length;d+=100){const x=track.startX+d;this._signs.push({x,y:this._heightAt(x),label:String(d),jump:false});}
+      for(let i=0;i<track.segments.length-1;i++){const s=track.segments[i];if(this._endless&&track.segments[i+1][0].x<=s[s.length-1].x+.05)continue;const x=s[s.length-1].x-5;this._signs.push({x,y:this._heightAt(x),label:'JUMP',jump:true});}
+      for(let i=0;!this._endless&&i<track.checkpoints.length;i++){const cp=track.checkpoints[i];this._flags.push({x:cp.x,y:finite(cp.y,this._heightAt(cp.x)),index:i});}
     }
     _worldSprite(ppu,left,bottom,w,h,draw){
       const canvas=makeCanvas(Math.ceil(w*ppu),Math.ceil(h*ppu)),c=canvas.getContext('2d');
@@ -3033,6 +3231,7 @@ globalThis.TruckAudio = TruckAudio;
       bank.glow=this._worldSprite(Math.min(ppu,40),-2.4,-2.4,4.8,4.8,c=>{const g=c.createRadialGradient(0,0,.1,0,0,2.4);g.addColorStop(0,'#4fd6ff66');g.addColorStop(.5,'#1f8fff2e');g.addColorStop(1,'#1f8fff00');c.fillStyle=g;c.fillRect(-2.4,-2.4,4.8,4.8);});
       for(let i=0;i<kinds.length;i++){const kind=kinds[i];bank.props[kind]=this._worldSprite(Math.min(ppu,60),-1.8,-.08,3.6,4.45,c=>this._paintProp(c,kind));}
       for(let i=0;i<this._signs.length;i++){const sign=this._signs[i];if(!bank.signs[sign.label])bank.signs[sign.label]=this._worldSprite(ppu,-.8,-.05,1.6,2.5,c=>this._paintSign(c,sign.label));}
+      if(this._endless&&!bank.signs.JUMP)bank.signs.JUMP=this._worldSprite(ppu,-.8,-.05,1.6,2.5,c=>this._paintSign(c,'JUMP'));
       for(let i=0;i<this._flags.length;i++)for(let passed=0;passed<2;passed++)bank.flags.push(this._worldSprite(ppu,-.12,-.05,1.45,3.6,c=>{
         line(c,0,0,0,3.4,'#425d54',.065);poly(c,[[0,3.35],[1.15,3.2],[.95,2.62],[0,2.77]],passed?'#ed3f53':'#29252f',o,.045);this._bakedText(c,i?String(i).padStart(2,'0'):'OJAS',.47,2.92,i?.25:.19,'#ffede8');
       }));
@@ -3274,8 +3473,8 @@ globalThis.TruckAudio = TruckAudio;
         ty+=(centerY+(safeCenter-this.height*.73)/s-ty)*focus;
       }
       if(frame.mode==='title'){
-        const track=this._track,travel=track?Math.max(1,track.length-35):100;
-        tx=(track?track.startX:0)+12+(this._clock*2.1)%travel;ty=this._heightAt(tx)-.25;
+        const track=this._track,start=track?(this._endless?track.segments[0][0].x:track.startX):0,travel=track?Math.max(1,track.finishX-start-35):100;
+        tx=start+12+(this._clock*2.1)%travel;ty=this._heightAt(tx)-.25;
       }
       if(this._snap){this._cameraX=tx;this._cameraY=ty;this._snap=false;}
       else if(dt>0){
@@ -3330,7 +3529,7 @@ globalThis.TruckAudio = TruckAudio;
       const breakables=this._breakables;for(let i=0;i<breakables.length;i++){const p=breakables[i];if(p.broken||p.active===false||p.x<left-1||p.x>right+1)continue;this._sprite(bank.props[this._breakKinds[p.variant&7]]||bank.props.crate,p.x,p.y,0,.82);}
       const cp=finite(this._state.checkpointIndex,finite(this._physics.checkpointIndex));
       for(let i=0;i<this._flags.length;i++){const p=this._flags[i];if(p.x>=left-1&&p.x<=right+1)this._sprite(bank.flags[i*2+(cp>=i?1:0)],p.x,p.y);}
-      if(this._track.finishX>=left-3&&this._track.finishX<=right+3)this._sprite(bank.finish,this._track.finishX,this._heightAt(this._track.finishX));
+      if(!this._endless&&this._track.finishX>=left-3&&this._track.finishX<=right+3)this._sprite(bank.finish,this._track.finishX,this._heightAt(this._track.finishX));
     }
     _drawTruck(pose,offset,rival=false,ghost=false){
       const x=pose[offset],y=pose[offset+1],angle=finite(pose[offset+2]);if(!Number.isFinite(x)||x<this._left-4||x>this._right+4)return;
@@ -3382,13 +3581,13 @@ globalThis.TruckAudio = TruckAudio;
         const walk=z.hit?0:((Math.floor(this._worldClock*5+i)&1));this._sprite(bank.zombies[(i%3)*2+walk],x,y,(Number.isFinite(pose[n+2])?pose[n+2]:finite(z.angle))+spin);
       }
       c.globalAlpha=1;const m=state.monster;
-      if(m&&m.x>=this._left-3&&m.x<=this._right+3&&(m.alive||finite(m.timeSinceHit)<1.2)){
+      if(!this._endless&&m&&m.x>=this._left-3&&m.x<=this._right+3&&(m.alive||finite(m.timeSinceHit)<1.2)){
         const t=finite(m.timeSinceHit);c.globalAlpha=m.alive?1:clamp(1-t/1.2,0,1);this._sprite(bank.monster,m.x,m.y,m.alive?0:-Math.min(1.3,t*1.7),m.alive&&this._motion?1+Math.sin(this._clock*2.3)*.014:1);c.globalAlpha=1;
         if(m.alive){const tx=m.weakpoint?m.weakpoint.x:m.x,ty=m.weakpoint?m.weakpoint.y:m.y+2.85,locked=state.weapon&&state.weapon.canHit;c.globalAlpha=locked?1:.55;this._sprite(bank.target,tx,ty,Math.sin(this._clock)*.07);if(locked){const radius=Math.max(.65,18/this._cameraScale)*(1+Math.sin(this._clock*6)*.08);c.strokeStyle='#e4f5ab';c.lineWidth=2/this._cameraScale;c.beginPath();for(let i=0;i<4;i++)c.arc(tx,ty,radius,i*Math.PI/2+.14,i*Math.PI/2+1.1);c.stroke();this._stats.drawOps++;}c.globalAlpha=1;}
       }
     }
     _drawCannon(){
-      const state=this._state,weapon=state.weapon;if(!weapon||!this._pose)return;
+      const state=this._state,weapon=state.weapon;if(this._endless||!weapon||!this._pose)return;
       const p=this._pose,x=p[0],y=p[1],a=finite(p[2]),cos=Math.cos(a),sin=Math.sin(a),mx=x+cos*.2-sin*1.4,my=y+sin*.2+cos*1.4;
       // Interpolate the mount with the chassis; aim is a world angle supplied by
       // physics. Preserve the shot angle during its flash, even after a kill.
@@ -3531,7 +3730,7 @@ globalThis.TruckAudio = TruckAudio;
     render(frame=EMPTY){
       const start=performance.now();this._stats.drawOps=0;
       if(!this._biome||!this._banks.length){this.ctx.fillStyle='#152a2d';this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);this._stats.drawOps=1;this._stats.renderMs=performance.now()-start;return;}
-      this._frame=frame;this._state=frame.state||EMPTY;this._input=frame.input||EMPTY;
+      this._frame=frame;this._state=frame.state||EMPTY;this._input=frame.input||EMPTY;this._syncTerrain();
       const dt=clamp(finite(frame.dt),0,.1);this._clock+=dt;this._worldClock+=Number.isFinite(frame.worldDt)?frame.worldDt:dt;this._kick*=Math.exp(-dt*19);this._muzzle=Math.max(0,this._muzzle-dt);
       const settings=frame.settings||EMPTY,rival=this._state.rival;this._motion=!settings.reducedMotion;
       this._boost+=((this._state.boosting?1:0)-this._boost)*(1-Math.exp(-dt*(this._state.boosting?14:7)));this._rivalBoost+=((rival&&rival.boosting?1:0)-this._rivalBoost)*(1-Math.exp(-dt*10));
@@ -3655,6 +3854,7 @@ globalThis.TruckAudio = TruckAudio;
   const canvas=document.getElementById('gameCanvas'),app=document.getElementById('app');
   const ui=new global.IronUI(document),audio=new global.TruckAudio(),pacer=new FramePacer(),ghost=new GhostTape();
   let storage;try{storage=global.localStorage;}catch(_){storage=null;}
+  let endlessRound=false;
   const save=Rules.Save.load(storage);let stageIndex=clamp(save.selected|0,0,save.unlocked-1);
   let physics=new global.TruckPhysics(stageIndex,{tuning:save.upgrades}),state=physics.getState(),pose=new Float64Array(physics.poseLength);
   const renderer=new global.IronRenderer(canvas,{biomes}),shotDirector=new ShotDirector(),impactDirector=new ImpactDirector();
@@ -3702,6 +3902,7 @@ globalThis.TruckAudio = TruckAudio;
     }catch(_){}
   }
   function buildWhoosh(){
+    if(endlessRound){whooshXs=[];whooshIndex=0;return;}
     const track=physics.track,xs=[];
     for(let d=50;d<track.length;d+=100)xs.push(track.startX+d);
     for(let i=0;i<track.segments.length-1;i++){const s=track.segments[i];xs.push(s[s.length-1].x-5);}
@@ -3727,23 +3928,28 @@ globalThis.TruckAudio = TruckAudio;
   function show(name,data={}){
     screen=name;ui.clearFeedback();ui.showScreen(name,data);ui.hud.setVisible(false);ui.setRecoverVisible(false);clearInput();
     if(name==='pause'){mode='paused';audio.setPaused(true);}
-    else if(name==='results'||name==='failed'){/* endOutro already chose its mode */}
+    else if(name==='results'||name==='failed'||name==='endlessFailed'){/* endOutro already chose its mode */}
     else {mode=name;audio.setPaused(false);}
     musicClock=1;
   }
-  function loadStage(index,{brief=true,bypass=false}={}){
-    index=clamp(index|0,0,9);if(!bypass&&index>=save.unlocked)return false;
+  function loadStage(index,{brief=true,bypass=false,endless=false}={}){
+    index=endless?9:clamp(index|0,0,9);if(!bypass&&(index>=save.unlocked||endless&&!save.completed.includes(9)))return false;
     ui.clearFeedback();
-    stageIndex=index;save.selected=index;persist();physics=new global.TruckPhysics(index,{tuning:save.upgrades});state=physics.getState();pose=new Float64Array(physics.poseLength);
+    endlessRound=!!endless;stageIndex=index;save.selected=index;persist();physics=new global.TruckPhysics(index,{tuning:save.upgrades,endless:endlessRound});state=physics.getState();pose=new Float64Array(physics.poseLength);
     shotDirector.reset();impactDirector.reset();outro=null;frame.state=state;frame.pose=pose;physics.getPose(pose);renderer.setStage(physics,index);renderer.snapCamera();
     view.checkpointProgress=physics.track.checkpoints.slice(1).map(p=>(p.x-physics.track.startX)/physics.track.length);
     run=Rules.createRun(index);run.previousStars=save.stars[index]||[false,false,false];runTime=0;recoveries=0;accumulator=0;countdownLeft=0;hitStop=0;slowLeft=0;flippedTime=0;fallenTime=0;stageResult=null;lowFuelWarned=false;monsterWarned=false;lockWarned=false;ghost.reset();
     nitroTip=false;everBoosted=false;droveOnce=false;gasTipAt=1.6;nudge(false);airFor=0;tiltCues=0;tiltCueAt=0;if(tiltWant){nudgeLean(tiltWant,false);tiltWant='';}chainMultiplier=1;boostRumble=0;rocketDone=true;buildWhoosh();
-    try{ghost.load(storage?.getItem(`irontrail-ghost-v1-${index}`));}catch(_){ghost.replay=null;}
-    ghost.record(0,pose);clearInput();refreshCampaign();musicClock=1;
+    try{if(endlessRound)ghost.replay=null;else ghost.load(storage?.getItem(`irontrail-ghost-v1-${index}`));}catch(_){ghost.replay=null;}
+    if(!endlessRound)ghost.record(0,pose);clearInput();refreshCampaign();musicClock=1;
     if(brief)showBrief();return true;
   }
+  function startEndless({skip=false,bypass=false}={}){
+    if(!loadStage(9,{brief:!skip,bypass,endless:true}))return false;
+    navigation.length=0;navigation.push('stages');audio.ui('confirm');if(skip)countdown(true);return true;
+  }
   function showBrief(){
+    if(endlessRound){show('endlessBrief',{bestDistance:save.endless.bestDistance});return;}
     const stage=stages[stageIndex];show('brief',{stageIndex,name:stage.name,length:stage.length,par:Rules.PAR_TIMES[stageIndex],challenge:Rules.CHALLENGES[stageIndex].label,best:save.best[stageIndex]||null});
   }
   // A retry counts down faster than a first start: back in the action in about a second.
@@ -3755,35 +3961,35 @@ globalThis.TruckAudio = TruckAudio;
     musicClock=1;
   }
   function play(){
-    primeAudio();audio.ui('confirm');if(screen==='title'){navigation.length=0;navigation.push('title');loadStage(stageIndex,{brief:true});return;}
-    if(screen==='brief'){
-      if(Object.keys(save.upgrades).some(key=>physics.tuning[key]!==save.upgrades[key]))loadStage(stageIndex,{brief:false,bypass:true});
+    primeAudio();audio.ui('confirm');if(screen==='title'){if(save.completed.includes(9))return startEndless();navigation.length=0;navigation.push('title');loadStage(stageIndex,{brief:true});return;}
+    if(screen==='brief'||screen==='endlessBrief'){
+      if(Object.keys(save.upgrades).some(key=>physics.tuning[key]!==save.upgrades[key]))loadStage(stageIndex,{brief:false,bypass:true,endless:endlessRound});
       countdown();return;
     }
     if(screen==='pause'){resume();return;}
-    if(screen==='results'){if(stageIndex<9)next();else retry();return;}
-    if(screen==='failed')retry();
+    if(screen==='results'){next();return;}
+    if(screen==='failed'||screen==='endlessFailed')retry();
   }
-  function retry(){navigation.length=0;audio.ui('confirm');loadStage(stageIndex,{brief:false,bypass:true});countdown(false,true);}
-  function next(){if(stageIndex<9){navigation.length=0;navigation.push('stages');loadStage(stageIndex+1,{brief:true});audio.ui('confirm');}}
-  function pause(){if(mode!=='playing'&&mode!=='countdown')return;pausedFrom=mode;show('pause',{stageName:stages[stageIndex].name,time:runTime,fuel:state.fuel});}
+  function retry(){navigation.length=0;audio.ui('confirm');loadStage(stageIndex,{brief:false,bypass:true,endless:endlessRound});countdown(false,true);}
+  function next(){if(stageIndex===9&&!endlessRound){startEndless();return;}if(stageIndex<9){navigation.length=0;navigation.push('stages');loadStage(stageIndex+1,{brief:true});audio.ui('confirm');}}
+  function pause(){if(mode!=='playing'&&mode!=='countdown')return;pausedFrom=mode;show('pause',{stageName:physics.stage.name,time:runTime,fuel:state.fuel});}
   function resume(){if(mode!=='paused')return;ui.showScreen(null);screen=null;mode=pausedFrom;clearInput();accumulator=0;last=performance.now();audio.setPaused(false);ui.hud.setVisible(mode==='playing');musicClock=1;}
   function title(){navigation.length=0;show('title');renderer.snapCamera();refreshCampaign();}
   function openScreen(name){if(mode==='playing'||mode==='countdown')pause();if(screen!==name)navigation.push(screen||'title');show(name);refreshCampaign();}
   function back(){
     audio.ui('back');if(mode==='playing'||mode==='countdown'){pause();return;}if(screen==='pause'){resume();return;}
     const target=navigation.pop()||'title';
-    if(target==='pause'){show('pause',{stageName:stages[stageIndex].name,time:runTime,fuel:state.fuel});return;}
+    if(target==='pause'){show('pause',{stageName:physics.stage.name,time:runTime,fuel:state.fuel});return;}
     if(target==='results'&&stageResult){mode=stageIndex===9?'victory':'cleared';show('results',stageResult);return;}
-    if(target==='failed'&&stageResult){mode='failed';show('failed',stageResult);return;}
-    if(target==='brief'){showBrief();return;}if(['stages','garage','settings'].includes(target)){show(target);refreshCampaign();return;}title();
+    if((target==='failed'||target==='endlessFailed')&&stageResult){mode='failed';show(target,stageResult);return;}
+    if(target==='brief'||target==='endlessBrief'){showBrief();return;}if(['stages','garage','settings'].includes(target)){show(target);refreshCampaign();return;}title();
   }
   function recover(){
-    if(mode!=='playing'||outro)return;const ok=physics.reset(physics.checkpointIndex);state=physics.getState();
+    if(mode!=='playing'||outro||endlessRound)return;const ok=physics.reset(physics.checkpointIndex);state=physics.getState();
     if(!ok){if(physics.failed)beginOutro(false,physics.failed);return;}
     recoveries++;accumulator=0;flippedTime=0;fallenTime=0;hitStop=0;impactDirector.reset();autoBoost=false;physics.getPose(pose);renderer.snapCamera();seekWhoosh();ui.cue('recover');audio.ui('back');ui.setRecoverVisible(false);
   }
-  function fire(){if(mode!=='playing'||outro)return;if(physics.fire()){state=physics.getState();shotDirector.shoot();ui.clearFeedback();ui.cue('shot');}else audio.ui('error');}
+  function fire(){if(mode!=='playing'||outro||endlessRound)return;if(physics.fire()){state=physics.getState();shotDirector.shoot();ui.clearFeedback();ui.cue('shot');}else audio.ui('error');}
   function toggleSound(){
     if(audio.muted||audio.context?.state!=='running'){audio.setMuted(false);primeAudio().then(ok=>{if(ok)audio.ui('confirm');});}
     else audio.setMuted(true);
@@ -3814,7 +4020,7 @@ globalThis.TruckAudio = TruckAudio;
     if(key==='quality'&&renderScale>previousScale)renderer.resize(width,height);
     audio.ui('move');
   }
-  ui.on('play',play);ui.on('selectStage',i=>{navigation.length=0;navigation.push('stages');if(loadStage(i))audio.ui('confirm');});ui.on('retry',retry);ui.on('next',next);ui.on('resume',resume);ui.on('pause',pause);ui.on('title',title);ui.on('stages',()=>openScreen('stages'));ui.on('garage',()=>openScreen('garage'));ui.on('settings',()=>openScreen('settings'));ui.on('dedication',()=>openScreen('dedication'));ui.on('back',back);ui.on('buy',buy);ui.on('setting',setting);ui.on('fire',fire);ui.on('recover',recover);ui.on('restart',retry);ui.on('sound',toggleSound);ui.on('testSound',testSound);ui.on('fullscreen',fullscreen);
+  ui.on('endless',()=>startEndless());ui.on('play',play);ui.on('selectStage',i=>{navigation.length=0;navigation.push('stages');if(loadStage(i))audio.ui('confirm');});ui.on('retry',retry);ui.on('next',next);ui.on('resume',resume);ui.on('pause',pause);ui.on('title',title);ui.on('stages',()=>openScreen('stages'));ui.on('garage',()=>openScreen('garage'));ui.on('settings',()=>openScreen('settings'));ui.on('dedication',()=>openScreen('dedication'));ui.on('back',back);ui.on('buy',buy);ui.on('setting',setting);ui.on('fire',fire);ui.on('recover',recover);ui.on('restart',retry);ui.on('sound',toggleSound);ui.on('testSound',testSound);ui.on('fullscreen',fullscreen);
   ui.on('sfx',kind=>{if(kind==='tick')audio.scoreTick();else if(kind==='stamp')audio.ui('buy');});
   function firstGesture(){primeAudio();}
   for(const type of ['pointerdown','touchend','click','keydown'])window.addEventListener(type,firstGesture,{capture:true,passive:true});
@@ -3943,10 +4149,15 @@ globalThis.TruckAudio = TruckAudio;
   // finish/fail envelope before the screen appears. Reduced motion goes straight to the screen.
   function beginOutro(won,reason){
     if(mode!=='playing'||outro)return;clearInput();ui.setRecoverVisible(false);hitStop=0;slowLeft=0;
+    if(endlessRound){
+      const summary={distance:state.distance,time:runTime},record=Rules.Save.recordEndless(save,summary);persist();refreshCampaign();
+      stageResult={reason,distance:summary.distance,time:runTime,bestDistance:save.endless.bestDistance,newBest:record.newBest};
+      mode='failed';accumulator=0;shotDirector.reset();impactDirector.reset();audio.result(false);show('endlessFailed',stageResult);return;
+    }
     const summary={time:runTime,fuel:state.fuel,won,recoveries,cleared:state.cleared,totalZombies:state.totalZombies,cans:state.stats.cans,totalCans:physics.fuelCans.length,stats:state.stats,maxCombo:run.maxCombo,rivalGap:state.rival?state.x-state.rival.x:0,previousStars:save.stars[stageIndex]||[false,false,false]};
     const result=Rules.finish(run,summary),record=Rules.Save.recordResult(save,stageIndex,result,summary);persist();refreshCampaign();
     if(won&&record.newBest&&ghost.count>1){try{storage?.setItem(`irontrail-ghost-v1-${stageIndex}`,ghost.serialize());}catch(_){}}
-    stageResult={stageIndex,name:stages[stageIndex].name,time:runTime,par:Rules.PAR_TIMES[stageIndex],score:result.score,stars:result.stars,breakdown:result.breakdown,awards:result.awards||[],scrap:result.scrap,newBest:record.newBest,newScoreBest:record.newScoreBest,challenge:result.challenge,nextAvailable:won&&stageIndex<9,reason,tip:TIPS[reason]||TIPS.rival};
+    stageResult={stageIndex,name:stages[stageIndex].name,time:runTime,par:Rules.PAR_TIMES[stageIndex],score:result.score,stars:result.stars,breakdown:result.breakdown,awards:result.awards||[],scrap:result.scrap,newBest:record.newBest,newScoreBest:record.newScoreBest,challenge:result.challenge,nextAvailable:won&&stageIndex<9,endlessUnlocked:won&&stageIndex===9,reason,tip:TIPS[reason]||TIPS.rival};
     const kind=won?'finish':reason==='fuel'?'stall':'fail',instant=save.settings.reducedMotion||typeof physics.coast!=='function';
     outro={won,elapsed:0,duration:instant?0:IMPACTS[kind].duration};
     impactDirector.reset();impactDirector.trigger(kind,1);
@@ -3969,7 +4180,7 @@ globalThis.TruckAudio = TruckAudio;
   function tick(){
     physics.step(STEP,input);state=physics.getState();runTime+=STEP;Rules.tick(run,STEP);
     for(const event of physics.drainEvents())physicsEvent(event);
-    ghost.record(runTime,physics.poseCurr);
+    if(!endlessRound)ghost.record(runTime,physics.poseCurr);
     if(state.fuel<22&&!lowFuelWarned){lowFuelWarned=true;audio.lowFuel();ui.cue('fuel');}
     if(state.monster.alive&&state.weapon.distance<70&&!monsterWarned){monsterWarned=true;ui.cue('target');}
     if(state.weapon.canHit&&state.ammo>0&&!lockWarned){lockWarned=true;ui.cue('target',{value:touch||activePad?undefined:'X'});}
@@ -3984,21 +4195,22 @@ globalThis.TruckAudio = TruckAudio;
     if(!nitroTip&&!everBoosted&&state.nitro>=60&&runTime>1.5){nitroTip=true;award('nitro',{label:'Nitro ready',value:nitroHint()});}
     const angle=Math.abs(Math.atan2(Math.sin(state.angle),Math.cos(state.angle)));
     flippedTime=angle>1.7&&Math.abs(state.speed)<2?flippedTime+STEP:0;fallenTime=state.y<-9?fallenTime+STEP:0;
-    const needRecover=state.inverted||flippedTime>1.2||state.y<-3||state.stalledTime>2.5;ui.setRecoverVisible(needRecover);
+    const needRecover=state.inverted||flippedTime>1.2||state.y<-3||state.stalledTime>2.5;ui.setRecoverVisible(!endlessRound&&needRecover);
     if(physics.failed){beginOutro(false,physics.failed);return;}if(physics.finished){beginOutro(true);return;}
-    if(fallenTime>.45||state.x<-31)recover();
+    if(!endlessRound&&(fallenTime>.45||state.x<-31))recover();
   }
   function updateHud(ghostFrame){
     ui.setInputMode?.(activePad?'gamepad':touch?'touch':'keyboard');
-    const track=physics.track;view.stageIndex=stageIndex;view.stageName=stages[stageIndex].name;view.progress=clamp((state.x-track.startX)/track.length,0,1);
-    view.distance=clamp(state.x-track.startX,0,track.length);view.length=track.length;
+    const track=physics.track;view.stageIndex=stageIndex;view.stageName=physics.stage.name;view.endless=endlessRound;view.difficulty=state.difficulty||1;view.progress=clamp((state.x-track.startX)/track.length,0,1);
+    view.distance=endlessRound?state.distance:clamp(state.x-track.startX,0,track.length);view.length=track.length;
     view.shootingPhase=shotDirector.state.phase;view.time=runTime;view.score=stageResult?stageResult.score:run.score;view.ghostDelta=ghostFrame?(ghostFrame.pose[0]-state.x)/Math.max(8,Math.abs(state.speed)):null;
     view.fuel=state.fuel;view.cleared=state.cleared;view.totalZombies=state.totalZombies;view.speed=state.speed;view.gear=audio.gear;view.rpm=audio.rpm;view.ammo=state.ammo;view.locked=state.weapon.canHit;view.monsterDistance=state.weapon.distance;view.monsterAlive=state.monster.alive;
     view.monsterProgress=state.monster.alive?clamp((state.monster.x-track.startX)/track.length,0,1):null;view.rivalProgress=state.rival?clamp((state.rival.x-track.startX)/track.length,0,1):null;view.racePosition=state.racePosition;view.combo=run.combo;view.comboLeft=run.comboLeft;view.comboMax=run.comboMax;view.paused=mode==='paused';view.muted=audio.muted;
     view.nitro=Number(state.nitro)||0;view.boosting=!!state.boosting;view.nitroReady=!!state.nitroReady;view.nitroHint=nitroHint();view.slipstream=Number(state.slipstream)||0;view.gap=state.rival?state.x-state.rival.x:null;
     // Live star goals: the clock star drains against par and the challenge star lights while its rule holds.
     const challenge=Rules.CHALLENGES&&Rules.CHALLENGES[stageIndex];view.par=(Rules.PAR_TIMES||[])[stageIndex]||0;
-    if(challenge){liveGoal.time=runTime;liveGoal.fuel=state.fuel;liveGoal.recoveries=recoveries;liveGoal.cleared=state.cleared;liveGoal.totalZombies=state.totalZombies;liveGoal.cans=state.stats.cans;liveGoal.totalCans=physics.fuelCans.length;liveGoal.stats=state.stats;liveGoal.rivalGap=state.rival?state.x-state.rival.x:0;view.goal=!!challenge.check(liveGoal);view.goalId=challenge.id;view.goalProgress=challenge.progress?clamp(Number(challenge.progress(liveGoal))||0,0,1):view.goal?1:0;}
+    if(endlessRound){view.par=0;view.goal=false;view.goalId='';view.goalProgress=0;}
+    else if(challenge){liveGoal.time=runTime;liveGoal.fuel=state.fuel;liveGoal.recoveries=recoveries;liveGoal.cleared=state.cleared;liveGoal.totalZombies=state.totalZombies;liveGoal.cans=state.stats.cans;liveGoal.totalCans=physics.fuelCans.length;liveGoal.stats=state.stats;liveGoal.rivalGap=state.rival?state.x-state.rival.x:0;view.goal=!!challenge.check(liveGoal);view.goalId=challenge.id;view.goalProgress=challenge.progress?clamp(Number(challenge.progress(liveGoal))||0,0,1):view.goal?1:0;}
     ui.hud.update(view);
   }
   function updateMusic(){
@@ -4035,7 +4247,7 @@ globalThis.TruckAudio = TruckAudio;
       }
     }else accumulator=0;
     const playing=mode==='playing',alpha=playing?clamp(accumulator/STEP,0,1):1;physics.interpolatePose(alpha,pose);
-    const ghostFrame=playing&&!outro?ghost.at(runTime):null,shot=shotDirector.state,impact=impactDirector.state;
+    const ghostFrame=playing&&!outro&&!endlessRound?ghost.at(runTime):null,shot=shotDirector.state,impact=impactDirector.state;
     cinema.kind=playing?impact.kind:'idle';cinema.zoom=playing?impact.zoom:0;cinema.progress=playing?impact.progress:0;
     cinema.bars=playing&&!reduced?Math.max(impact.bars,shot.phase==='shot'||shot.phase==='impact'?shot.intensity*.85:shot.phase==='aim'?shot.intensity*.3:0):0;
     frame.state=state;frame.pose=pose;frame.alpha=alpha;frame.dt=mode==='paused'?0:dt;frame.worldDt=playing?worldDt:0;frame.encounter=shot;frame.time=runTime;frame.mode=mode;frame.ghost=ghostFrame;renderer.render(frame);
@@ -4048,8 +4260,8 @@ globalThis.TruckAudio = TruckAudio;
     if(save.settings.showFps&&hudClock<dt)ui.setFps(perf);else if(!save.settings.showFps)ui.setFps(null);
     pacer.push(now,pose[0],alpha,steps,cpu);requestAnimationFrame(animation);
   }
-  const qa=Object.freeze({start(index=0){loadStage(index,{brief:false,bypass:true});countdown(true);return true;},get warm(){return warmReady;}});
-  global.irontrail=Object.freeze({get mode(){return mode;},get telemetry(){return {...state,time:runTime,bestAir:state.stats.maxAir,checkpoint:physics.checkpointIndex,recoveries,score:run.score};},get encounter(){return {...shotDirector.state};},get cinema(){return {...impactDirector.state};},get outro(){return !!outro;},get physics(){return physics;},get audio(){return audio;},get campaign(){return Rules.Save.migrate(save);},get stage(){return stageIndex+1;},get perf(){return perf;},qa});
+  const qa=Object.freeze({start(index=0){loadStage(index,{brief:false,bypass:true,endless:index===10});countdown(true);return true;},get warm(){return warmReady;}});
+  global.irontrail=Object.freeze({get mode(){return mode;},get telemetry(){return {...state,time:runTime,bestAir:state.stats.maxAir,checkpoint:physics.checkpointIndex,recoveries,score:run.score};},get encounter(){return {...shotDirector.state};},get cinema(){return {...impactDirector.state};},get outro(){return !!outro;},get physics(){return physics;},get audio(){return audio;},get campaign(){return Rules.Save.migrate(save);},get stage(){return endlessRound?11:stageIndex+1;},get perf(){return perf;},qa});
   refreshCampaign();applySettings();resize();renderer.setStage(physics,stageIndex);physics.getPose(pose);buildWhoosh();view.checkpointProgress=physics.track.checkpoints.slice(1).map(p=>(p.x-physics.track.startX)/physics.track.length);show('title');updateHud(null);requestAnimationFrame(animation);
   const warm=()=>{global.TruckPhysics.warmUp(65);warmReady=true;};if(global.requestIdleCallback)requestIdleCallback(warm,{timeout:350});else setTimeout(warm,30);
 })(globalThis);
