@@ -1,5 +1,7 @@
 # Endless Boss handoff — 12 November 2026
 
+Released game commit `22e7942` to main and existing Vercel production deployment `dpl_8sKhPCtHYvRdra31F1mKhiuuCd6g` (Ready). Git auto-deployment did not start for this push, so publication used `vercel deploy --prod --yes --scope max-recursion` against the retained project. Custom and fallback hosts each match the exact685,303-byte tested bundle. Live390×664 browser verification won stage10, opened ∞, drove150m with fuel dropping to73% and two cans collected, froze on pause, immediately ended on overturn and saved the150m record. Screenshot: `/tmp/irontrail-endless-live-result.png`. No DNS/project/access changes.
+
 ## Current addition
 
 Winning campaign stage10 now unlocks **Endless Boss**, a separate terrain-survival round. Stage10 results offer ∞; track select gains an endless entry, and title GO starts survival once the campaign is complete. The original ten stage definitions, campaign saves, stars, scraps and best ghosts remain. Prior one-charge/mandatory-giant and race finish rules apply to the campaign; the new survival round has no cannon/giant/rival finish gate.
