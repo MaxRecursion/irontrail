@@ -407,6 +407,132 @@ assert.ok(roof.getState().inverted, 'player requires lean to self-right');
 advance(roof, 2, { throttle: 1 }); assert.ok(roof.getState().stalledTime >= 2.5);
 console.log('PASS pose snaps/interpolation/NaNs/freeze, controlled front/back flips, settled perfect/big-air landings, stat lifecycle, stuck detection and torque-only righting');
 
+// ---- Redline pass (SPEC §15.1) ----
+// Baseline digests recorded from the v3 build: with no boost input the pass must be bit-identical.
+const V3_DIGEST = [[0,60,714,227.52560523894454,84.4520000000004,5,null,10,2],[0,120,1429,227.64733382154952,84.40216666666484,5,null,10,2],[4,60,1120,362.60061936937734,51.424999999998334,14,null,22,2],[4,120,2253,362.6787168755433,50.73750000000535,13,null,22,2],[9,60,1777,567.6763775257348,25.565833333333075,26,560.4086866585748,40,4],[9,120,3557,567.6707122447596,26.111249999999742,26,558.4832635440711,40,4]];
+for (const [stage, hz, steps, x, fuel, cleared, rivalX, bodies, joints] of V3_DIGEST) {
+  const game = make(stage); let n = 0;
+  while (n < 12000 && !game.finished && !game.failed) { if (game.getState().weapon.canHit) game.fire(); game.step(1 / hz, { throttle: 1 }); n++; game.drainEvents(); }
+  assert.equal(n, steps, `v3 digest steps stage ${stage + 1} ${hz} Hz`);
+  assert.equal(game.chassis.getPosition().x, x, `v3 digest x stage ${stage + 1} ${hz} Hz`);
+  assert.equal(game.fuel, fuel); assert.equal(game.cleared, cleared);
+  assert.equal(game.rival ? game.rival.chassis.getPosition().x : null, rivalX, 'rival is bit-identical without player boost');
+  assert.equal(game.world.getBodyCount(), bodies, 'Redline systems add no bodies'); assert.equal(game.world.getJointCount(), joints);
+  assert.equal(game.getState().boosting, false); assert.equal(game.stats.nitroBurned, 0); assert.equal(game.getState().escalated, false);
+}
+console.log('PASS Redline is baseline-neutral: v3 digests for stages 1/5/10 at 60/120 Hz match exactly; no new bodies or joints');
+
+const N = TruckPhysics.NITRO, RT = TruckPhysics.RIVAL_TUNING;
+assert.ok(Object.isFrozen(N) && Object.isFrozen(N.gain) && N.max === 100 && N.engage > 0 && N.drain > 0);
+const burn = make(); advance(burn, 1.2, { throttle: 1 });
+assert.equal(burn.getState().nitro, N.start); assert.equal(burn.getState().nitroReady, true);
+burn.drainEvents(); burn.step(1 / 120, { throttle: 1, boost: true });
+let burnEvents = burn.drainEvents();
+assert.ok(burn.getState().boosting && burnEvents.some(e => e.type === 'nitro' && e.phase === 'start' && e.owner === 'player'));
+assert.ok(Math.abs(burn.getState().nitro - (N.start - N.drain / 120)) < 1e-9, 'meter drains at the published rate');
+const fuelBefore = burn.fuel; burn.step(1 / 120, { throttle: 0, boost: true });
+assert.ok(Math.abs(fuelBefore - burn.fuel - burn.stage.fuelDrain / 120) < 1e-9, 'a burn spends fuel as full throttle');
+burn.step(1 / 120, { throttle: 1, boost: true, brake: true }); assert.equal(burn.getState().boosting, false, 'brake cancels a burn');
+burn.step(1 / 120, { throttle: -1, boost: true }); assert.equal(burn.getState().boosting, false, 'reverse cannot burn');
+burnEvents = []; for (let i = 0; i < 240; i++) { burn.step(1 / 120, { throttle: 1, boost: true }); burnEvents.push(...burn.drainEvents().filter(e => e.type === 'nitro')); }
+assert.ok(burn.getState().nitro < N.engage && !burn.getState().boosting, 'an empty meter ends the burn');
+assert.ok(burnEvents.some(e => e.phase === 'end' && e.empty === true)); assert.ok(burn.stats.nitroBurned > N.start * 0.9);
+burn.step(1 / 120, { throttle: 1, boost: true }); assert.equal(burn.getState().boosting, false, 'needs the engage level to relight');
+assert.equal(burn.grantNitro(500), N.max); assert.ok(burn.drainEvents().some(e => e.type === 'nitro' && e.phase === 'full'));
+const carried = burn.getState().nitro; burn._weaponDirty = true; clearMonster(burn); assert.ok(burn.reset(0)); assert.equal(burn.getState().nitro, carried, 'meter survives recovery');
+burn.restart(); assert.equal(burn.getState().nitro, N.start, 'restart restores the starting meter'); assert.equal(burn.stats.nitroBurned, 0);
+function boostRun(stage, hz, tuning, boost = true) {
+  const game = new TruckPhysics(stage, { random: () => 0.5, tuning }); let time = 0, top = 0, lit = 0;
+  while (time < 90 && !game.finished && !game.failed) {
+    if (game.getState().weapon.canHit) game.fire();
+    game.step(1 / hz, { throttle: 1, boost }); time += 1 / hz; game.drainEvents();
+    if (game.player.boosting) lit += 1 / hz; top = Math.max(top, Math.abs(game.chassis.getLinearVelocity().x));
+  }
+  return { game, time, top, uptime: lit / time };
+}
+const boostGains = [];
+for (const hz of [60, 120]) for (const tuning of [undefined, maxTuning]) for (let stage = 0; stage < 10; stage++) {
+  const lit = boostRun(stage, hz, tuning);
+  assert.ok(lit.game.finished, `always-boost bot finishes stage ${stage + 1} at ${hz} Hz ${tuning ? 'max' : 'base'} (${lit.game.failed})`);
+  if (hz === 120 && !tuning) {
+    const plain = boostRun(stage, hz, tuning, false);
+    assert.ok(lit.time < plain.time * 0.985, `nitro is faster on stage ${stage + 1}`); assert.ok(lit.uptime > 0.15 && lit.uptime < 0.5, `boost uptime ${lit.uptime}`);
+    assert.ok(lit.top > plain.top * 1.1, 'nitro raises top speed'); boostGains.push(Math.round((1 - lit.time / plain.time) * 100));
+    assert.equal(lit.game.stats.topSpeed, lit.top); assert.ok(lit.game.stats.nitroEarned > 20);
+  }
+}
+const flat = make(); advance(flat, 0.5); moveTruck(flat.player, 60, flat._heightAt(60) + 1.43, 0); flat.player.nitro = 100;
+let flatTop = 0; for (let i = 0; i < 330; i++) { flat.step(1 / 120, { throttle: 1, boost: true }); flatTop = Math.max(flatTop, flat.chassis.getLinearVelocity().x); if (flat.player.nitro < 5) flat.player.nitro = 100; }
+assert.ok(flatTop > 34 * 0.72 * 1.2, `sustained nitro top speed ${flatTop}`);
+console.log(`PASS nitro engage/drain/fuel/cancel/relight/grant/recovery/restart rules; always-boost bots finish all stages at 60/120 Hz base/max; ${boostGains.join('/')} % faster; sustained top ${flatTop.toFixed(1)} m/s`);
+
+const props = make(2), layout = props.breakables.map(b => [b.x, b.y, b.variant]);
+assert.ok(layout.length >= 6 && layout.length <= 40);
+assert.deepEqual(make(2, 0.9).breakables.map(b => [b.x, b.y, b.variant]), layout, 'breakables ignore options.random');
+for (const prop of props.breakables) {
+  assert.ok(prop.variant >= 0 && prop.variant < 8 && prop.x >= props.track.startX + 18 && prop.x <= props.track.finishX - 12);
+  assert.ok(Math.abs(props._slopeAt(prop.x)) < 0.25); assert.ok(props.track.checkpoints.every(cp => Math.abs(cp.x - prop.x) >= 8));
+  assert.ok(props.track.canXs.every(x => Math.abs(x - prop.x) >= 5)); assert.equal(prop.active, Math.abs(prop.x - props.monster.x) >= 7);
+}
+const smashEvents = []; let smashTime = 0;
+while (smashTime < 60 && !props.finished && !props.failed) { if (props.getState().weapon.canHit) props.fire(); props.step(1 / 120, { throttle: 1 }); smashTime += 1 / 120; smashEvents.push(...props.drainEvents().filter(e => e.type === 'smash')); }
+assert.ok(props.finished && smashEvents.length >= 4 && smashEvents.every(e => e.owner === 'player' && e.strength >= 0.2 && Number.isFinite(e.x)));
+assert.equal(props.stats.smashes, smashEvents.length); assert.equal(props.breakables.filter(b => b.broken).length, smashEvents.length);
+const brokenIds = props.breakables.filter(b => b.broken).map(b => b.id);
+props.restart(); assert.ok(props.breakables.every(b => !b.broken), 'restart rebuilds every prop'); assert.equal(props.stats.smashes, 0);
+advance(props, 4, { throttle: 1 }); const kept = props.breakables.filter(b => b.broken).length; clearMonster(props); assert.ok(kept > 0 && props.reset(0));
+assert.equal(props.breakables.filter(b => b.broken).length, kept, 'recovery keeps smashed props');
+assert.ok(brokenIds.length > 0);
+console.log(`PASS breakables: deterministic, clear of cans/checkpoints/monster, ${smashEvents.length} smashes on stage 3, restart/recovery lifecycle`);
+
+const duel = make(9), duelEvents = [];
+advance(duel, 3, { throttle: 1 }); assert.equal(duel.getState().escalated, false); assert.equal(duel.rival.boosting, false, 'Iron Maw never burns first');
+assert.ok(duel.rival.nitro > N.start, 'rival meter charges on its own');
+duel.drainEvents(); duel.step(1 / 120, { throttle: 1, boost: true }); duelEvents.push(...duel.drainEvents());
+assert.ok(duelEvents.some(e => e.type === 'escalate') && duel.getState().escalated);
+for (let i = 0; i < 360; i++) { duel.step(1 / 120, { throttle: 1 }); duelEvents.push(...duel.drainEvents()); }
+assert.ok(duelEvents.some(e => e.type === 'nitro' && e.owner === 'rival' && e.phase === 'start'), 'escalated rival lights its own meter');
+assert.equal(duelEvents.filter(e => e.type === 'escalate').length, 1);
+const margins = [];
+for (const hz of [60, 120]) for (const tuning of [undefined, maxTuning]) {
+  const race = boostRun(9, hz, tuning), gap = race.game.chassis.getPosition().x - race.game.rival.chassis.getPosition().x;
+  assert.ok(race.game.finished && gap > 1 && gap < 70, `boosted clean boss margin ${gap} at ${hz} Hz`); margins.push(gap.toFixed(1));
+}
+const slip = make(9); advance(slip, 0.6); const slipNitro = slip.player.nitro;
+moveTruck(slip.rival, slip.chassis.getPosition().x + 5, slip.chassis.getPosition().y, slip.chassis.getLinearVelocity().x);
+slip.step(1 / 120, { throttle: 1 }); assert.equal(slip.getState().slipstream, 1); assert.ok(slip.player.nitro > slipNitro, 'drafting charges the meter');
+moveTruck(slip.rival, slip.chassis.getPosition().x + 14, slip.chassis.getPosition().y, 0); slip.step(1 / 120, { throttle: 1 }); assert.equal(slip.getState().slipstream, 0);
+const slam = make(9); advance(slam, 0.6, { throttle: 1 });
+const slamAt = () => { const pp = slam.chassis.getPosition(); moveTruck(slam.rival, pp.x + 5.2, pp.y, 0); moveTruck(slam.player, pp.x, pp.y, 20); };
+slamAt(); slam.player.nitro = 100; slam.drainEvents(); let slamSeen = [];
+for (let i = 0; i < 90; i++) { slam.step(1 / 120, { throttle: 1, boost: true }); slamSeen.push(...slam.drainEvents()); }
+assert.ok(slamSeen.some(e => e.type === 'slam'), 'ramming with nitro lit slams Iron Maw'); assert.equal(slam.stats.slams, 1);
+assert.ok(slamSeen.findIndex(e => e.type === 'slam') > slamSeen.findIndex(e => e.type === 'collision'));
+const quiet = make(9); advance(quiet, 0.6, { throttle: 1 });
+{ const pp = quiet.chassis.getPosition(); moveTruck(quiet.rival, pp.x + 5.2, pp.y, 0); moveTruck(quiet.player, pp.x, pp.y, 20); }
+let quietSeen = []; for (let i = 0; i < 90; i++) { quiet.step(1 / 120, { throttle: 1 }); quietSeen.push(...quiet.drainEvents()); }
+assert.ok(quietSeen.some(e => e.type === 'collision') && !quietSeen.some(e => e.type === 'slam') && quiet.rival.stun === 0, 'no slam without nitro');
+slamAt(); slam.player.nitro = 100; slamSeen = []; for (let i = 0; i < 90; i++) { slam.step(1 / 120, { throttle: 1, boost: true }); slamSeen.push(...slam.drainEvents()); }
+assert.equal(slam.stats.slams, 1, 'slam cooldown');
+console.log(`PASS Iron Maw escalation only after the player's first burn; boosted clean margins ${margins.join('/')} m; slipstream, nitro slam, stun and cooldown`);
+
+const wrecked = make(); poseTruck(wrecked.player, 0, 1.25, Math.PI); wrecked.drainEvents(); advance(wrecked, 0.5, { throttle: 1 });
+assert.equal(wrecked.drainEvents().filter(e => e.type === 'wreck' && e.kind === 'roof').length, 1);
+const fallen = make(); poseTruck(fallen.player, fallen.track.segments[0][fallen.track.segments[0].length - 1].x + 1, -2.5, 0); fallen.drainEvents(); advance(fallen, 0.6);
+assert.equal(fallen.drainEvents().filter(e => e.type === 'wreck' && e.kind === 'fall').length, 1);
+const coastGame = make(); assert.equal(coastGame.coast(1 / 120), false, 'coast is refused while the run is live');
+clearMonster(coastGame); while (!coastGame.finished) coastGame.step(1 / 120, { throttle: 1 });
+coastGame.drainEvents(); const frozen = JSON.stringify([coastGame.fuel, coastGame.stats, coastGame.cleared, coastGame.checkpointIndex, coastGame.player.nitro, coastGame.winner]);
+const coastX = coastGame.chassis.getPosition().x; coastGame.step(1 / 120, { throttle: 1 }); assert.equal(coastGame.chassis.getPosition().x, coastX, 'step stays frozen after the finish');
+for (let i = 0; i < 180; i++) assert.equal(coastGame.coast(1 / 120), true);
+assert.ok(coastGame.chassis.getPosition().x > coastX + 2, 'the truck rolls through the finish');
+assert.ok(Math.abs(coastGame.chassis.getLinearVelocity().x) < 12, 'and brakes'); assert.ok(coastGame.poseCurr[0] === coastGame.chassis.getPosition().x);
+assert.equal(JSON.stringify([coastGame.fuel, coastGame.stats, coastGame.cleared, coastGame.checkpointIndex, coastGame.player.nitro, coastGame.winner]), frozen, 'coasting changes no result');
+assert.ok(coastGame.drainEvents().every(e => ['land', 'collision', 'nitro'].includes(e.type)));
+const zombieRun = make(); let zombieEvent = null; for (let i = 0; i < 1200 && !zombieEvent; i++) { zombieRun.step(1 / 120, { throttle: 1 }); zombieEvent = zombieRun.drainEvents().find(e => e.type === 'zombie'); }
+assert.ok(zombieEvent && zombieEvent.vx > 5 && zombieEvent.boosted === false && zombieRun.zombies.some(z => z.hit && z.punt === zombieEvent.vx));
+console.log('PASS wreck events, terminal coast (frozen results, rolling world, frozen step) and zombie punt data');
+
 // Informational CPU timing, never a flaky cross-machine pass/fail threshold.
 TruckPhysics.warmUp(60);
 const timed = make(9), control = { throttle: 1 };

@@ -414,3 +414,179 @@ Cannon and collision audio add midrange impact harmonics and stronger transients
 ## 14. Ojas’s edition (4 November 2026)
 
 Parent-directed personalization replaces the amber signature with red/black OJAS-01 across every biome, with white web/spider details and outline contrast. The UI adds a dedication screen/event routed through existing navigation, an animated vector title showcase and personal trophy/result messages. Stage1 display name becomes Ojas Speedway; numerical stage IDs, track geometry, tuning, storage and gameplay contracts stay the same. The new dedication is revisitable via the heart button, and Reduced Motion disables title/trophy animations. This personalization supersedes earlier amber-paint/old-title wording.
+
+
+## 15. Redline pass (v4, 11 November 2026) — speed, nitro, impact and spectacle
+
+Goal: raise IRONTRAIL to the production values of a top-tier arcade-racing studio: a relentless sense of speed,
+a risk→reward boost loop, impacts and wrecks staged as spectacle, the engine and mix as the hero, constant kinetic
+reward feedback, zero-friction flow and a locked frame budget. Every mechanic, name and asset is original to
+IRONTRAIL (NITRO, SMASH, SLAM, WRECKED); nothing is copied from another game. §1 hard rules, §0 budgets, the
+single-file contract, Ojas's red/black edition, saves and the kid-friendly, non-graphic tone all stay.
+
+### 15.0 Ground rules for every owner
+- **Additive and baseline-neutral.** With `input.boost` never set, vehicle dynamics, fuel, rules, existing events
+  and results are bit-identical to v3: no new Planck bodies/fixtures/joints, no extra `options.random` draws, the
+  same joint calls with the same values in the same order. Every existing assertion in the suite keeps passing
+  unmodified; new behaviour gets new assertions.
+- Shared signature colours: nitro `#4fd6ff` (hot core `#eafcff`, deep `#1f8fff`); fuel stays amber; brand red/black.
+- `settings.reducedMotion` disables slow motion, letterbox, afterimages, speed streaks, screen flashes and camera
+  kicks. `settings.shake === false` disables shake and kicks only. Flashes stay mild: no strobing, at most one
+  screen flash per 250 ms, never a full-screen inversion.
+- Missing/unknown optional fields never throw (older fixtures and harnesses pass partial data).
+- Ownership — P: `src/physics.js`, `tests/physics-smoke.cjs`. R: `src/render.js`, `src/biomes.js`,
+  `tests/render-check.cjs`, `tests/render-harness.html`. A: `src/audio.js`, `src/music.js`, `tests/audio-check.html`,
+  `tests/audio-live-check.html`. U: `src/ui.js`, `src/shell.html`, `src/rules.js`, `tests/ui-harness.html`,
+  `tests/rules-check.cjs`. Main: `src/game.js`, `build.py`, docs, `tests/pacing-check.cjs`, `tests/shot-check.cjs`,
+  `tests/integration-harness.html`, fixtures, generated `index.html`/`dist/`. Never edit another owner's files and
+  never run `build.py` (main builds).
+
+### 15.1 Physics (P)
+**Input.** `step(dt, input)` reads `input.boost` (truthy = hold nitro).
+
+**Constants.** `static get NITRO()` — frozen: `{max:100, start:25, engage:8, drain:30, torque:1.75, speed:1.32,
+thrustGround:9, thrustAir:5, gain:{airPerSecond:7, airDelay:.25, landing:4, perfect:10, flip:16, bigAir:6, zombie:4,
+smash:1.5, checkpoint:8, monster:35, slipstreamPerSecond:6, slam:25}}`. P may retune the numbers by simulation
+(targets below) but keeps the keys. `RIVAL_TUNING` gains `nitroPower` (0..1 scale of the rival's nitro effect),
+`nitroBurnAt` (meter level at which it lights, default 40), `stun` (seconds, default 1.1), `slamStrength`
+(minimum collision strength, default .35), `slamCooldown` (default 4).
+
+**Nitro (per vehicle).** `vehicle.nitro` 0..max; the player's meter starts at `start` on `restart()` and survives
+checkpoint `reset()`. Burn: `wants = input.boost && throttle >= -0.05 && !brake`; a burn starts when `wants` and
+`nitro >= engage`, and ends when `!wants`, the meter hits 0, or the run ends. While burning: meter −`drain`/s;
+effective throttle = max(throttle, 1) for BOTH the motor and the unchanged fuel formula; wheel motor torque ×`torque`
+and motor speed ×`speed`; plus a forward thrust force at the chassis centre along the chassis +X axis of
+`totalVehicleMass × thrustGround` (grounded) or `× thrustAir` (airborne). No boost while self-righting or inverted.
+Gains (clamped to max; all apply whether or not burning): airtime `airPerSecond`·dt once airtime > `airDelay`;
+settled `landing` event: upright `landing`, perfect +`perfect`, each landed flip +`flip`, bigAir +`bigAir`; zombie
+knockdown `zombie`; breakable `smash`; checkpoint `checkpoint`; `monsterHit` `monster`; slipstream
+`slipstreamPerSecond`·strength·dt; nitro slam `slam`. `grantNitro(amount)` adds a game-level bonus (clamped; no-op
+after the run ends; returns the new level).
+Tuning targets (measure with bots, 60 and 120 Hz, zero and max upgrades): nitro top speed ≥ 1.25× base; an
+always-hold-boost bot that fires at lock finishes every stage, 10–22 % faster than the no-boost bot, never fails
+because of nitro (no gap/landing/monster/fuel regressions), and has boost uptime of roughly 25–45 % of the run.
+
+**Iron Maw escalation (stage 10).** The rival earns nitro at all times by the same airtime/landing rules, but
+burns it only after the player's FIRST burn of the attempt (`{type:'escalate', x, y}` fires once). It never reads
+the player's position, speed or gap. Burn rule: escalated, grounded, upright, not righting, not stunned, not in
+the ramp-lift window, meter ≥ `nitroBurnAt` → burn until empty/airborne-inverted/stunned. Same multipliers scaled
+by `nitroPower`. Targets: without player boost the race is bit-identical to v3; with an always-boost player and an
+escalated rival a clean run wins by about 3–20 m at 60 and 120 Hz for base and max upgrades, and a sloppy run
+(one recovery) can still lose.
+
+**Nitro slam.** When the existing vehicle↔vehicle `collision` is emitted with strength ≥ `slamStrength`, the
+player burned nitro within the last 0.4 s, the rival is not already stunned and `slamCooldown` has elapsed: the
+rival is stunned for `stun` seconds (throttle 0, balance lean 0, no burn; self-righting still works), the player
+gains `slam` nitro, `stats.slams++`, and `{type:'slam', x, y, strength}` follows the `collision` event.
+
+**Slipstream.** Player grounded, rival chassis 2–10 m ahead, |Δy| < 3 m → `state.slipstream` 0..1 (1 between
+3 and 7 m, linear fade at the edges), meter +`slipstreamPerSecond`·slipstream·dt. No force.
+
+**Zombie punt.** On knockdown replace the fixed nudge with a launch proportional to the hitting vehicle's speed
+(cosmetic only: a hit zombie already collides with terrain only, so the truck is unaffected). The `zombie` event
+gains `vx` (vehicle speed) and `boosted` (bool).
+
+**Breakables.** `physics.breakables = [{id, x, y, variant (0..7), broken, active}]`, deterministic per stage from a
+local integer hash (never `this.random`), no Planck bodies. Placement: on walkable ground with |slope| < 0.25,
+≥ 6 m from chain ends, ≥ 5 m from fuel cans, ≥ 8 m from checkpoints, ≥ 2.5 m from zombie spawns, x within
+`[startX+18, finishX−12]`, typical spacing 9–15 m (denser on later stages, 8–40 per stage). `restart()` clears
+`broken` and sets `active=false` within 7 m of this attempt's monster; `reset()` keeps `broken`. A vehicle chassis
+within 1.6 m horizontally and < 2.2 m above the ground at the prop breaks it: `{type:'smash', id, variant,
+owner:'player'|'rival', x, y, strength}` (strength = clamp(|vx|/25, .2, 1)); player smashes add `stats.smashes`
+and nitro.
+
+**Wreck events.** `{type:'wreck', kind:'roof', x, y, strength}` when the player becomes inverted-on-ground
+(cooldown 1.5 s); `{type:'wreck', kind:'fall', x, y, strength:1}` once when the player drops below y = −3 (re-armed
+by a spawn).
+
+**Terminal coast.** `coast(dt)` returns false unless `failed` or `winner` is set. Otherwise it copies
+`poseCurr → posePrev`, steps the world with no rules (no fuel, nitro, pickups, checkpoints, monster, finish, stats or
+score events): player throttle 0 with brake when `winner === 'player'` or `failed === 'fuel'`, free-rolling
+otherwise; the rival keeps its controller until it has crossed the finish, then brakes. `land`/`collision` events may
+still be emitted for presentation. `step()` keeps its exact terminal freeze.
+
+**State and stats.** `getState()` adds `nitro`, `boosting`, `boostTime` (s of the current burn), `nitroReady`
+(meter ≥ engage), `slipstream`, `escalated`; each vehicle snapshot (player and `state.rival`) adds `nitro`,
+`boosting`, `stunned` (seconds left). `stats` adds `smashes`, `slams`, `topSpeed` (m/s), `nitroBurned`, `nitroEarned`.
+Nitro events: `{type:'nitro', phase:'start'|'end'|'full', owner:'player'|'rival', empty?:bool, x, y}` (`full` fires
+when the player's meter reaches max from below).
+
+**Tests to add.** Baseline digest equality (capture v3 numbers before editing: final time/x/fuel/cleared for
+stages 1, 5 and 10 at 60 and 120 Hz with no boost, and assert them exactly); body/joint counts unchanged; nitro
+engage/drain/gain/clamp/reset/restart rules; top-speed ratio; always-boost bots finish all ten stages at both rates
+and upgrade levels; escalation only after the player's first burn and never position-dependent; boosted boss
+margins; slam stun/cooldown; slipstream accrual; breakable determinism/reset/restart/monster clearance/smash events
+for both owners; wreck events; coast semantics; `grantNitro`.
+
+### 15.2 Renderer (R)
+Reads the new state (`boosting`, `nitro`, `boostTime`, `slipstream`, `rival.boosting`, `rival.stunned`),
+`physics.breakables`, the new events and `frame.cinema = {kind:'idle'|'slam'|'wreck'|'finish'|'fail', bars:0..1,
+zoom:0..1, progress:0..1}` (optional; `bars` already includes the cannon shot). All of it inside §0: ≤ 220 draw ops
+on stage 10 at High in the worst case (both trucks burning, slipstream, letterbox, full particles), ≤ 3 `ctx.font`
+strings per frame (the current three), no per-frame gradients/canvases/allocations, no DOM/layout reads.
+- **Speed.** Velocity streaks as ONE batched stroke (plus one tinted batch while burning) whose length/alpha follow
+  speed; a pre-rendered periodic foreground silhouette strip (parallax > 1, bottom edge only, alpha by speed, two
+  `drawImage`s) that whips past; stronger speed zoom-out and look-ahead; camera lag + zoom kick when a burn starts
+  and a low rumble while it lasts.
+- **Nitro.** Additive exhaust flame sprites with flicker and a ground glow for the player and the rival, cyan
+  ember trail, up to two chassis afterimages, a cached warm/cool edge vignette pulse, small X stretch of the truck.
+- **Impact.** Directional camera kicks (landing, shot recoil, slam, wreck), landing dust ring, sparks on
+  slam/wreck, stronger giant defeat (double shock ring, chunky debris), breathing idle for the giant.
+- **Cinema.** Letterbox bars from `frame.cinema.bars` (≤ 9 % of the height each, ≤ 6 % in touch layout) and extra
+  push-in from `frame.cinema.zoom` during slam/wreck/finish/fail; `frame.mode` stays `'playing'` during outros.
+- **Breakables.** Sprites per `variant` from the biome's small props (plus new crate/barrel/cone art), drawn in
+  front of the terrain like signs; decorative props within 2.5 m are dropped; `smash` spawns debris/dust by variant;
+  broken or inactive props are not drawn.
+- **Slipstream.** A few flowing lines from the rival to the player while `state.slipstream > 0` (one stroke).
+- `onEvent` handles `nitro`, `escalate`, `smash`, `slam`, `wreck` (unknown types still ignored); `popup` gains style
+  `'nitro'`. `tests/render-check.cjs` gains a worst-case Redline scenario and reduced-motion/shake-off assertions.
+
+### 15.3 Audio (A)
+Same gates as §6/§12/§13 (mute/pause exact silence, pre-unlock safety, cooldowns, ≤ 96 event sources, k-rate
+≤ 60 Hz automation, no growth while suspended, no clipping).
+- `update(state, dt, input)` drives persistent nitro layers from `state.boosting`/`state.boostTime`/`state.nitro`
+  (jet noise + afterburner tone + sub, pitch rising through the burn, engine pitch/intake lift), slipstream wind
+  from `state.slipstream`, and a quieter rival burn from `state.rival.boosting`.
+- Engine as the hero: detuned second combustion voice, RPM-swept exhaust resonance, throttle-on bark, turbo spool
+  whine with blow-off on lift/shift, lift-off crackle, airborne limiter flutter. Engine alone stays < 0.5 peak.
+- One-shots (cooldown-guarded, pan via `setScene`): `nitro(phase, {owner, empty})` (ignition whump + rising sweep /
+  blow-off + crackle / full chime), `escalate()`, `smash(strength, variant)` (wood, metal, stone timbres),
+  `slam(strength)`, `wreck(strength, kind)`, `whoosh(strength)`, `stall()` (fuel-out sputter), `finishLine(won)`
+  (crossing hit before `result`), plus the existing set. `scoreTick()`/`star()` stay available for results count-up.
+- `setMusicState` accepts `boost` 0..1 and `tension` 0..1: the score adds a driving sixteenth layer, octave lead
+  and opens its filter with `boost`; `tension` (boss proximity/low fuel) tightens it. `music.hit(kind)` plays short
+  stingers for `'slam'`/`'finish'`. `tests/audio-check.html` covers every new cue and layer, stacked worst case,
+  silence gates and the suspended-context bound.
+
+### 15.4 UI and rules (U)
+- HUD view additions (all optional, write-on-change): `nitro` 0..100, `boosting`, `nitroReady`, `nitroHint` (short
+  string such as `Z / N` or `RB`, empty on touch), `slipstream` 0..1, `gap` (metres ahead of Iron Maw, or null).
+- NITRO meter (`#nitroHud`, `#nitroFill`, `#nitroHint`) joined to the speed cluster: transform bar, states
+  `ready`/`burning`/`full`/`empty`; boss gap badge `#hudGap`; a larger chain multiplier. Touch layout adds a
+  `data-input="nitro"` pedal (hit area ≥ 56 px, no overlap with other controls or the recover slot at 390×844
+  and 844×390).
+- `ui.award(kind, {label, value})`: kinetic award slabs (pooled nodes, at most three stacked, icon + one or two
+  words + number, transform/opacity animation only, cleared by `clearFeedback()`); kinds `perfect`, `flip`, `air`,
+  `smash`, `chain`, `slam`, `nitro`, `giant`, `checkpoint`, `wreck`, `start`. Existing `cue`/`toast`/`banner` stay.
+- Results: `data.awards = [{id, label, value}]` row and a count-up of the score rows driven by `ui.tick(dt)`,
+  emitting `ui.emit('sfx', 'tick'|'stamp')` for audio; reduced motion shows final values at once.
+- Settings add `haptics` (default true, "Controller vibration") and `autoNitro` (default false, "Auto nitro");
+  brief/title hints mention nitro.
+- Rules: `smash` (player only) +25 × chain multiplier, joins and refreshes the combo chain (bucket "Roadside
+  smashes"); `slam` +500 (bucket "Nitro slams"); finish adds "Nitro burn" = floor(stats.nitroBurned) × 2;
+  `finish()` returns `awards` built from `summary.stats` (`topSpeed` in km/h, `maxAir`, best chain, smashes, slams,
+  nitro burned); `Save.defaults()/migrate()` carry `settings.haptics`, `settings.autoNitro` and `totals.smashes`,
+  `totals.slams`; `recordResult` accumulates them. No change to stars, pars, challenges, upgrade costs or keys.
+
+### 15.5 Runtime (main)
+- Input: nitro on `Z`, `N` or Shift, gamepad RB/LB, touch pedal; optional auto-nitro; keys held through the
+  countdown count at GO; a throttle press within 0.25 s of GO earns a rocket-start nitro bonus.
+- `ImpactDirector` (pure, exported for Node tests): real-time envelopes for `slam`, `wreck`, `finish` and `fail`
+  giving `{kind, timeScale, bars, zoom, progress}`; the world time scale is the minimum of the shot and impact
+  envelopes; reduced motion pins it to 1.
+- Outro: when the run ends the result is computed and saved immediately, then the world coasts through
+  `physics.coast()` under the finish/fail envelope (≤ 1.5 s, skippable, skipped with reduced motion) before the
+  results/failed screen; `irontrail.mode` stays `playing` until the screen appears and the run clock stops at the
+  terminal step.
+- Hit-stop on heavy hits, gamepad dual-rumble haptics (setting), pass-by whooshes, a snappier countdown and
+  instant retry, HUD/award/music wiring for every new event.

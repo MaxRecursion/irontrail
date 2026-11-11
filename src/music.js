@@ -12,7 +12,7 @@
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0)),LEVEL=.68;
   class TruckMusic{
     constructor(context,destination){
-      this.context=context;this.destination=destination;this.state={biome:0,intensity:.2,mood:'menu',playing:false,timeScale:1};
+      this.context=context;this.destination=destination;this.state={biome:0,intensity:.2,mood:'menu',playing:false,timeScale:1,boost:0,tension:0};
       this.volume=1;this.active=false;this._stopped=false;this.timer=null;this.nextTime=0;this.step=0;this._drums=new Set();this._gainParams=[];this._color=-1;this._duckUntil=0;this._duckDepth=1;
       this.output=context.createGain();this.output.gain.value=LEVEL;
       this.tone=context.createBiquadFilter();this.tone.type='lowpass';this.tone.frequency.value=6800;this.tone.Q.value=.5;
@@ -50,7 +50,7 @@
     _schedule(t){
       const s=this.state,mood=s.mood,menu=mood==='menu',boss=mood==='boss',danger=mood==='danger';
       const bpm=menu?104:TEMPOS[s.biome]+(boss?6:0),sixteenth=15/bpm*(1+(1-s.timeScale)*.25),n=this.step%16,bar=Math.floor(this.step/16)%8,chord=bar%4;
-      const root=55*Math.pow(2,((s.biome%3)-1)/12),chordRoot=root*Math.pow(2,ROOTS[chord]/12),energy=menu?.46:.72+s.intensity*.28;
+      const root=55*Math.pow(2,((s.biome%3)-1)/12),chordRoot=root*Math.pow(2,ROOTS[chord]/12),boost=menu?0:s.boost||0,tension=menu?0:s.tension||0,energy=menu?.46:.72+s.intensity*.28+boost*.1;
       const groove=menu?[0,8].includes(n):n===0||n===8||n===6||boss&&n===10;
       if(groove){this._note(this.kick,55,t,.17,energy*(menu?.7:1));this.kick.osc.frequency.setValueAtTime(140,t);this.kick.osc.frequency.exponentialRampToValueAtTime(42,t+.17);}
       if(!menu&&(n===4||n===12)){
@@ -59,11 +59,14 @@
       if(n%2===0&&(!menu||n%4===2))this._drum(t,n===14&&!menu?'open':'hat',(n%4===0?.026:.018)*energy);
       if(!menu&&(boss||s.intensity>.75)&&n%4===3)this._drum(t,'hat',.012*energy);
       if(!menu&&bar===7&&n>=14)this._drum(t,'snare',n===14?.07:.1);
+      // Nitro drives a sixteenth pulse; tension adds an urgent off-beat kick.
+      if(boost>.25&&n%2===1)this._drum(t,'hat',.02*energy*boost);
+      if(tension>.45&&(n===3||n===11)){this._note(this.kick,55,t,.12,energy*tension*.7);this.kick.osc.frequency.setValueAtTime(120,t);this.kick.osc.frequency.exponentialRampToValueAtTime(44,t+.12);}
       const bass=BASS[n];if(bass>=0&&(!menu||n%4===0))this._note(this.bass,chordRoot*Math.pow(2,bass/12),t,sixteenth*(n%4===0?1.65:.78),energy);
       if(n===0){for(let i=0;i<3;i++){const semitone=[0,THIRDS[chord],7][i];this._note(this.pads[i],chordRoot*4*Math.pow(2,semitone/12),t,sixteenth*14,menu?.65:danger?.7:1);}}
       if(n%2===0){
         const hook=(bar<4?HOOK:ANSWER)[Math.floor(this.step/2)%32];
-        if(hook>=0){const hz=root*4*Math.pow(2,hook/12),amount=energy*(menu?.75:1);this._note(this.lead,hz,t,sixteenth*1.65,amount);if(!menu)this._note(this.leadTop,hz/2,t,sixteenth*1.45,amount);}
+        if(hook>=0){const hz=root*4*Math.pow(2,hook/12),amount=energy*(menu?.75:1);this._note(this.lead,hz,t,sixteenth*1.65,amount);if(!menu)this._note(this.leadTop,boost>.5?hz:hz/2,t,sixteenth*1.45,amount*(1+boost*.4));}
       }
       if(!menu&&n%2===1){const degrees=[0,7,12,THIRDS[chord]+12],note=degrees[Math.floor(n/2)%4];this._note(this.arp,chordRoot*4*Math.pow(2,note/12),t,sixteenth*.7,energy*(danger?.5:.8));}
       this.step++;this.nextTime=t+sixteenth;this.stats.scheduledUntil=this.nextTime;
@@ -80,6 +83,7 @@
       if(MOODS.includes(next.mood))old.mood=next.mood;
       if(next.timeScale!==undefined)old.timeScale=clamp(next.timeScale,.1,1);
       if(next.playing!==undefined)old.playing=!!next.playing;
+      if(next.boost!==undefined)old.boost=clamp(next.boost,0,1);if(next.tension!==undefined)old.tension=clamp(next.tension,0,1);
       if(this.context.state==='running'&&Math.abs(this._color-old.timeScale)>.015){this._color=old.timeScale;this.tone.frequency.setTargetAtTime(850+5950*Math.sqrt(old.timeScale),this.context.currentTime,.09);}
       if(old.playing&&this.volume>0&&this.context.state==='running')this.start();else this.stop();
     }
@@ -104,6 +108,12 @@
       this._duckDepth=t<this._duckUntil?Math.min(this._duckDepth,depth):depth;this._duckUntil=Math.max(this._duckUntil,t+seconds);
       if(p.cancelAndHoldAtTime)p.cancelAndHoldAtTime(t);else{const value=p.value;p.cancelScheduledValues(t);p.setValueAtTime(value,t);}
       p.linearRampToValueAtTime(LEVEL*this.volume*this._duckDepth,t+.006);p.setValueAtTime(LEVEL*this.volume*this._duckDepth,t+.04);p.linearRampToValueAtTime(LEVEL*this.volume,this._duckUntil);
+    }
+    // Short stingers on the lead voice for the biggest moments.
+    hit(kind='slam'){
+      if(!this.active||this.volume<=0||this.context.state!=='running')return;const t=this.context.currentTime+.01;
+      if(kind==='finish'){this._note(this.lead,523.25,t,.12,.9);this._note(this.lead,659.25,t+.1,.12,.9);this._note(this.lead,783.99,t+.2,.34,.95);}
+      else{this._note(this.lead,146.83,t,.2,.9);this._note(this.lead,110,t+.12,.3,.9);}
     }
     stinger(won=true){
       if(!this.active||this.volume<=0)return;const t=this.context.currentTime,root=won?440:293.66;

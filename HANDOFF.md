@@ -191,3 +191,36 @@ Bundle and source syntax/shot checks pass. Renderer still passes1,400real-physic
 Personalized integration flow passes: dedication opens/returns with no run/progress change; Ojas Speedway clears11.91s with one shot/slow motion, rewards, ghost, garage, pause and persistent settings. No runtime warnings/errors. At1280×530,DPR2/≈60Hz, callback mean.646ms/p991.5ms/max2.5ms over788warm frames is an available-browser observation only. Final generated bundle568,125bytes.
 
 Ojas edition3556ae9 pushed to main; Vercel deployment7d7f22vskeuf2yY4G6f7nW5tjjip reports success. HTTPS checks initiated before browser denial returnedHTTP200 with the exact568,125byte bundle at both production aliases. The browser origin approval gate declined opening irontrail.maxrecursion.dev; no alternative browser/origin route was attempted. Final screenshots are local previews (/tmp/ojas-monster-rally-preview.png and /tmp/ojas-dedication-preview.png), not live-browser captures.
+
+
+## Redline pass (v4) — 11 November 2026
+
+Contract: SPEC §15. Goal: arcade-racing production values (speed, a risk→reward nitro loop, staged impacts, kinetic feedback) with original names and art. Uncommitted in the working tree; nothing was pushed or deployed.
+
+Implemented
+- `physics.js`: per-vehicle nitro (`input.boost`, `TruckPhysics.NITRO`, `grantNitro`), Iron Maw escalation after the player's first burn, nitro slam + stun, slipstream, deterministic `breakables` with `smash` events, `wreck` events, terminal `coast(dt)`, new state/stats fields.
+- `render.js`: velocity streaks, foreground parallax strip, nitro flame/glow/afterimages/vignette, camera kicks and push-in, letterbox from `frame.cinema`, breakable sprites and debris, landing ring, slipstream lines, cosmetic zombie punt arc.
+- `audio.js` / `music.js`: nitro jet + afterburner layers, cues `nitro/escalate/smash/slam/wreck/whoosh/stall/finishLine`, music `boost`/`tension` and `music.hit()`.
+- `ui.js` / `shell.html` / `rules.js`: nitro meter, boss gap badge, award slabs (`ui.award`), touch NITRO pedal, results awards + count-up (`ui.tick`, `sfx` event), settings `haptics` / `autoNitro`, smash/slam scoring, nitro-burn bonus, new totals.
+- `game.js`: nitro input (Z/N/Shift, RB/LB, pedal, auto), `ImpactDirector`, coasting outros (result saved at the terminal step; `irontrail.mode` stays `playing`, `irontrail.outro` is true until the screen), hit-stop, rumble, whooshes, rocket start, 0.62 s countdown steps (0.4 s on retry).
+
+Deviations from the SPEC §15 draft (all deliberate)
+- **Zombie punt is renderer-only.** Launching the physical body, even a step after the hit, changed broad-phase pair order and broke v3 bit-identity (37 of 174 recorded runs drifted). Physics only records `zombie.punt`; the renderer draws the arc.
+- **Nitro wheel drive applies only on the ground.** Extra wheel torque in the air pitched the truck onto its roof (an always-hold bot ran dry on stage 9). Airborne nitro is thrust only.
+- **No passive air gain while burning**, and tuned constants: start 25, engage 8, drain 34/s, torque ×1.6, speed ×1.27, thrust 5/3 m/s², gains air 4/s, landing 3, perfect 8, flip 14, big air 5, zombie 3, smash 1, checkpoint 6, giant 30, slipstream 6/s, slam 25.
+- **Iron Maw also charges 8/s** (`NITRO.gain.rivalPerSecond`; it has no props or zombies to farm) and burns at `nitroPower` 0.95. Still no position/gap input.
+- Engine "hero" work is limited to the nitro layers, RPM lift and a lift-off blow-off/crackle; the second combustion voice, turbo whine and limiter flutter in §15.3 were not built.
+
+Verified
+- Baseline neutrality: 174 recorded v3 runs (all stages, 60/120 Hz, base/max, varied monster rolls, recovery, reverse) are bit-identical with no boost input, including pose and event hashes; six digests are asserted in `physics-smoke.cjs`.
+- `physics-smoke.cjs`: all v3 assertions unchanged and passing, plus nitro rules, always-boost bots finishing all ten stages at 60/120 Hz base/max (10/12/9/10/12/12/13/12/5/15 % faster at 120 Hz base, uptime 25–35 %), breakable lifecycle, escalation, slipstream, slam/cooldown, wreck events, coast. Boosted clean boss margins 48.4 / 5.5 / 44.7 / 29.9 m (60 base, 60 max, 120 base, 120 max). Stage 10 mean step 52 µs (was 51).
+- `rules-check.cjs`, `pacing-check.cjs`, `shot-check.cjs` (adds ImpactDirector), `render-check.cjs` (v3 max 171/220 draw ops; Redline worst case 188/220, 3 fonts, no hot canvases/gradients; reduced motion and shake-off gates), `bundle-check.py` (70 ids, 623 kB).
+- Headless Chrome via `tests/page-check.mjs`: `audio-check.html` PASS (15 new cues, nitro layers, boost/tension score, worst-case stack peak 0.39), `ui-harness.html` PASS at 1440×900, 390×844 and 844×390, `integration-harness.html` PASS for all phases (v3 numbers unchanged: stage 1 11.91 s, boss 29.07 s) plus the new `redline` phase (Z nitro 10.69 s, 111 km/h, finish outro, awards, Iron Maw escalation).
+- Screenshots reviewed at 1280×720 and 390×844: gameplay with nitro, cannon letterbox, finish outro, results awards, phone layout.
+
+Not verified / limits
+- The boosted boss margin is wide (5–48 m for an always-boost bot); the race is chaotic once the trucks touch. It was tuned to favour the player, not to a tight window.
+- `ui-harness.html` has no new assertions for the nitro meter, award pool, count-up or pedal hit-testing; those were checked through the integration harness and screenshots only.
+- No listening test, no physical phone/controller, no 120 Hz display. Rumble uses `vibrationActuator.playEffect` and was not exercised on hardware. `audio-live-check.html` was not re-run.
+- Slipstream, slam and auto-nitro were exercised in Node tests or by construction, not in a played boss race.
+- `tests/redline-preview.html` is a git-ignored developer preview used for the screenshots.

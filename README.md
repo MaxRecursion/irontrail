@@ -12,6 +12,7 @@ Play: https://irontrail.maxrecursion.dev . Vercel fallback: https://irontrail-io
 | Reverse | Down / S | LT at low speed |
 | Brake | Space | LT while moving forward |
 | Air balance / self-right | Left / A, Right / D | Left stick / D-pad |
+| Nitro (hold) | Z, N or Shift | RB / LB |
 | Fire once | X / J or FIRE | A |
 | Recover at checkpoint | C | X |
 | Retry stage | R | Y |
@@ -19,13 +20,24 @@ Play: https://irontrail.maxrecursion.dev . Vercel fallback: https://irontrail-io
 | Mute | M | Settings menu |
 | Fullscreen | F | On-screen button |
 
-Touch pedals and a separate FIRE button appear on small or touch screens. Menus support keyboard and gamepad navigation. Sound starts after the first pointer/key gesture; browsers may require a click before gamepad audio can play.
+Touch pedals, a NITRO pedal above the lean buttons and a separate FIRE button appear on small or touch screens. Menus support keyboard and gamepad navigation. Sound starts after the first pointer/key gesture; browsers may require a click before gamepad audio can play.
 
 Each attempt gives you **one cannon charge and one randomly placed giant monster**. Wait for the green target lock and fire. Early shots can miss or hit terrain. Reaching or passing a living monster ends the run. Holding FIRE never reloads it.
 
 Fuel burns while playing, even at idle. Amber cans restore up to **32 fuel**, capped at 100. Recovery costs **12 fuel** and preserves ammunition, the monster, cans, zombies and rival progress. A full retry supplies a new tank, charge and random encounter. Pause freezes the run and rival.
 
 Clear stages to unlock the next route. Earn stars for survival, par time and a route-specific challenge. Score combos, landed flips, perfect landings and big air earn scrap for engine, tyre, suspension and fuel-system upgrades. Your fastest clear leaves a ghost replay. Unlocks and earlier v2 records migrate automatically when browser storage is available.
+
+## Redline pass — speed, nitro and spectacle
+
+The game now plays like an arcade racer built around risk and reward. Everything below is additive: if you never touch nitro, every stage and the Iron Maw race drive exactly as before.
+
+- **Nitro.** A cyan meter beside the speedometer. It fills from big air, clean and perfect landings, flips, zombie knockdowns, smashed roadside props, checkpoints, slipstreaming Iron Maw and stopping the giant. Hold **Z / N / Shift** (RB on a pad, the NITRO pedal on touch) to burn it for more drive, about a quarter more top speed and a thrust flame. Settings → **Auto nitro** burns a healthy meter for you.
+- **Smash.** Crates, barrels, cones, fences and other small props shatter when you drive through them. They score, feed nitro and keep the zombie chain alive, so the multiplier can ride the whole stage.
+- **Iron Maw fights back.** In the boss race Iron Maw lights its own nitro only after your first burn, and never looks at your position. Ram it with your nitro lit for a **Nitro Slam** that cuts its engine for a moment. Tuck in behind it to draft and charge your meter.
+- **Spectacle.** Speed streaks, foreground parallax, exhaust flame and afterimages, directional camera kicks, hit-stop, a letterboxed slow-motion finish and wreck moments, kinetic award slabs, controller rumble, and a results screen that counts up with your top speed, longest air, best chain, smashes and nitro burned. A throttle press right on GO earns a rocket start. Retries count down in about a second.
+- **Sound.** Nitro ignition, jet and blow-off, wood/metal/stone smashes, the slam, wrecks, pass-by whooshes and a finish hit; the score adds a driving sixteenth layer while you burn and tightens when the race is close.
+- **Comfort.** Reduced Motion removes slow motion, letterbox, streaks, afterimages, flashes and camera kicks; Camera Shake off removes shake and kicks; Controller vibration has its own switch.
 
 ## Campaign
 
@@ -61,7 +73,11 @@ node tests/physics-smoke.cjs
 node tests/rules-check.cjs
 node tests/pacing-check.cjs
 node tests/render-check.cjs
+node tests/shot-check.cjs
 python3 -m http.server 4173 --bind 127.0.0.1
+node tests/page-check.mjs http://127.0.0.1:4173/tests/audio-check.html --timeout 240
+node tests/page-check.mjs http://127.0.0.1:4173/tests/ui-harness.html
+node tests/page-check.mjs http://127.0.0.1:4173/tests/integration-harness.html --click "#start" --timeout 300
 ```
 
 Browser checks on localhost:

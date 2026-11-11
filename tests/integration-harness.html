@@ -6,7 +6,7 @@ const lines=[],metrics=[];let win,doc,game,running=false,current='Ready',reportT
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const assert=(value,message)=>{if(!value)throw Error(message);};
 function log(text){lines.push(text);output.textContent=lines.join('\n');output.scrollTop=output.scrollHeight;}
-function key(code,down=true){const names={KeyW:'w',KeyX:'x',KeyP:'p',Escape:'Escape'};win.dispatchEvent(new win.KeyboardEvent(down?'keydown':'keyup',{code,key:names[code]||code,bubbles:true,cancelable:true}));}
+function key(code,down=true){const names={KeyW:'w',KeyX:'x',KeyP:'p',KeyZ:'z',Escape:'Escape'};win.dispatchEvent(new win.KeyboardEvent(down?'keydown':'keyup',{code,key:names[code]||code,bubbles:true,cancelable:true}));}
 function click(selector){const node=doc.querySelector(selector);assert(node&&!node.disabled,'Missing/disabled control '+selector);node.click();}
 async function waitFor(test,timeout=5000,label='condition'){const stop=performance.now()+timeout;while(performance.now()<stop){if(test())return;await delay(20);}throw Error('Timeout '+label+'; mode='+game.mode+', time='+game.telemetry.time.toFixed(2));}
 function setButton(index,value){const b=win.__qaPad.buttons[index];b.value=value;b.pressed=value>.5;}
@@ -52,9 +52,32 @@ async function runPad(){
   resetPad();game.qa.start(0);perfStart('gamepad stage 1');win.__qaPad.connected=true;setButton(7,1);await delay(650);assert(game.telemetry.x>game.physics.track.startX+.1,'Gamepad RT drives');await edgeButton(9);assert(game.mode==='paused','Gamepad Start pauses');const t=game.telemetry.time,f=game.telemetry.fuel;await delay(300);assert(game.telemetry.time===t&&game.telemetry.fuel===f,'Gamepad pause freezes');await edgeButton(9);assert(game.mode==='playing','Gamepad Start resumes');
   setButton(7,1);let fired=false,sawSlow=false,sawImpact=false;const stop=performance.now()+30000;while(game.mode==='playing'&&performance.now()<stop){if(!fired&&game.telemetry.weapon.canHit){await edgeButton(0);fired=true;}await delay(12);}resetPad();perfEnd('gamepad stage 1');assert(game.mode==='cleared'&&fired&&game.telemetry.ammo===0,'Gamepad A fires one shot and clears');log('PASS synthetic gamepad RT, Start pause/resume and A cannon complete stage 1.');
 }
+// Redline: nitro through the real keyboard path, HUD/award feedback, the coasting finish outro and results awards.
+async function runRedline(){
+  current='Redline nitro run';resetPad();game.qa.start(0);await waitFor(()=>game.mode==='playing',3000,'start');
+  assert(game.telemetry.nitro===win.TruckPhysics.NITRO.start&&doc.getElementById('nitroHud'),'Nitro meter starts at the published level');await waitFor(()=>doc.getElementById('nitroHint').textContent==='Z / N',1500,'keyboard nitro hint after the pad disconnects');
+  key('KeyW');key('KeyZ');let fired=false,sawBurn=false,sawHud=false,sawAward=false,sawOutro=false,sawBars=false,outroTime=null,top=0;const stop=performance.now()+40000;
+  while(game.mode==='playing'&&performance.now()<stop){
+    const t=game.telemetry;top=Math.max(top,t.speed);if(t.boosting)sawBurn=true;if(doc.getElementById('nitroHud').classList.contains('burning'))sawHud=true;
+    if(doc.querySelector('#hudAwards .award-slab.show'))sawAward=true;
+    if(game.outro){sawOutro=true;if(outroTime===null)outroTime=t.time;assert(t.time===outroTime,'Run clock stops at the finish');if(game.cinema.bars>.5&&game.cinema.timeScale<1)sawBars=true;}
+    if(!fired&&t.weapon.canHit&&t.ammo){key('KeyX');key('KeyX',false);fired=true;}
+    await delay(12);
+  }
+  key('KeyW',false);key('KeyZ',false);
+  assert(game.mode==='cleared','Boosted stage 1 must clear: '+game.mode+' '+game.physics.failed);const t=game.telemetry;
+  assert(sawBurn&&t.stats.nitroBurned>20&&sawHud,'Z burns nitro and the HUD shows it');assert(sawAward,'Kinetic award slabs appear');
+  assert(sawOutro&&sawBars,'Finish outro coasts in slow motion with letterbox');assert(t.time<11.6&&top>25.5,'Nitro is faster: '+t.time.toFixed(2)+'s top '+top.toFixed(1));
+  assert(t.stats.smashes>0&&doc.querySelectorAll('.result-award').length>=3,'Results list awards');assert(/Nitro burn/.test(doc.querySelector('.score-breakdown').textContent),'Nitro burn bonus row');
+  assert(game.campaign.totals.smashes>=t.stats.smashes,'Smash totals persist');
+  log('PASS Redline: Z nitro '+t.time.toFixed(2)+'s (top '+(top*3.6).toFixed(0)+' km/h, '+Math.round(t.stats.nitroBurned)+' burned, '+t.stats.smashes+' smashes), HUD/awards, slow-motion finish outro, results awards.');
+  game.qa.start(9);await waitFor(()=>game.mode==='playing',3000,'boss');key('KeyW');await delay(1500);assert(!game.telemetry.escalated&&!game.telemetry.rival.boosting,'Iron Maw waits for the player');
+  key('KeyZ');await waitFor(()=>game.telemetry.escalated,3000,'escalation');key('KeyZ',false);await waitFor(()=>game.telemetry.rival.boosting,9000,'rival burn');key('KeyW',false);
+  assert(doc.getElementById('hudGap').hidden===false,'Boss gap badge');log('PASS Iron Maw answers the first burn with its own nitro; gap badge visible.');
+}
 async function run(){
   if(running)return;running=true;button.disabled=true;document.title='RUNNING — IRONTRAIL integration validation';lines.length=0;log('RUN '+phase+' · isolated QA campaign '+campaignKey);frame.contentWindow.focus();game.audio.prime();reportTimer=setInterval(()=>{const t=game.telemetry;status.textContent=current+' · '+game.mode+' · '+t.time.toFixed(2)+'s · fuel '+Math.ceil(t.fuel)+'% · ammo '+t.ammo;},500);
-  try{await waitFor(()=>game.qa.warm,4000,'warm-up');if(phase==='all'||phase==='flow')await runFlow();if(phase==='all'||phase==='failures')await runFailures();if(phase==='all'||phase==='boss')await runBoss();if(phase==='all'||phase==='gamepad')await runPad();assert(['all','flow','failures','boss','gamepad'].includes(phase),'Unknown phase '+phase);key('KeyW',false);resetPad();if(game.mode==='playing'){key('KeyP');key('KeyP',false);}log('PASS integration '+phase+'; production storage untouched.');document.title='PASS — IRONTRAIL integration validation';status.textContent='PASS · '+phase+' · see exact checks and callback metrics below.';globalThis.irontrailIntegration={phase,lines:lines.slice(),metrics,campaignKey,ghostPrefix};}
+  try{await waitFor(()=>game.qa.warm,4000,'warm-up');if(phase==='all'||phase==='flow')await runFlow();if(phase==='all'||phase==='failures')await runFailures();if(phase==='all'||phase==='boss')await runBoss();if(phase==='all'||phase==='gamepad')await runPad();if(phase==='all'||phase==='redline')await runRedline();assert(['all','flow','failures','boss','gamepad','redline'].includes(phase),'Unknown phase '+phase);key('KeyW',false);resetPad();if(game.mode==='playing'){key('KeyP');key('KeyP',false);}log('PASS integration '+phase+'; production storage untouched.');document.title='PASS — IRONTRAIL integration validation';status.textContent='PASS · '+phase+' · see exact checks and callback metrics below.';globalThis.irontrailIntegration={phase,lines:lines.slice(),metrics,campaignKey,ghostPrefix};}
   catch(error){log('FAIL '+error.stack);document.title='FAIL — IRONTRAIL integration validation';status.textContent='FAIL · '+current;key('KeyW',false);resetPad();}
   finally{clearInterval(reportTimer);running=false;button.textContent='Reload for another run';button.disabled=false;button.onclick=()=>location.reload();}
 }

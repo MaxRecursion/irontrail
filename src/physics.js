@@ -22,7 +22,13 @@
     tank: Object.freeze({ drain: upgrade([1, 0.93, 0.86, 0.79]) })
   });
   const RIVAL_TUNING = Object.freeze({ motorSpeed: 34.3, engineSpeedPerLevel: 0.035, engineTorquePerLevel: 0.06,
-    startGap: 6, rampLift: 0.9 });
+    startGap: 6, rampLift: 0.9, nitroPower: 0.95, nitroBurnAt: 40, stun: 1.1, slamStrength: 0.35, slamCooldown: 4 });
+  // Redline nitro: earned by stunts and smashes, burned for torque, top speed and thrust.
+  const NITRO = Object.freeze({ max: 100, start: 25, engage: 8, drain: 34, torque: 1.6, speed: 1.27, thrustGround: 5, thrustAir: 3,
+    gain: Object.freeze({ airPerSecond: 4, airDelay: 0.25, landing: 3, perfect: 8, flip: 14, bigAir: 5, zombie: 3, smash: 1,
+      checkpoint: 6, monster: 30, slipstreamPerSecond: 6, slam: 25, rivalPerSecond: 8 }) });
+  // Local integer hash for deterministic scenery; never consumes options.random.
+  const hash = n => { n = Math.imul(n ^ 0x9e3779b9, 0x85ebca6b); n ^= n >>> 13; n = Math.imul(n, 0xc2b2ae35); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; };
   const STAGES = Object.freeze(NAMES.map((name, i) => Object.freeze({
     id: i + 1, name, subtitle: SUBTITLES[i], length: LENGTHS[i], difficulty: i + 1,
     boss: i === 9, fuelDrain: FUEL_RATES[i], fuelInterval: 78 + i * 2,
@@ -34,6 +40,7 @@
     static get POSE() { return POSE; }
     static get UPGRADES() { return UPGRADES; }
     static get RIVAL_TUNING() { return RIVAL_TUNING; }
+    static get NITRO() { return NITRO; }
 
     static warmUp(milliseconds = 60) {
       const now = () => typeof performance === 'object' ? performance.now() : Date.now();
@@ -74,7 +81,27 @@
         segment.xs = new Float64Array(segment.length);
         for (let j = 0; j < segment.length; j++) segment.xs[j] = segment[j].x;
       }
+      this._breakableLayout = this._makeBreakables();
       this.restart();
+    }
+
+    // Smashable roadside props: plain records with x-overlap triggers, no Planck bodies.
+    _makeBreakables() {
+      const track = this.track, out = [], zombieXs = [], canXs = track.canXs.slice();
+      for (let i = 0; i < this.stage.zombieCount; i++) zombieXs.push(this._safeEntityX(track.startX + 25 + i * (this.stage.length - 45) / this.stage.zombieCount, 7));
+      if (this.stage.boss) canXs.push(track.startX + 35);
+      const spacing = 14.5 - this.stageIndex * 0.55;
+      for (let x = track.startX + 18, n = 0; out.length < 40; n++) {
+        const px = x + hash(this.stageIndex * 977 + n * 31 + 7) * 4;
+        x += spacing * (0.75 + hash(this.stageIndex * 613 + n * 17 + 3) * 0.5);
+        if (px > track.finishX - 12) break;
+        const segment = this._segmentAt(px);
+        if (!segment || px - segment[0].x < 6 || segment[segment.length - 1].x - px < 6) continue;
+        if (Math.abs(this._slopeAt(px)) >= 0.25) continue;
+        if (canXs.some(c => Math.abs(c - px) < 5) || track.checkpoints.some(c => Math.abs(c.x - px) < 8) || zombieXs.some(z => Math.abs(z - px) < 2.5)) continue;
+        out.push({ id: out.length, x: px, y: this._heightAt(px), variant: Math.floor(hash(this.stageIndex * 131 + n * 7 + 11) * 8), broken: false, active: true });
+      }
+      return out;
     }
 
     _makeTrack() {
@@ -242,6 +269,7 @@
         this.monster.alive = false; this.monster.hit = true; this.monster.timeSinceHit = 0;
         this.monster.body.setActive(false);
         this.events.push({ type: 'monsterHit', x: this.monster.x, y: this.monster.weakpoint.y, strength: 1 });
+        this._gain(this.player, NITRO.gain.monster);
       }
       if (hit || bullet.remaining <= 0.000001) this.projectile = null;
     }
@@ -266,8 +294,11 @@
       this._weaponDirty = true; this._state = null;
       this._pendingMonsterCrash = false; this.ammo = 1; this.projectile = null;
       this.fuel = 100; this.failed = null; this.winner = null; this.finished = false; this.cleared = 0;
-      this.stats = { flips: 0, perfectLandings: 0, bigAirs: 0, maxAir: 0, airTotal: 0, cans: 0, rivalImpacts: 0 };
+      this.stats = { flips: 0, perfectLandings: 0, bigAirs: 0, maxAir: 0, airTotal: 0, cans: 0, rivalImpacts: 0,
+        smashes: 0, slams: 0, topSpeed: 0, nitroBurned: 0, nitroEarned: 0 };
+      this._escalated = false; this._lastSlam = -100; this._slipstream = 0; this._wreckAt = -100; this._coasting = false;
       this.checkpointIndex = 0;
+      this.player = null;
       this._spawnPlayer(0);
       this.rival = this.stage.boss ? this._createTruck(this.track.startX - RIVAL_TUNING.startGap, 'rival') : null;
       this.zombies = [];
@@ -275,7 +306,7 @@
         const rawX = this.track.startX + 25 + i * (this.stage.length - 45) / this.stage.zombieCount;
         const x = this._safeEntityX(rawX, 7), y = this._heightAt(x) + 0.7;
         const body = this.world.createDynamicBody({ position: V(x, y), angularDamping: 2, linearDamping: 0.2 });
-        const zombie = { id: i, x, y, angle: 0, alive: true, hit: false, timeSinceHit: 0, phase: i * 1.7, body };
+        const zombie = { id: i, x, y, angle: 0, alive: true, hit: false, timeSinceHit: 0, phase: i * 1.7, body, punt: 0 };
         body.setUserData({ type: 'zombie', entity: zombie });
         const filter = { density: 0.16, friction: 0.5, restitution: 0.05, filterCategoryBits: 8, filterMaskBits: 1 | 2 | 4 };
         body.createFixture(new P.Box(0.2, 0.65), filter);
@@ -293,6 +324,8 @@
         this.fuelCans.unshift({ id: -1, x, y: this._heightAt(x) + 1.3, collected: false });
       }
       this.monster = this._createMonster();
+      this.breakables = this._breakableLayout;
+      for (const prop of this.breakables) { prop.broken = false; prop.active = Math.abs(prop.x - this.monster.x) >= 7; }
       this.world.on('begin-contact', contact => {
         const a = contact.getFixtureA().getBody().getUserData(), b = contact.getFixtureB().getBody().getUserData();
         if (a?.type === 'zombie' && b?.type === 'vehicle' && a.entity.alive) this._pendingHits.add(a.entity);
@@ -334,7 +367,9 @@
       }
       return { chassis, wheels, joints, grounded: false, airtime: 0, everGrounded: false, takeoffSent: false, owner,
         wheelContact: [false, false], chassisContact: false, inverted: false, stalledTime: 0,
-        airRotation: 0, lastAngle: 0, flipCount: 0, landing: null, righting: false };
+        airRotation: 0, lastAngle: 0, flipCount: 0, landing: null, righting: false,
+        nitro: NITRO.start, boosting: false, boostTime: 0, sinceBurn: Infinity, stun: 0,
+        mass: chassis.getMass() + wheels[0].getMass() + wheels[1].getMass() };
     }
 
     _spawnPlayer(checkpointIndex) {
@@ -345,9 +380,12 @@
           this.world.destroyBody(this.player.chassis);
         }
       }
+      // The meter is a run resource like ammunition: it survives checkpoint recovery.
+      const nitro = this.player ? this.player.nitro : NITRO.start;
       this.checkpointIndex = clamp(Math.floor(Number(checkpointIndex) || 0), 0, this.track.checkpoints.length - 1);
       const cp = this.track.checkpoints[this.checkpointIndex];
       this.player = this._createTruck(cp.x + 1.5, 'player');
+      this.player.nitro = nitro; this._fell = false; this._wasInverted = false;
       this.chassis = this.player.chassis; this.wheels = this.player.wheels; this.joints = this.player.joints;
       this.grounded = false; this.airtime = 0;
       this.airRotation = 0; this._weaponDirty = true;
@@ -419,10 +457,20 @@
       const mass = vehicle.chassis.getMass(), isPlayer = vehicle.owner === 'player';
       const torqueScale = isPlayer ? UPGRADES.engine.torque[this.tuning.engine] : 1 + RIVAL_TUNING.engineTorquePerLevel * this.tuning.engine;
       if (isPlayer) maxSpeed *= UPGRADES.engine.speed[this.tuning.engine];
+      // burn is exactly 0 unless nitro is lit, so every factor below is exactly 1 for a v3 run.
+      const burn = vehicle.boosting ? (isPlayer ? 1 : RIVAL_TUNING.nitroPower) : 0;
+      // Wheels only get the extra drive on the ground: spinning them up in the air would pitch the
+      // chassis over. Airborne nitro is thrust alone.
+      const drive = vehicle.grounded ? burn : 0;
+      if (burn) throttle = Math.max(throttle, 1);
       for (const joint of vehicle.joints) {
         joint.enableMotor(brake || Math.abs(throttle) > 0.01);
-        joint.setMotorSpeed(brake ? 0 : throttle * (throttle >= 0 ? -maxSpeed : -13));
-        joint.setMaxMotorTorque(brake ? 125 : (vehicle.grounded ? 48 : 7) * torqueScale * Math.abs(throttle));
+        joint.setMotorSpeed(brake ? 0 : throttle * (throttle >= 0 ? -maxSpeed * (1 + (NITRO.speed - 1) * drive) : -13));
+        joint.setMaxMotorTorque(brake ? 125 : (vehicle.grounded ? 48 : 7) * torqueScale * Math.abs(throttle) * (1 + (NITRO.torque - 1) * drive));
+      }
+      if (burn && !vehicle.inverted && !vehicle.righting) {
+        const angle = vehicle.chassis.getAngle(), thrust = vehicle.mass * (vehicle.grounded ? NITRO.thrustGround : NITRO.thrustAir) * burn;
+        this._force.set(Math.cos(angle) * thrust, Math.sin(angle) * thrust); vehicle.chassis.applyForceToCenter(this._force, true);
       }
       if (vehicle.grounded) {
         const wantsRighting = !isPlayer || Math.abs(lean) > 0.05;
@@ -452,6 +500,35 @@
       } else if (!isPlayer) vehicle.chassis.applyTorque(-lean * mass * 8, true);
     }
 
+    _gain(vehicle, amount) {
+      if (!(amount > 0)) return;
+      const before = vehicle.nitro; vehicle.nitro = Math.min(NITRO.max, before + amount);
+      if (vehicle !== this.player) return;
+      this.stats.nitroEarned += vehicle.nitro - before;
+      if (before < NITRO.max && vehicle.nitro >= NITRO.max) {
+        const p = vehicle.chassis.getPosition(); this.events.push({ type: 'nitro', phase: 'full', owner: 'player', x: p.x, y: p.y });
+      }
+    }
+
+    grantNitro(amount) {
+      if (!this.failed && !this.winner) this._gain(this.player, Number(amount) || 0);
+      return this.player.nitro;
+    }
+
+    _updateBurn(vehicle, wants, dt) {
+      const was = vehicle.boosting;
+      if (was) { if (!wants || vehicle.nitro <= 0) vehicle.boosting = false; }
+      else if (wants && vehicle.nitro >= NITRO.engage) vehicle.boosting = true;
+      if (vehicle.boosting) {
+        const used = Math.min(vehicle.nitro, NITRO.drain * dt); vehicle.nitro -= used; vehicle.boostTime += dt; vehicle.sinceBurn = 0;
+        if (vehicle === this.player) this.stats.nitroBurned += used;
+      } else { vehicle.boostTime = 0; vehicle.sinceBurn += dt; }
+      if (was !== vehicle.boosting) {
+        const p = vehicle.chassis.getPosition();
+        this.events.push({ type: 'nitro', phase: vehicle.boosting ? 'start' : 'end', owner: vehicle.owner, empty: !vehicle.boosting && vehicle.nitro <= 0, x: p.x, y: p.y });
+      }
+    }
+
     _updateFlight(vehicle, dt, vyBefore, emit) {
       const before = vehicle.grounded, flightTime = vehicle.airtime;
       vehicle.grounded = this._touchingGround(vehicle);
@@ -465,11 +542,13 @@
           if (flightTime >= 0.45) vehicle.landing = { airtime: flightTime, rotation, flips, dir, started: this._elapsed,
             mask: (vehicle.wheelContact[0] ? 1 : 0) | (vehicle.wheelContact[1] ? 2 : 0), bothAt: Infinity };
         }
+        if (!emit && !this._coasting && !before && vehicle.everGrounded && flightTime >= 0.45 && !vehicle.inverted) this._gain(vehicle, NITRO.gain.landing);
         vehicle.airtime = 0; vehicle.everGrounded = true; vehicle.takeoffSent = false;
       } else {
         if (before) { vehicle.airRotation = 0; vehicle.flipCount = 0; }
         vehicle.airRotation += wrap(angle - vehicle.lastAngle);
         vehicle.airtime += dt;
+        if (!this._coasting && !vehicle.boosting && vehicle.airtime > NITRO.gain.airDelay) this._gain(vehicle, NITRO.gain.airPerSecond * dt);
         if (emit && vehicle.everGrounded && vehicle.airtime > 0.09 && !vehicle.takeoffSent) {
           vehicle.takeoffSent = true;
           this.events.push({ type: 'takeoff', strength: clamp(Math.hypot(vehicle.chassis.getLinearVelocity().x, vyBefore) / 26, 0.2, 1) });
@@ -491,6 +570,7 @@
           this.events.push({ type: 'landing', airtime: landing.airtime, rotation: landing.rotation, flips, dir: landing.dir,
             upright, perfect, bigAir, x: p.x, y: p.y });
           this.stats.flips += flips; if (perfect) this.stats.perfectLandings++; if (bigAir) this.stats.bigAirs++;
+          this._gain(vehicle, (upright ? NITRO.gain.landing : 0) + (perfect ? NITRO.gain.perfect : 0) + flips * NITRO.gain.flip + (bigAir && upright ? NITRO.gain.bigAir : 0));
           vehicle.landing = null;
         }
       }
@@ -511,6 +591,11 @@
       if (this.monster.hit) this.monster.timeSinceHit += dt;
       const throttle = clamp(Number(input.throttle) || 0, -1, 1), lean = clamp(Number(input.lean) || 0, -1, 1);
       const beforeX = this.chassis.getPosition().x, vyBefore = this.chassis.getLinearVelocity().y;
+      this._updateBurn(this.player, !!input.boost && throttle >= -0.05 && !input.brake && !this.player.inverted && !this.player.righting, dt);
+      if (this.player.boosting && this.rival && !this._escalated) {
+        // Iron Maw answers the player's first burn with its own meter. It never reads position or gap.
+        this._escalated = true; const rp = this.rival.chassis.getPosition(); this.events.push({ type: 'escalate', x: rp.x, y: rp.y });
+      }
       this._drive(this.player, throttle, !!input.brake, lean);
       let rivalBeforeX = 0, rivalVy = 0;
       if (this.rival) {
@@ -523,7 +608,13 @@
           const feature = this.track.features[f];
           if ((feature.kind === 'ramp' || feature.kind === 'kicker') && rivalBeforeX > feature.endX - 4 && rivalBeforeX < feature.endX - 0.1) rivalThrottle = RIVAL_TUNING.rampLift;
         }
-        this._drive(this.rival, rivalThrottle, false, balance, RIVAL_TUNING.motorSpeed * (1 + RIVAL_TUNING.engineSpeedPerLevel * this.tuning.engine));
+        const rival = this.rival, stunned = rival.stun > 0;
+        if (stunned) rival.stun = Math.max(0, rival.stun - dt);
+        // Iron Maw has no zombies or props to farm, so its meter also charges steadily while it drives.
+        if (!stunned && !rival.boosting) this._gain(rival, NITRO.gain.rivalPerSecond * dt);
+        this._updateBurn(rival, this._escalated && !stunned && !rival.inverted && !rival.righting &&
+          (rival.boosting || rival.grounded && rivalThrottle === 1 && rival.nitro >= RIVAL_TUNING.nitroBurnAt), dt);
+        this._drive(rival, stunned ? 0 : rivalThrottle, false, stunned ? 0 : balance, RIVAL_TUNING.motorSpeed * (1 + RIVAL_TUNING.engineSpeedPerLevel * this.tuning.engine));
       }
       for (const zombie of this.zombies) {
         if (!zombie.alive || Math.abs(zombie.x - beforeX) > 45) continue;
@@ -542,6 +633,23 @@
       }
       this._updateFlight(this.player, dt, vyBefore, true);
       this.grounded = this.player.grounded; this.airtime = this.player.airtime; this.airRotation = this.player.airRotation;
+      {
+        const pp = this.chassis.getPosition(), pv = this.chassis.getLinearVelocity(), speed = Math.abs(pv.x);
+        if (speed > this.stats.topSpeed) this.stats.topSpeed = speed;
+        if (this.player.inverted && !this._wasInverted && this._elapsed - this._wreckAt > 1.5) {
+          this._wreckAt = this._elapsed;
+          this.events.push({ type: 'wreck', kind: 'roof', x: pp.x, y: pp.y, strength: clamp(Math.hypot(pv.x, vyBefore) / 20, 0.3, 1) });
+        }
+        this._wasInverted = this.player.inverted;
+        if (!this._fell && pp.y < -3) { this._fell = true; this.events.push({ type: 'wreck', kind: 'fall', x: pp.x, y: pp.y, strength: 1 }); }
+        let slip = 0;
+        if (this.rival && this.player.grounded) {
+          const rp = this.rival.chassis.getPosition(), gap = rp.x - pp.x;
+          if (gap > 2 && gap < 10 && Math.abs(rp.y - pp.y) < 3) slip = gap < 3 ? gap - 2 : gap > 7 ? (10 - gap) / 3 : 1;
+        }
+        this._slipstream = slip;
+        if (slip > 0) this._gain(this.player, NITRO.gain.slipstreamPerSecond * slip * dt);
+      }
       if (Math.abs(throttle) > 0.05 && this.grounded && Math.abs(this.chassis.getLinearVelocity().x) < 0.6) this.player.stalledTime += dt;
       else this.player.stalledTime = 0;
       if (this.rival) this._updateFlight(this.rival, dt, rivalVy, false);
@@ -556,7 +664,14 @@
         }
         zombie.body.applyLinearImpulse(V(0.12, 0.2), zombie.body.getWorldCenter(), true);
         zombie.body.applyAngularImpulse(-0.16, true);
-        this.events.push({ type: 'zombie', x: zombie.body.getPosition().x, y: zombie.body.getPosition().y, strength: clamp(Math.abs(this.chassis.getLinearVelocity().x) / 25, 0.2, 1) });
+        // The renderer adds a cosmetic punt arc from `punt` (the hitting truck's speed). Launching the
+        // body itself would perturb broad-phase pair order and break v3 bit-identity.
+        const zp = zombie.body.getPosition();
+        const hitter = this.rival && Math.abs(this.rival.chassis.getPosition().x - zp.x) < Math.abs(this.chassis.getPosition().x - zp.x) ? this.rival : this.player;
+        const hv = hitter.chassis.getLinearVelocity().x;
+        zombie.punt = hv;
+        this._gain(hitter, NITRO.gain.zombie);
+        this.events.push({ type: 'zombie', x: zp.x, y: zp.y, strength: clamp(Math.abs(this.chassis.getLinearVelocity().x) / 25, 0.2, 1), vx: hv, boosted: hitter.boosting });
       }
       this._pendingHits.clear();
       for (const zombie of this.zombies) {
@@ -565,13 +680,34 @@
       }
       if (this._pendingCollision > 0.8 && this._elapsed - this._lastCollisionTime > 0.32) {
         const rp = this.rival.chassis.getPosition(), pp = this.chassis.getPosition();
-        this.events.push({ type: 'collision', x: (rp.x + pp.x) / 2, y: (rp.y + pp.y) / 2, strength: clamp(this._pendingCollision / 45, 0.08, 1) });
+        const strength = clamp(this._pendingCollision / 45, 0.08, 1);
+        this.events.push({ type: 'collision', x: (rp.x + pp.x) / 2, y: (rp.y + pp.y) / 2, strength });
         this.stats.rivalImpacts++;
         this._lastCollisionTime = this._elapsed;
+        // Nitro slam: ramming Iron Maw with the nitro lit cuts its engine for a moment.
+        if (strength >= RIVAL_TUNING.slamStrength && this.player.sinceBurn <= 0.4 && this.rival.stun <= 0 && this._elapsed - this._lastSlam >= RIVAL_TUNING.slamCooldown) {
+          this._lastSlam = this._elapsed; this.rival.stun = RIVAL_TUNING.stun; this.stats.slams++;
+          this._gain(this.player, NITRO.gain.slam);
+          this.events.push({ type: 'slam', x: (rp.x + pp.x) / 2, y: (rp.y + pp.y) / 2, strength });
+        }
       }
       this._pendingCollision = 0;
-      this.fuel = Math.max(0, this.fuel - this.stage.fuelDrain * UPGRADES.tank.drain[this.tuning.tank] * (0.35 + Math.abs(throttle) * 0.65) * dt);
+      this.fuel = Math.max(0, this.fuel - this.stage.fuelDrain * UPGRADES.tank.drain[this.tuning.tank] * (0.35 + (this.player.boosting ? 1 : Math.abs(throttle)) * 0.65) * dt);
       const p = this.chassis.getPosition();
+      for (let i = 0; i < this.breakables.length; i++) {
+        const prop = this.breakables[i];
+        if (prop.broken || !prop.active) continue;
+        let owner = '', vx = 0;
+        if (Math.abs(p.x - prop.x) < 1.6 && p.y - prop.y < 2.6) { owner = 'player'; vx = this.chassis.getLinearVelocity().x; }
+        else if (this.rival) {
+          const rp = this.rival.chassis.getPosition();
+          if (Math.abs(rp.x - prop.x) < 1.6 && rp.y - prop.y < 2.6) { owner = 'rival'; vx = this.rival.chassis.getLinearVelocity().x; }
+        }
+        if (!owner) continue;
+        prop.broken = true;
+        if (owner === 'player') { this.stats.smashes++; this._gain(this.player, NITRO.gain.smash); }
+        this.events.push({ type: 'smash', id: prop.id, variant: prop.variant, owner, x: prop.x, y: prop.y + 0.6, strength: clamp(Math.abs(vx) / 25, 0.2, 1), vx });
+      }
       for (const can of this.fuelCans) if (!can.collected && Math.hypot(p.x - can.x, p.y - can.y) < 3.9) {
         can.collected = true; const amount = Math.min(32, 100 - this.fuel); this.fuel += amount;
         this.stats.cans++;
@@ -581,6 +717,7 @@
         const cp = this.track.checkpoints[i];
         if (p.x >= cp.x && p.y > -3 && (!this.monster.alive || cp.x + 13.5 < this.monster.x)) {
           this.checkpointIndex = i; this.events.push({ type: 'checkpoint', index: i, x: cp.x, y: cp.y });
+          this._gain(this.player, NITRO.gain.checkpoint);
         }
       }
       if (this.fuel <= 0) { this._failFuel(); this._capturePose(); return; }
@@ -597,6 +734,48 @@
       this._capturePose();
     }
 
+    // After the run is decided the runtime may let the world roll on for a short outro.
+    // No rules run here: fuel, nitro, pickups, checkpoints, results and stats are frozen.
+    coast(dt) {
+      if (!this.failed && !this.winner) return false;
+      this.posePrev.set(this.poseCurr);
+      dt = clamp(Number(dt) || 0, 0, 1 / 30);
+      if (!dt) return true;
+      const player = this.player, rival = this.rival, vy = this.chassis.getLinearVelocity().y, wasGrounded = player.grounded, air = player.airtime;
+      if (player.boosting) { const p = this.chassis.getPosition(); player.boosting = false; player.boostTime = 0; this.events.push({ type: 'nitro', phase: 'end', owner: 'player', empty: false, x: p.x, y: p.y }); }
+      this._drive(player, 0, this.winner === 'player' || this.failed === 'fuel', 0);
+      let rivalVy = 0;
+      if (rival) {
+        const rp = rival.chassis.getPosition(), rv = rival.chassis.getLinearVelocity(), done = rp.x >= this.track.finishX;
+        rivalVy = rv.y;
+        if (rival.boosting) { rival.boosting = false; rival.boostTime = 0; this.events.push({ type: 'nitro', phase: 'end', owner: 'rival', empty: false, x: rp.x, y: rp.y }); }
+        const balance = clamp((wrap(rival.chassis.getAngle()) - this._slopeAt(rp.x + Math.max(4, rv.x * 0.5))) * 0.8 + rival.chassis.getAngularVelocity() * 0.26, -1, 1);
+        this._drive(rival, done ? 0 : 1, done, done ? 0 : balance, RIVAL_TUNING.motorSpeed * (1 + RIVAL_TUNING.engineSpeedPerLevel * this.tuning.engine));
+      }
+      this.world.step(dt, 8, 3);
+      this._elapsed += dt;
+      this._coasting = true;
+      this._updateFlight(player, dt, vy, false);
+      if (rival) this._updateFlight(rival, dt, rivalVy, false);
+      this._coasting = false;
+      this.grounded = player.grounded; this.airtime = player.airtime; this.airRotation = player.airRotation;
+      if (!wasGrounded && player.grounded && air > 0.16) this.events.push({ type: 'land', strength: clamp(Math.abs(vy) / 13, 0.1, 1), airtime: air, rotation: 0, flips: 0, dir: 'back' });
+      if (rival && this._pendingCollision > 0.8 && this._elapsed - this._lastCollisionTime > 0.32) {
+        const rp = rival.chassis.getPosition(), pp = this.chassis.getPosition();
+        this.events.push({ type: 'collision', x: (rp.x + pp.x) / 2, y: (rp.y + pp.y) / 2, strength: clamp(this._pendingCollision / 45, 0.08, 1) });
+        this._lastCollisionTime = this._elapsed;
+      }
+      this._pendingCollision = 0; this._pendingHits.clear(); this._pendingMonsterCrash = false;
+      for (const zombie of this.zombies) {
+        const pos = zombie.body.getPosition(); zombie.x = pos.x; zombie.y = pos.y; zombie.angle = zombie.body.getAngle();
+        if (zombie.hit) zombie.timeSinceHit += dt;
+      }
+      if (this.monster.hit) this.monster.timeSinceHit += dt;
+      this._weaponDirty = true;
+      this._capturePose();
+      return true;
+    }
+
     _snapshot(vehicle, out) {
       if (!out) out = { wheels: [{}, {}], anchors: [{}, {}], wheelContact: [false, false], suspension: [0, 0] };
       const p = vehicle.chassis.getPosition(), v = vehicle.chassis.getLinearVelocity();
@@ -604,6 +783,7 @@
       out.wheelSpeed = (Math.abs(vehicle.wheels[0].getAngularVelocity()) + Math.abs(vehicle.wheels[1].getAngularVelocity())) / 2;
       out.grounded = vehicle.grounded; out.airtime = vehicle.airtime; out.airRotation = vehicle.airRotation;
       out.inverted = vehicle.inverted; out.stalledTime = vehicle.stalledTime;
+      out.nitro = vehicle.nitro; out.boosting = vehicle.boosting; out.boostTime = vehicle.boostTime; out.stunned = vehicle.stun;
       for (let i = 0; i < 2; i++) {
         const w = vehicle.wheels[i], pos = w.getPosition(), local = vehicle.joints[i].getLocalAnchorA();
         out.wheels[i].x = pos.x; out.wheels[i].y = pos.y; out.wheels[i].angle = w.getAngle();
@@ -621,6 +801,7 @@
       state.rival = this.rival ? this._snapshot(this.rival, state.rival) : null;
       state.fuel = this.fuel; state.cleared = this.cleared; state.totalZombies = this.zombies.length;
       state.racePosition = state.rival && state.rival.x > state.x ? 2 : 1; state.ammo = this.ammo;
+      state.nitroReady = this.player.nitro >= NITRO.engage; state.slipstream = this._slipstream; state.escalated = this._escalated;
       const m = this.monster, monster = state.monster || (state.monster = { weakpoint: {} });
       monster.x = m.x; monster.y = m.y; monster.width = m.width; monster.height = m.height;
       monster.weakpoint.x = m.weakpoint.x; monster.weakpoint.y = m.weakpoint.y;

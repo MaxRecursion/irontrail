@@ -31,6 +31,22 @@ html,body{background:#17141a}.screen-layer{background:radial-gradient(ellipse at
 
 .ojas-title{text-shadow:0 5px 0 #321c29,0 10px 35px #0b071760}.screen-dedication.menu-panel{max-width:820px}.screen-dedication .menu-header{margin-bottom:18px}.dedication-emblem{width:56px;height:56px;margin-bottom:15px}.dedication-emblem svg{width:38px;height:38px}.dedication-card .menu-title{font-size:30px}.dedication-message{font-size:27px;margin:18px 0 11px}.dedication-love{font-size:12px;margin:10px 0}.dedication-truck{width:250px;margin:-8px auto -20px}
 @media(max-height:520px) and (min-width:600px){.screen-dedication.menu-panel{position:relative}.dedication-card{text-align:left;margin:0;max-width:54%}.dedication-emblem{display:none}.dedication-card .menu-title{font-size:25px}.dedication-message{font-size:20px;margin:13px 0 8px}.dedication-love{font-size:10px;line-height:1.5}.dedication-truck{position:absolute;width:280px;max-width:43%;right:22px;bottom:45px}.screen-dedication .menu-actions{justify-content:flex-start}.screen-dedication .menu-hint{display:none}}
+
+/* Redline pass: nitro meter, kinetic award slabs, boss gap and results awards. Transform/opacity only. */
+.hud-nitro{right:24px;bottom:124px;width:196px;transform:skewX(-10deg);transform-origin:100% 100%}.nitro-top{display:flex;justify-content:space-between;align-items:center;height:20px}.nitro-label{display:flex;align-items:center;gap:5px;font:900 italic 14px 'Arial Black',Impact,'Helvetica Neue',Arial,sans-serif;letter-spacing:1.6px;color:#9fe9ff;text-shadow:0 2px 6px #04121c}.nitro-label svg{width:14px;height:14px;fill:currentColor;stroke:none}.nitro-hint{font:700 9px var(--mono);letter-spacing:1px;color:#eafcff;background:#0b2a3ae0;border:1px solid #4fd6ff80;border-radius:4px;padding:2px 6px}.nitro-hint:empty{display:none}.nitro-track{height:13px;margin-top:5px;background:#06141cd9;border:1px solid #4fd6ff70;border-radius:3px;overflow:hidden}.nitro-track .bar-fill{background:linear-gradient(90deg,#1f8fff,#4fd6ff 72%,#eafcff)}.hud-nitro.empty .nitro-label{color:#7f9aa6}.hud-nitro.empty .nitro-track{border-color:#4fd6ff2e}.hud-nitro.full .nitro-track{border-color:#eafcff;animation:nitro-pulse .55s ease-in-out infinite alternate}.hud-nitro.full .nitro-label{color:#eafcff}.hud-nitro.burning .nitro-label{color:#fff;animation:nitro-pulse .12s linear infinite alternate}.hud-nitro.burning .nitro-track{border-color:#eafcff}.hud-nitro.burning .nitro-track .bar-fill{background:linear-gradient(90deg,#4fd6ff,#eafcff)}@keyframes nitro-pulse{from{opacity:.62}to{opacity:1}}
+.hud-gap{margin-top:7px;font:900 italic 17px 'Arial Black',Impact,'Helvetica Neue',Arial,sans-serif;letter-spacing:.5px;color:#c8f59f;text-shadow:0 2px 7px #091a19}.hud-gap.behind{color:#ff9d8a}
+.hud-combo .combo-top strong{font:900 italic 31px 'Arial Black',Impact,'Helvetica Neue',Arial,sans-serif;letter-spacing:-1px;text-shadow:0 3px 0 #2a0d14,0 5px 12px #0008}.hud-combo .combo-track{height:5px}
+.hud-awards{position:absolute;left:24px;top:182px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;pointer-events:none;z-index:21;contain:layout style}.award-slab{--award:var(--accent);display:flex;align-items:center;gap:9px;padding:7px 16px 7px 11px;background:linear-gradient(100deg,#0d0c12f5,#1f1b26eb);border-left:5px solid var(--award);color:#fff;transform:translateX(-140%) skewX(-12deg);opacity:0;font:900 italic 16px 'Arial Black',Impact,'Helvetica Neue',Arial,sans-serif;letter-spacing:.6px;text-transform:uppercase;white-space:nowrap;will-change:transform,opacity;box-shadow:0 4px 12px #0007}.award-slab svg{width:18px;height:18px;stroke-width:2.4;color:var(--award);flex:none}.award-slab b{color:var(--award);font-size:18px}.award-slab b:empty{display:none}.award-slab.show.a{animation:award-a 1.45s cubic-bezier(.2,.9,.3,1) both}.award-slab.show.b{animation:award-b 1.45s cubic-bezier(.2,.9,.3,1) both}
+@keyframes award-a{0%{transform:translateX(-140%) skewX(-12deg);opacity:0}8%{transform:translateX(10px) skewX(-12deg);opacity:1}14%{transform:translateX(0) skewX(-12deg);opacity:1}84%{transform:translateX(0) skewX(-12deg);opacity:1}100%{transform:translateX(-46px) skewX(-12deg);opacity:0}}
+@keyframes award-b{0%{transform:translateX(-140%) skewX(-12deg);opacity:0}8%{transform:translateX(10px) skewX(-12deg);opacity:1}14%{transform:translateX(0) skewX(-12deg);opacity:1}84%{transform:translateX(0) skewX(-12deg);opacity:1}100%{transform:translateX(-46px) skewX(-12deg);opacity:0}}
+.award-nitro,.award-start{--award:#4fd6ff}.award-slam,.award-wreck,.award-giant{--award:#ffb53a}.award-perfect,.award-flip,.award-air{--award:#ffe27a}.award-chain,.award-smash{--award:#ff5a68}.award-checkpoint{--award:#c8f59f}
+.result-awards{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.result-award{padding:7px 12px;border:1px solid #ffffff1f;border-left:3px solid var(--accent);background:#0d0c12b3;font:700 8px var(--mono);letter-spacing:1.2px;color:#cdbfc6}.result-award b{display:block;margin-top:3px;font:900 italic 16px 'Arial Black',Impact,'Helvetica Neue',Arial,sans-serif;color:#fff;letter-spacing:.3px}
+.onboarding-nitro{color:#9fe9ff;border-color:#4fd6ff80!important}.onboarding-nitro svg{width:12px;height:12px;fill:currentColor;stroke:none;vertical-align:-1px}
+.lean-group{position:relative}.pedal.nitro{position:absolute;left:0;right:0;bottom:calc(100% + 8px);width:auto;height:56px;display:flex;align-items:center;justify-content:center;gap:5px;background:#0c3a52eb;border-color:#4fd6ff;color:#eafcff;font:900 italic 12px 'Arial Black',Impact,'Helvetica Neue',Arial,sans-serif;letter-spacing:1px}.pedal.nitro svg{width:15px;height:15px;fill:currentColor;stroke:none}.pedal.nitro.pressed{background:#4fd6ff;color:#06202c;transform:translateY(3px)}
+@media(max-width:820px){.hud-nitro{left:15px;right:15px;bottom:97px;width:auto;transform:none}.hud-nitro .nitro-top{display:none}.hud-nitro .nitro-track{height:9px;margin-top:0}.hud-awards{left:15px;top:150px}.award-slab{font-size:13px;padding:6px 12px 6px 9px}.award-slab b{font-size:14px}.hud-gap{font-size:14px}.hud-combo .combo-top strong{font-size:25px}.pedal.nitro{font-size:10px;height:54px}}
+@media(max-height:520px) and (min-width:600px){.hud-nitro{left:auto;right:16px;bottom:88px;width:150px;transform:none}.hud-nitro .nitro-top{display:none}.hud-nitro .nitro-track{height:9px;margin-top:0}.hud-awards{left:262px;top:14px}.pedal.nitro{height:46px}}
+.reduced-motion .award-slab.show{animation:none;transform:skewX(-12deg);opacity:1}.reduced-motion .hud-nitro.full .nitro-track,.reduced-motion .hud-nitro.burning .nitro-label{animation:none}
+@media(prefers-reduced-motion:reduce){.award-slab.show{animation:none;transform:skewX(-12deg);opacity:1}.hud-nitro.full .nitro-track,.hud-nitro.burning .nitro-label{animation:none}}
 </style><!-- Planck.js 1.5.0 license:
 The MIT License
 Copyright (c) Erin Catto, Ali Shakiba
@@ -58,17 +74,18 @@ SOFTWARE.
 <canvas id="gameCanvas" tabindex="-1" role="img" aria-label="Ojas’s Monster Rally driving game. Arrow keys or WASD drive and balance, Space brakes, X or J fires your one cannon charge, C recovers for 12 fuel."></canvas>
 <div id="gameHud" class="hud" hidden>
   <div class="hud-block hud-stage"><div id="hudStageNumber" class="hud-eyebrow">STAGE 01 / 10</div><div id="hudStageName" class="hud-stage-name">Redstone Outbreak</div><div class="hud-track"><div id="hudProgressFill" class="bar-fill"></div><div id="hudCheckpointTicks"></div><div id="hudMonsterMarker" class="hud-marker-track"><i></i></div><div id="hudRivalMarker" class="hud-marker-track rival" hidden><i></i></div></div><div class="hud-progress-copy"><span id="hudDistance">0 / 220 M</span><span id="hudStageStatus">ONE SHOT. ONE GIANT.</span></div></div>
-  <div class="hud-block hud-run"><div id="hudTime" class="hud-clock">00:00.00</div><div class="hud-score-row">◆ <strong id="hudScore">0</strong></div><div id="hudGhost" class="hud-ghost" hidden>GHOST —</div></div>
+  <div class="hud-block hud-run"><div id="hudTime" class="hud-clock">00:00.00</div><div class="hud-score-row">◆ <strong id="hudScore">0</strong></div><div id="hudGhost" class="hud-ghost" hidden>GHOST —</div><div id="hudGap" class="hud-gap" hidden></div></div>
   <div class="hud-block hud-tools"><button id="pauseButton" class="icon-button" aria-label="Pause game" title="Pause (P / Escape)"><svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg></button><button id="restartButton" class="icon-button" aria-label="Restart stage" title="Retry (R)"><svg viewBox="0 0 24 24"><path d="M5 8a8 8 0 1 1-1 7M5 3v6h6"/></svg></button><button id="soundButton" class="icon-button" aria-label="Mute sound" title="Sound (M)"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM17 8q4 4 0 8M20 5q7 7 0 14"/></svg></button><button id="fullscreenButton" class="icon-button" aria-label="Enter fullscreen" title="Fullscreen (F)"><svg viewBox="0 0 24 24"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M8 20H4v-4"/></svg></button></div>
   <div id="hudCombo" class="hud-block hud-combo" hidden><div class="combo-top"><strong id="hudComboValue">×1</strong><span>☠</span></div><div class="combo-track"><div id="hudComboFill" class="bar-fill"></div></div></div>
   <div id="fuelHud" class="hud-block hud-fuel"><div class="fuel-top"><span>⛽</span><strong id="fuelValue">100%</strong></div><div id="fuelMeter" class="fuel-track" role="meter" aria-label="Fuel remaining" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="fuelFill" class="bar-fill"></div></div><div class="fuel-bottom"><span>☠</span><strong id="zombieValue">0 / 5</strong></div></div>
   <div class="hud-block hud-speed"><div class="gear-chip">GEAR<b id="gearValue">N</b></div><div class="speed-readout"><strong id="speedValue">00</strong><span>KM / H</span><div class="rpm-track"><div id="hudRpmFill" class="bar-fill"></div></div></div></div>
+  <div id="nitroHud" class="hud-block hud-nitro empty" role="meter" aria-label="Nitro"><div class="nitro-top"><span class="nitro-label"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#cue-bolt"/></svg>NITRO</span><span id="nitroHint" class="nitro-hint"></span></div><div class="nitro-track"><div id="nitroFill" class="bar-fill"></div></div></div>
   <div id="weaponHud" class="hud-block hud-cannon"><div class="cannon-top"><span aria-hidden="true">◎</span><i id="ammoPip" class="ammo-pip" role="img" aria-label="One charge ready"></i><strong class="sr-only" id="ammoValue">1 / 1</strong></div><div id="weaponStatus" class="cannon-status sr-only">SAVE YOUR ONE SHOT</div><div id="monsterDistance" class="cannon-distance">GIANT AHEAD</div><button id="fireButton" class="fire-button" aria-label="Fire cannon" title="Fire once (X / J)"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#cue-target"/></svg><small>X / J</small></button></div>
   <div class="recover-slot"><button id="recoverButton" class="recover-button" hidden aria-label="Recover at checkpoint for 12 fuel"><span>↻ RECOVER</span><small>C · −12 FUEL</small></button></div>
   <div id="fpsPanel" class="fps-panel" hidden></div>
-  <div class="touch-controls"><div class="touch-group"><button class="pedal lean" data-input="left" aria-label="Lean nose up">↶</button><button class="pedal lean" data-input="right" aria-label="Lean nose down">↷</button></div><div class="touch-group"><button class="pedal" data-input="reverse" aria-label="Reverse">REV</button><button class="pedal" data-input="brake" aria-label="Brake">■</button><button class="pedal gas" data-input="gas" aria-label="Accelerate">GAS ↑</button></div></div>
+  <div class="touch-controls"><div class="touch-group lean-group"><button class="pedal nitro" data-input="nitro" aria-label="Nitro boost"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#cue-bolt"/></svg>NITRO</button><button class="pedal lean" data-input="left" aria-label="Lean nose up">↶</button><button class="pedal lean" data-input="right" aria-label="Lean nose down">↷</button></div><div class="touch-group"><button class="pedal" data-input="reverse" aria-label="Reverse">REV</button><button class="pedal" data-input="brake" aria-label="Brake">■</button><button class="pedal gas" data-input="gas" aria-label="Accelerate">GAS ↑</button></div></div>
 </div>
-<svg class="sr-only" aria-hidden="true"><defs><symbol id="cue-target" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M12 1v6M12 17v6M1 12h6M17 12h6"/></symbol><symbol id="cue-shot" viewBox="0 0 24 24"><path d="M3 12h16M14 6l6 6-6 6"/></symbol><symbol id="cue-hit" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></symbol><symbol id="cue-miss" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></symbol><symbol id="cue-fuel" viewBox="0 0 24 24"><path d="M5 21V4h9v17M4 21h12M5 9h9M16 5l3 3v9c0 2 3 2 3 0v-5l-3-3"/></symbol><symbol id="cue-checkpoint" viewBox="0 0 24 24"><path d="M5 22V3m0 1h14l-3 4 3 4H5"/></symbol><symbol id="cue-recover" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v7h7"/></symbol><symbol id="cue-trick" viewBox="0 0 24 24"><path d="M5 7a8 8 0 1 1-1 9M5 2v6h6"/></symbol><symbol id="cue-success" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></symbol><symbol id="cue-error" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 9v5M12 17v1"/></symbol><symbol id="cue-upgrade" viewBox="0 0 24 24"><path d="M12 21V3M5 10l7-7 7 7"/></symbol></defs></svg><div class="feedback-layer"><div id="hudCue" class="hud-cue" role="status" hidden><svg aria-hidden="true" viewBox="0 0 24 24"><use id="cueGlyph" href="#cue-target"/></svg><strong id="cueValue"></strong><span id="cueLabel" class="sr-only"></span></div><div id="hudToast" class="hud-toast" role="status" aria-live="polite"></div><div id="hudBanner" class="hud-banner" aria-live="polite"></div></div>
+<svg class="sr-only" aria-hidden="true"><defs><symbol id="cue-target" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M12 1v6M12 17v6M1 12h6M17 12h6"/></symbol><symbol id="cue-shot" viewBox="0 0 24 24"><path d="M3 12h16M14 6l6 6-6 6"/></symbol><symbol id="cue-hit" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></symbol><symbol id="cue-miss" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></symbol><symbol id="cue-fuel" viewBox="0 0 24 24"><path d="M5 21V4h9v17M4 21h12M5 9h9M16 5l3 3v9c0 2 3 2 3 0v-5l-3-3"/></symbol><symbol id="cue-checkpoint" viewBox="0 0 24 24"><path d="M5 22V3m0 1h14l-3 4 3 4H5"/></symbol><symbol id="cue-recover" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v7h7"/></symbol><symbol id="cue-trick" viewBox="0 0 24 24"><path d="M5 7a8 8 0 1 1-1 9M5 2v6h6"/></symbol><symbol id="cue-success" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></symbol><symbol id="cue-error" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 9v5M12 17v1"/></symbol><symbol id="cue-upgrade" viewBox="0 0 24 24"><path d="M12 21V3M5 10l7-7 7 7"/></symbol><symbol id="cue-bolt" viewBox="0 0 24 24"><path d="M13 2L5 14h6l-1 8 9-13h-6z"/></symbol><symbol id="cue-burst" viewBox="0 0 24 24"><path d="M12 2l2.2 6.2L20 5l-3.2 5.8L23 12l-6.2 1.2L20 19l-5.8-3.2L12 22l-2.2-6.2L4 19l3.2-5.8L1 12l6.2-1.2L4 5l5.8 3.2z"/></symbol><symbol id="cue-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17.2 6.4 20.3l1.2-6.3L3 9.6l6.3-.8z"/></symbol><symbol id="cue-air" viewBox="0 0 24 24"><path d="M3 17q5-13 18-10M21 7l-5-1M21 7l-2 5M4 21h16"/></symbol></defs></svg><div class="feedback-layer"><div id="hudCue" class="hud-cue" role="status" hidden><svg aria-hidden="true" viewBox="0 0 24 24"><use id="cueGlyph" href="#cue-target"/></svg><strong id="cueValue"></strong><span id="cueLabel" class="sr-only"></span></div><div id="hudAwards" class="hud-awards" aria-live="polite"><div class="award-slab"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#cue-star"/></svg><span class="award-label"></span><b class="award-value"></b></div><div class="award-slab"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#cue-star"/></svg><span class="award-label"></span><b class="award-value"></b></div><div class="award-slab"><svg aria-hidden="true" viewBox="0 0 24 24"><use href="#cue-star"/></svg><span class="award-label"></span><b class="award-value"></b></div></div><div id="hudToast" class="hud-toast" role="status" aria-live="polite"></div><div id="hudBanner" class="hud-banner" aria-live="polite"></div></div>
 <div id="screenLayer" class="screen-layer"><section id="menuPanel" class="menu-panel screen-title" role="dialog" aria-modal="true" aria-labelledby="screenHeading"><header class="menu-header"><div class="brand"><span class="brand-mark" aria-hidden="true"></span>IRONTRAIL</div><div id="menuCrumb" class="menu-crumb">BUILT FOR OJAS</div><button class="dedication-button" data-ui="dedication" aria-label="Read the dedication for Ojas" title="Made for Ojas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg></button></header><div id="menuBody"></div><footer class="menu-actions"><button id="playButton" class="primary-button">Start your engine <span aria-hidden="true">→</span></button><div id="secondaryActions" class="secondary-actions"></div></footer><div id="menuHint" class="menu-hint">ARROWS / WASD · X / J FIRE · C RECOVER · GAMEPAD READY</div></section></div>
 </div>
 <script>
@@ -122,7 +139,13 @@ SOFTWARE.
     tank: Object.freeze({ drain: upgrade([1, 0.93, 0.86, 0.79]) })
   });
   const RIVAL_TUNING = Object.freeze({ motorSpeed: 34.3, engineSpeedPerLevel: 0.035, engineTorquePerLevel: 0.06,
-    startGap: 6, rampLift: 0.9 });
+    startGap: 6, rampLift: 0.9, nitroPower: 0.95, nitroBurnAt: 40, stun: 1.1, slamStrength: 0.35, slamCooldown: 4 });
+  // Redline nitro: earned by stunts and smashes, burned for torque, top speed and thrust.
+  const NITRO = Object.freeze({ max: 100, start: 25, engage: 8, drain: 34, torque: 1.6, speed: 1.27, thrustGround: 5, thrustAir: 3,
+    gain: Object.freeze({ airPerSecond: 4, airDelay: 0.25, landing: 3, perfect: 8, flip: 14, bigAir: 5, zombie: 3, smash: 1,
+      checkpoint: 6, monster: 30, slipstreamPerSecond: 6, slam: 25, rivalPerSecond: 8 }) });
+  // Local integer hash for deterministic scenery; never consumes options.random.
+  const hash = n => { n = Math.imul(n ^ 0x9e3779b9, 0x85ebca6b); n ^= n >>> 13; n = Math.imul(n, 0xc2b2ae35); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; };
   const STAGES = Object.freeze(NAMES.map((name, i) => Object.freeze({
     id: i + 1, name, subtitle: SUBTITLES[i], length: LENGTHS[i], difficulty: i + 1,
     boss: i === 9, fuelDrain: FUEL_RATES[i], fuelInterval: 78 + i * 2,
@@ -134,6 +157,7 @@ SOFTWARE.
     static get POSE() { return POSE; }
     static get UPGRADES() { return UPGRADES; }
     static get RIVAL_TUNING() { return RIVAL_TUNING; }
+    static get NITRO() { return NITRO; }
 
     static warmUp(milliseconds = 60) {
       const now = () => typeof performance === 'object' ? performance.now() : Date.now();
@@ -174,7 +198,27 @@ SOFTWARE.
         segment.xs = new Float64Array(segment.length);
         for (let j = 0; j < segment.length; j++) segment.xs[j] = segment[j].x;
       }
+      this._breakableLayout = this._makeBreakables();
       this.restart();
+    }
+
+    // Smashable roadside props: plain records with x-overlap triggers, no Planck bodies.
+    _makeBreakables() {
+      const track = this.track, out = [], zombieXs = [], canXs = track.canXs.slice();
+      for (let i = 0; i < this.stage.zombieCount; i++) zombieXs.push(this._safeEntityX(track.startX + 25 + i * (this.stage.length - 45) / this.stage.zombieCount, 7));
+      if (this.stage.boss) canXs.push(track.startX + 35);
+      const spacing = 14.5 - this.stageIndex * 0.55;
+      for (let x = track.startX + 18, n = 0; out.length < 40; n++) {
+        const px = x + hash(this.stageIndex * 977 + n * 31 + 7) * 4;
+        x += spacing * (0.75 + hash(this.stageIndex * 613 + n * 17 + 3) * 0.5);
+        if (px > track.finishX - 12) break;
+        const segment = this._segmentAt(px);
+        if (!segment || px - segment[0].x < 6 || segment[segment.length - 1].x - px < 6) continue;
+        if (Math.abs(this._slopeAt(px)) >= 0.25) continue;
+        if (canXs.some(c => Math.abs(c - px) < 5) || track.checkpoints.some(c => Math.abs(c.x - px) < 8) || zombieXs.some(z => Math.abs(z - px) < 2.5)) continue;
+        out.push({ id: out.length, x: px, y: this._heightAt(px), variant: Math.floor(hash(this.stageIndex * 131 + n * 7 + 11) * 8), broken: false, active: true });
+      }
+      return out;
     }
 
     _makeTrack() {
@@ -342,6 +386,7 @@ SOFTWARE.
         this.monster.alive = false; this.monster.hit = true; this.monster.timeSinceHit = 0;
         this.monster.body.setActive(false);
         this.events.push({ type: 'monsterHit', x: this.monster.x, y: this.monster.weakpoint.y, strength: 1 });
+        this._gain(this.player, NITRO.gain.monster);
       }
       if (hit || bullet.remaining <= 0.000001) this.projectile = null;
     }
@@ -366,8 +411,11 @@ SOFTWARE.
       this._weaponDirty = true; this._state = null;
       this._pendingMonsterCrash = false; this.ammo = 1; this.projectile = null;
       this.fuel = 100; this.failed = null; this.winner = null; this.finished = false; this.cleared = 0;
-      this.stats = { flips: 0, perfectLandings: 0, bigAirs: 0, maxAir: 0, airTotal: 0, cans: 0, rivalImpacts: 0 };
+      this.stats = { flips: 0, perfectLandings: 0, bigAirs: 0, maxAir: 0, airTotal: 0, cans: 0, rivalImpacts: 0,
+        smashes: 0, slams: 0, topSpeed: 0, nitroBurned: 0, nitroEarned: 0 };
+      this._escalated = false; this._lastSlam = -100; this._slipstream = 0; this._wreckAt = -100; this._coasting = false;
       this.checkpointIndex = 0;
+      this.player = null;
       this._spawnPlayer(0);
       this.rival = this.stage.boss ? this._createTruck(this.track.startX - RIVAL_TUNING.startGap, 'rival') : null;
       this.zombies = [];
@@ -375,7 +423,7 @@ SOFTWARE.
         const rawX = this.track.startX + 25 + i * (this.stage.length - 45) / this.stage.zombieCount;
         const x = this._safeEntityX(rawX, 7), y = this._heightAt(x) + 0.7;
         const body = this.world.createDynamicBody({ position: V(x, y), angularDamping: 2, linearDamping: 0.2 });
-        const zombie = { id: i, x, y, angle: 0, alive: true, hit: false, timeSinceHit: 0, phase: i * 1.7, body };
+        const zombie = { id: i, x, y, angle: 0, alive: true, hit: false, timeSinceHit: 0, phase: i * 1.7, body, punt: 0 };
         body.setUserData({ type: 'zombie', entity: zombie });
         const filter = { density: 0.16, friction: 0.5, restitution: 0.05, filterCategoryBits: 8, filterMaskBits: 1 | 2 | 4 };
         body.createFixture(new P.Box(0.2, 0.65), filter);
@@ -393,6 +441,8 @@ SOFTWARE.
         this.fuelCans.unshift({ id: -1, x, y: this._heightAt(x) + 1.3, collected: false });
       }
       this.monster = this._createMonster();
+      this.breakables = this._breakableLayout;
+      for (const prop of this.breakables) { prop.broken = false; prop.active = Math.abs(prop.x - this.monster.x) >= 7; }
       this.world.on('begin-contact', contact => {
         const a = contact.getFixtureA().getBody().getUserData(), b = contact.getFixtureB().getBody().getUserData();
         if (a?.type === 'zombie' && b?.type === 'vehicle' && a.entity.alive) this._pendingHits.add(a.entity);
@@ -434,7 +484,9 @@ SOFTWARE.
       }
       return { chassis, wheels, joints, grounded: false, airtime: 0, everGrounded: false, takeoffSent: false, owner,
         wheelContact: [false, false], chassisContact: false, inverted: false, stalledTime: 0,
-        airRotation: 0, lastAngle: 0, flipCount: 0, landing: null, righting: false };
+        airRotation: 0, lastAngle: 0, flipCount: 0, landing: null, righting: false,
+        nitro: NITRO.start, boosting: false, boostTime: 0, sinceBurn: Infinity, stun: 0,
+        mass: chassis.getMass() + wheels[0].getMass() + wheels[1].getMass() };
     }
 
     _spawnPlayer(checkpointIndex) {
@@ -445,9 +497,12 @@ SOFTWARE.
           this.world.destroyBody(this.player.chassis);
         }
       }
+      // The meter is a run resource like ammunition: it survives checkpoint recovery.
+      const nitro = this.player ? this.player.nitro : NITRO.start;
       this.checkpointIndex = clamp(Math.floor(Number(checkpointIndex) || 0), 0, this.track.checkpoints.length - 1);
       const cp = this.track.checkpoints[this.checkpointIndex];
       this.player = this._createTruck(cp.x + 1.5, 'player');
+      this.player.nitro = nitro; this._fell = false; this._wasInverted = false;
       this.chassis = this.player.chassis; this.wheels = this.player.wheels; this.joints = this.player.joints;
       this.grounded = false; this.airtime = 0;
       this.airRotation = 0; this._weaponDirty = true;
@@ -519,10 +574,20 @@ SOFTWARE.
       const mass = vehicle.chassis.getMass(), isPlayer = vehicle.owner === 'player';
       const torqueScale = isPlayer ? UPGRADES.engine.torque[this.tuning.engine] : 1 + RIVAL_TUNING.engineTorquePerLevel * this.tuning.engine;
       if (isPlayer) maxSpeed *= UPGRADES.engine.speed[this.tuning.engine];
+      // burn is exactly 0 unless nitro is lit, so every factor below is exactly 1 for a v3 run.
+      const burn = vehicle.boosting ? (isPlayer ? 1 : RIVAL_TUNING.nitroPower) : 0;
+      // Wheels only get the extra drive on the ground: spinning them up in the air would pitch the
+      // chassis over. Airborne nitro is thrust alone.
+      const drive = vehicle.grounded ? burn : 0;
+      if (burn) throttle = Math.max(throttle, 1);
       for (const joint of vehicle.joints) {
         joint.enableMotor(brake || Math.abs(throttle) > 0.01);
-        joint.setMotorSpeed(brake ? 0 : throttle * (throttle >= 0 ? -maxSpeed : -13));
-        joint.setMaxMotorTorque(brake ? 125 : (vehicle.grounded ? 48 : 7) * torqueScale * Math.abs(throttle));
+        joint.setMotorSpeed(brake ? 0 : throttle * (throttle >= 0 ? -maxSpeed * (1 + (NITRO.speed - 1) * drive) : -13));
+        joint.setMaxMotorTorque(brake ? 125 : (vehicle.grounded ? 48 : 7) * torqueScale * Math.abs(throttle) * (1 + (NITRO.torque - 1) * drive));
+      }
+      if (burn && !vehicle.inverted && !vehicle.righting) {
+        const angle = vehicle.chassis.getAngle(), thrust = vehicle.mass * (vehicle.grounded ? NITRO.thrustGround : NITRO.thrustAir) * burn;
+        this._force.set(Math.cos(angle) * thrust, Math.sin(angle) * thrust); vehicle.chassis.applyForceToCenter(this._force, true);
       }
       if (vehicle.grounded) {
         const wantsRighting = !isPlayer || Math.abs(lean) > 0.05;
@@ -552,6 +617,35 @@ SOFTWARE.
       } else if (!isPlayer) vehicle.chassis.applyTorque(-lean * mass * 8, true);
     }
 
+    _gain(vehicle, amount) {
+      if (!(amount > 0)) return;
+      const before = vehicle.nitro; vehicle.nitro = Math.min(NITRO.max, before + amount);
+      if (vehicle !== this.player) return;
+      this.stats.nitroEarned += vehicle.nitro - before;
+      if (before < NITRO.max && vehicle.nitro >= NITRO.max) {
+        const p = vehicle.chassis.getPosition(); this.events.push({ type: 'nitro', phase: 'full', owner: 'player', x: p.x, y: p.y });
+      }
+    }
+
+    grantNitro(amount) {
+      if (!this.failed && !this.winner) this._gain(this.player, Number(amount) || 0);
+      return this.player.nitro;
+    }
+
+    _updateBurn(vehicle, wants, dt) {
+      const was = vehicle.boosting;
+      if (was) { if (!wants || vehicle.nitro <= 0) vehicle.boosting = false; }
+      else if (wants && vehicle.nitro >= NITRO.engage) vehicle.boosting = true;
+      if (vehicle.boosting) {
+        const used = Math.min(vehicle.nitro, NITRO.drain * dt); vehicle.nitro -= used; vehicle.boostTime += dt; vehicle.sinceBurn = 0;
+        if (vehicle === this.player) this.stats.nitroBurned += used;
+      } else { vehicle.boostTime = 0; vehicle.sinceBurn += dt; }
+      if (was !== vehicle.boosting) {
+        const p = vehicle.chassis.getPosition();
+        this.events.push({ type: 'nitro', phase: vehicle.boosting ? 'start' : 'end', owner: vehicle.owner, empty: !vehicle.boosting && vehicle.nitro <= 0, x: p.x, y: p.y });
+      }
+    }
+
     _updateFlight(vehicle, dt, vyBefore, emit) {
       const before = vehicle.grounded, flightTime = vehicle.airtime;
       vehicle.grounded = this._touchingGround(vehicle);
@@ -565,11 +659,13 @@ SOFTWARE.
           if (flightTime >= 0.45) vehicle.landing = { airtime: flightTime, rotation, flips, dir, started: this._elapsed,
             mask: (vehicle.wheelContact[0] ? 1 : 0) | (vehicle.wheelContact[1] ? 2 : 0), bothAt: Infinity };
         }
+        if (!emit && !this._coasting && !before && vehicle.everGrounded && flightTime >= 0.45 && !vehicle.inverted) this._gain(vehicle, NITRO.gain.landing);
         vehicle.airtime = 0; vehicle.everGrounded = true; vehicle.takeoffSent = false;
       } else {
         if (before) { vehicle.airRotation = 0; vehicle.flipCount = 0; }
         vehicle.airRotation += wrap(angle - vehicle.lastAngle);
         vehicle.airtime += dt;
+        if (!this._coasting && !vehicle.boosting && vehicle.airtime > NITRO.gain.airDelay) this._gain(vehicle, NITRO.gain.airPerSecond * dt);
         if (emit && vehicle.everGrounded && vehicle.airtime > 0.09 && !vehicle.takeoffSent) {
           vehicle.takeoffSent = true;
           this.events.push({ type: 'takeoff', strength: clamp(Math.hypot(vehicle.chassis.getLinearVelocity().x, vyBefore) / 26, 0.2, 1) });
@@ -591,6 +687,7 @@ SOFTWARE.
           this.events.push({ type: 'landing', airtime: landing.airtime, rotation: landing.rotation, flips, dir: landing.dir,
             upright, perfect, bigAir, x: p.x, y: p.y });
           this.stats.flips += flips; if (perfect) this.stats.perfectLandings++; if (bigAir) this.stats.bigAirs++;
+          this._gain(vehicle, (upright ? NITRO.gain.landing : 0) + (perfect ? NITRO.gain.perfect : 0) + flips * NITRO.gain.flip + (bigAir && upright ? NITRO.gain.bigAir : 0));
           vehicle.landing = null;
         }
       }
@@ -611,6 +708,11 @@ SOFTWARE.
       if (this.monster.hit) this.monster.timeSinceHit += dt;
       const throttle = clamp(Number(input.throttle) || 0, -1, 1), lean = clamp(Number(input.lean) || 0, -1, 1);
       const beforeX = this.chassis.getPosition().x, vyBefore = this.chassis.getLinearVelocity().y;
+      this._updateBurn(this.player, !!input.boost && throttle >= -0.05 && !input.brake && !this.player.inverted && !this.player.righting, dt);
+      if (this.player.boosting && this.rival && !this._escalated) {
+        // Iron Maw answers the player's first burn with its own meter. It never reads position or gap.
+        this._escalated = true; const rp = this.rival.chassis.getPosition(); this.events.push({ type: 'escalate', x: rp.x, y: rp.y });
+      }
       this._drive(this.player, throttle, !!input.brake, lean);
       let rivalBeforeX = 0, rivalVy = 0;
       if (this.rival) {
@@ -623,7 +725,13 @@ SOFTWARE.
           const feature = this.track.features[f];
           if ((feature.kind === 'ramp' || feature.kind === 'kicker') && rivalBeforeX > feature.endX - 4 && rivalBeforeX < feature.endX - 0.1) rivalThrottle = RIVAL_TUNING.rampLift;
         }
-        this._drive(this.rival, rivalThrottle, false, balance, RIVAL_TUNING.motorSpeed * (1 + RIVAL_TUNING.engineSpeedPerLevel * this.tuning.engine));
+        const rival = this.rival, stunned = rival.stun > 0;
+        if (stunned) rival.stun = Math.max(0, rival.stun - dt);
+        // Iron Maw has no zombies or props to farm, so its meter also charges steadily while it drives.
+        if (!stunned && !rival.boosting) this._gain(rival, NITRO.gain.rivalPerSecond * dt);
+        this._updateBurn(rival, this._escalated && !stunned && !rival.inverted && !rival.righting &&
+          (rival.boosting || rival.grounded && rivalThrottle === 1 && rival.nitro >= RIVAL_TUNING.nitroBurnAt), dt);
+        this._drive(rival, stunned ? 0 : rivalThrottle, false, stunned ? 0 : balance, RIVAL_TUNING.motorSpeed * (1 + RIVAL_TUNING.engineSpeedPerLevel * this.tuning.engine));
       }
       for (const zombie of this.zombies) {
         if (!zombie.alive || Math.abs(zombie.x - beforeX) > 45) continue;
@@ -642,6 +750,23 @@ SOFTWARE.
       }
       this._updateFlight(this.player, dt, vyBefore, true);
       this.grounded = this.player.grounded; this.airtime = this.player.airtime; this.airRotation = this.player.airRotation;
+      {
+        const pp = this.chassis.getPosition(), pv = this.chassis.getLinearVelocity(), speed = Math.abs(pv.x);
+        if (speed > this.stats.topSpeed) this.stats.topSpeed = speed;
+        if (this.player.inverted && !this._wasInverted && this._elapsed - this._wreckAt > 1.5) {
+          this._wreckAt = this._elapsed;
+          this.events.push({ type: 'wreck', kind: 'roof', x: pp.x, y: pp.y, strength: clamp(Math.hypot(pv.x, vyBefore) / 20, 0.3, 1) });
+        }
+        this._wasInverted = this.player.inverted;
+        if (!this._fell && pp.y < -3) { this._fell = true; this.events.push({ type: 'wreck', kind: 'fall', x: pp.x, y: pp.y, strength: 1 }); }
+        let slip = 0;
+        if (this.rival && this.player.grounded) {
+          const rp = this.rival.chassis.getPosition(), gap = rp.x - pp.x;
+          if (gap > 2 && gap < 10 && Math.abs(rp.y - pp.y) < 3) slip = gap < 3 ? gap - 2 : gap > 7 ? (10 - gap) / 3 : 1;
+        }
+        this._slipstream = slip;
+        if (slip > 0) this._gain(this.player, NITRO.gain.slipstreamPerSecond * slip * dt);
+      }
       if (Math.abs(throttle) > 0.05 && this.grounded && Math.abs(this.chassis.getLinearVelocity().x) < 0.6) this.player.stalledTime += dt;
       else this.player.stalledTime = 0;
       if (this.rival) this._updateFlight(this.rival, dt, rivalVy, false);
@@ -656,7 +781,14 @@ SOFTWARE.
         }
         zombie.body.applyLinearImpulse(V(0.12, 0.2), zombie.body.getWorldCenter(), true);
         zombie.body.applyAngularImpulse(-0.16, true);
-        this.events.push({ type: 'zombie', x: zombie.body.getPosition().x, y: zombie.body.getPosition().y, strength: clamp(Math.abs(this.chassis.getLinearVelocity().x) / 25, 0.2, 1) });
+        // The renderer adds a cosmetic punt arc from `punt` (the hitting truck's speed). Launching the
+        // body itself would perturb broad-phase pair order and break v3 bit-identity.
+        const zp = zombie.body.getPosition();
+        const hitter = this.rival && Math.abs(this.rival.chassis.getPosition().x - zp.x) < Math.abs(this.chassis.getPosition().x - zp.x) ? this.rival : this.player;
+        const hv = hitter.chassis.getLinearVelocity().x;
+        zombie.punt = hv;
+        this._gain(hitter, NITRO.gain.zombie);
+        this.events.push({ type: 'zombie', x: zp.x, y: zp.y, strength: clamp(Math.abs(this.chassis.getLinearVelocity().x) / 25, 0.2, 1), vx: hv, boosted: hitter.boosting });
       }
       this._pendingHits.clear();
       for (const zombie of this.zombies) {
@@ -665,13 +797,34 @@ SOFTWARE.
       }
       if (this._pendingCollision > 0.8 && this._elapsed - this._lastCollisionTime > 0.32) {
         const rp = this.rival.chassis.getPosition(), pp = this.chassis.getPosition();
-        this.events.push({ type: 'collision', x: (rp.x + pp.x) / 2, y: (rp.y + pp.y) / 2, strength: clamp(this._pendingCollision / 45, 0.08, 1) });
+        const strength = clamp(this._pendingCollision / 45, 0.08, 1);
+        this.events.push({ type: 'collision', x: (rp.x + pp.x) / 2, y: (rp.y + pp.y) / 2, strength });
         this.stats.rivalImpacts++;
         this._lastCollisionTime = this._elapsed;
+        // Nitro slam: ramming Iron Maw with the nitro lit cuts its engine for a moment.
+        if (strength >= RIVAL_TUNING.slamStrength && this.player.sinceBurn <= 0.4 && this.rival.stun <= 0 && this._elapsed - this._lastSlam >= RIVAL_TUNING.slamCooldown) {
+          this._lastSlam = this._elapsed; this.rival.stun = RIVAL_TUNING.stun; this.stats.slams++;
+          this._gain(this.player, NITRO.gain.slam);
+          this.events.push({ type: 'slam', x: (rp.x + pp.x) / 2, y: (rp.y + pp.y) / 2, strength });
+        }
       }
       this._pendingCollision = 0;
-      this.fuel = Math.max(0, this.fuel - this.stage.fuelDrain * UPGRADES.tank.drain[this.tuning.tank] * (0.35 + Math.abs(throttle) * 0.65) * dt);
+      this.fuel = Math.max(0, this.fuel - this.stage.fuelDrain * UPGRADES.tank.drain[this.tuning.tank] * (0.35 + (this.player.boosting ? 1 : Math.abs(throttle)) * 0.65) * dt);
       const p = this.chassis.getPosition();
+      for (let i = 0; i < this.breakables.length; i++) {
+        const prop = this.breakables[i];
+        if (prop.broken || !prop.active) continue;
+        let owner = '', vx = 0;
+        if (Math.abs(p.x - prop.x) < 1.6 && p.y - prop.y < 2.6) { owner = 'player'; vx = this.chassis.getLinearVelocity().x; }
+        else if (this.rival) {
+          const rp = this.rival.chassis.getPosition();
+          if (Math.abs(rp.x - prop.x) < 1.6 && rp.y - prop.y < 2.6) { owner = 'rival'; vx = this.rival.chassis.getLinearVelocity().x; }
+        }
+        if (!owner) continue;
+        prop.broken = true;
+        if (owner === 'player') { this.stats.smashes++; this._gain(this.player, NITRO.gain.smash); }
+        this.events.push({ type: 'smash', id: prop.id, variant: prop.variant, owner, x: prop.x, y: prop.y + 0.6, strength: clamp(Math.abs(vx) / 25, 0.2, 1), vx });
+      }
       for (const can of this.fuelCans) if (!can.collected && Math.hypot(p.x - can.x, p.y - can.y) < 3.9) {
         can.collected = true; const amount = Math.min(32, 100 - this.fuel); this.fuel += amount;
         this.stats.cans++;
@@ -681,6 +834,7 @@ SOFTWARE.
         const cp = this.track.checkpoints[i];
         if (p.x >= cp.x && p.y > -3 && (!this.monster.alive || cp.x + 13.5 < this.monster.x)) {
           this.checkpointIndex = i; this.events.push({ type: 'checkpoint', index: i, x: cp.x, y: cp.y });
+          this._gain(this.player, NITRO.gain.checkpoint);
         }
       }
       if (this.fuel <= 0) { this._failFuel(); this._capturePose(); return; }
@@ -697,6 +851,48 @@ SOFTWARE.
       this._capturePose();
     }
 
+    // After the run is decided the runtime may let the world roll on for a short outro.
+    // No rules run here: fuel, nitro, pickups, checkpoints, results and stats are frozen.
+    coast(dt) {
+      if (!this.failed && !this.winner) return false;
+      this.posePrev.set(this.poseCurr);
+      dt = clamp(Number(dt) || 0, 0, 1 / 30);
+      if (!dt) return true;
+      const player = this.player, rival = this.rival, vy = this.chassis.getLinearVelocity().y, wasGrounded = player.grounded, air = player.airtime;
+      if (player.boosting) { const p = this.chassis.getPosition(); player.boosting = false; player.boostTime = 0; this.events.push({ type: 'nitro', phase: 'end', owner: 'player', empty: false, x: p.x, y: p.y }); }
+      this._drive(player, 0, this.winner === 'player' || this.failed === 'fuel', 0);
+      let rivalVy = 0;
+      if (rival) {
+        const rp = rival.chassis.getPosition(), rv = rival.chassis.getLinearVelocity(), done = rp.x >= this.track.finishX;
+        rivalVy = rv.y;
+        if (rival.boosting) { rival.boosting = false; rival.boostTime = 0; this.events.push({ type: 'nitro', phase: 'end', owner: 'rival', empty: false, x: rp.x, y: rp.y }); }
+        const balance = clamp((wrap(rival.chassis.getAngle()) - this._slopeAt(rp.x + Math.max(4, rv.x * 0.5))) * 0.8 + rival.chassis.getAngularVelocity() * 0.26, -1, 1);
+        this._drive(rival, done ? 0 : 1, done, done ? 0 : balance, RIVAL_TUNING.motorSpeed * (1 + RIVAL_TUNING.engineSpeedPerLevel * this.tuning.engine));
+      }
+      this.world.step(dt, 8, 3);
+      this._elapsed += dt;
+      this._coasting = true;
+      this._updateFlight(player, dt, vy, false);
+      if (rival) this._updateFlight(rival, dt, rivalVy, false);
+      this._coasting = false;
+      this.grounded = player.grounded; this.airtime = player.airtime; this.airRotation = player.airRotation;
+      if (!wasGrounded && player.grounded && air > 0.16) this.events.push({ type: 'land', strength: clamp(Math.abs(vy) / 13, 0.1, 1), airtime: air, rotation: 0, flips: 0, dir: 'back' });
+      if (rival && this._pendingCollision > 0.8 && this._elapsed - this._lastCollisionTime > 0.32) {
+        const rp = rival.chassis.getPosition(), pp = this.chassis.getPosition();
+        this.events.push({ type: 'collision', x: (rp.x + pp.x) / 2, y: (rp.y + pp.y) / 2, strength: clamp(this._pendingCollision / 45, 0.08, 1) });
+        this._lastCollisionTime = this._elapsed;
+      }
+      this._pendingCollision = 0; this._pendingHits.clear(); this._pendingMonsterCrash = false;
+      for (const zombie of this.zombies) {
+        const pos = zombie.body.getPosition(); zombie.x = pos.x; zombie.y = pos.y; zombie.angle = zombie.body.getAngle();
+        if (zombie.hit) zombie.timeSinceHit += dt;
+      }
+      if (this.monster.hit) this.monster.timeSinceHit += dt;
+      this._weaponDirty = true;
+      this._capturePose();
+      return true;
+    }
+
     _snapshot(vehicle, out) {
       if (!out) out = { wheels: [{}, {}], anchors: [{}, {}], wheelContact: [false, false], suspension: [0, 0] };
       const p = vehicle.chassis.getPosition(), v = vehicle.chassis.getLinearVelocity();
@@ -704,6 +900,7 @@ SOFTWARE.
       out.wheelSpeed = (Math.abs(vehicle.wheels[0].getAngularVelocity()) + Math.abs(vehicle.wheels[1].getAngularVelocity())) / 2;
       out.grounded = vehicle.grounded; out.airtime = vehicle.airtime; out.airRotation = vehicle.airRotation;
       out.inverted = vehicle.inverted; out.stalledTime = vehicle.stalledTime;
+      out.nitro = vehicle.nitro; out.boosting = vehicle.boosting; out.boostTime = vehicle.boostTime; out.stunned = vehicle.stun;
       for (let i = 0; i < 2; i++) {
         const w = vehicle.wheels[i], pos = w.getPosition(), local = vehicle.joints[i].getLocalAnchorA();
         out.wheels[i].x = pos.x; out.wheels[i].y = pos.y; out.wheels[i].angle = w.getAngle();
@@ -721,6 +918,7 @@ SOFTWARE.
       state.rival = this.rival ? this._snapshot(this.rival, state.rival) : null;
       state.fuel = this.fuel; state.cleared = this.cleared; state.totalZombies = this.zombies.length;
       state.racePosition = state.rival && state.rival.x > state.x ? 2 : 1; state.ammo = this.ammo;
+      state.nitroReady = this.player.nitro >= NITRO.engage; state.slipstream = this._slipstream; state.escalated = this._escalated;
       const m = this.monster, monster = state.monster || (state.monster = { weakpoint: {} });
       monster.x = m.x; monster.y = m.y; monster.width = m.width; monster.height = m.height;
       monster.weakpoint.x = m.weakpoint.x; monster.weakpoint.y = m.weakpoint.y;
@@ -875,6 +1073,14 @@ class TruckAudio {
     this.wind = this._noiseLayer('lowpass', 650, 0.35);
     this.skid=this._noiseLayer('bandpass',2200,.5);this.creak=this._noiseLayer('bandpass',360,1.1);
     this.exhaustNoise = this._noiseLayer('lowpass', 240, 0.6);
+    // Nitro: a band of jet noise plus a low afterburner tone, silent until a burn starts.
+    this.jet = this._noiseLayer('bandpass', 900, 0.8);
+    this.burner = ctx.createOscillator(); this.burner.type = 'sawtooth'; this.burner.frequency.value = 72;
+    const burnerFilter = ctx.createBiquadFilter(); burnerFilter.type = 'lowpass'; burnerFilter.frequency.value = 420; burnerFilter.Q.value = 1.2;
+    this.burnerGain = ctx.createGain(); this.burnerGain.gain.value = 0;
+    this.burner.connect(burnerFilter); burnerFilter.connect(this.burnerGain); this.burnerGain.connect(this.engineBus);
+    try{this.burnerGain.gain.automationRate='k-rate';this.burner.frequency.automationRate='k-rate';}catch(_){}
+    this.burner.start();
     this.engine.start();
     this.sub.start();
     this.intake.start();
@@ -1027,7 +1233,8 @@ class TruckAudio {
     if (absSpeed < 1) this._gearIndex = 0;
     this.gear = speed < -0.5 ? 'R' : this._gearIndex + 1;
     let targetRPM = 820 + wheelSpeed * this._ratios[this._gearIndex] * 9.5493;
-    targetRPM += throttle * 380;
+    const burning = !!state.boosting, burnTime = Math.min(1, TruckAudio.clamp(state.boostTime, 0, 10) / 2.4);
+    targetRPM += throttle * 380 + (burning ? 520 : 0);
     if (!grounded) targetRPM = Math.max(targetRPM, 950 + throttle * 3500);
     if (this._shiftDip > 0) targetRPM *= 0.76;
     targetRPM = TruckAudio.clamp(targetRPM, 780, 5200);
@@ -1054,13 +1261,21 @@ class TruckAudio {
     this._set(this.gravel.filter.frequency, 750 + absSpeed * 35);
     const air = !grounded ? Math.min(1, TruckAudio.clamp(state.airtime, 0, 5) / .38) : 0;
     const rush=Math.hypot(absSpeed,TruckAudio.clamp(state.vy,-35,35)*1.2);
-    this._set(this.wind.gain.gain, Math.min(.085,rush*.002)*(0.12+air*.88), .12);
+    const draft = TruckAudio.clamp(state.slipstream, 0, 1);
+    this._set(this.wind.gain.gain, Math.min(.085,rush*.002)*(0.12+air*.88)+draft*.028, .12);
+    // The burn climbs in pitch and brightness the longer it is held.
+    this._set(this.jet.gain.gain, burning ? .13 + burnTime * .06 : 0, burning ? .05 : .12);
+    this._set(this.jet.filter.frequency, (650 + burnTime * 1700) * (.6 + .4 * Math.sqrt(scale)), .12);
+    this._set(this.burnerGain.gain, burning ? .075 + burnTime * .035 : 0, burning ? .04 : .1);
+    this._set(this.burner.frequency, (68 + burnTime * 46) * pitch, .09);
     this._set(this.wind.filter.frequency, (500+Math.min(2600,rush*60))*(.65+.35*Math.sqrt(scale)), .14);
     this._set(this.skid.gain.gain,grounded?Math.min(.055,slip*.06+(input?.brake?absSpeed*.001:0)):0,.07);
     const compression=state.suspension?Math.abs(state.suspension[0])+Math.abs(state.suspension[1]):0;
     this._set(this.creak.gain.gain,grounded?Math.min(.025,Math.abs(compression-this._lastCompression)*.18):0,.05);this._lastCompression=compression;
     if(this.context.state==='running'&&this._lastThrottle>.7&&throttle<.1&&this.rpm>2600&&this.context.currentTime-this._lastBackfire>.8&&this._canPlay()){
       this._lastBackfire=this.context.currentTime;this._thump(.055,100,42,.07);this._noiseBurst(.04,900,.055);
+      // Lift-off: turbo blow-off and a short crackle of pops instead of a single thud.
+      this._noiseSweep(.026,3400,900,.2,.02);for(let i=1;i<4;i++)this._thump(.03-i*.006,120+i*14,48,.045,.07*i+Math.random()*.03);
     }this._lastThrottle=throttle;
   }
 
@@ -1313,6 +1528,42 @@ class TruckAudio {
     }
   }
   _cue(name,cooldown=.12){if(!this._canPlay())return false;const now=this.context.currentTime;if(now-(this._cueTimes[name]??-10)<cooldown)return false;this._cueTimes[name]=now;return true;}
+  // ---- Redline cues (SPEC §15.3). All pass through _cue: gated by mute/pause/volume and cooled down. ----
+  nitro(phase='start',options={}) {
+    const rival=options.owner==='rival',g=rival?.45:1;
+    if(phase==='start'){if(!this._cue(rival?'nitroRival':'nitroStart',.25))return;
+      this._thump(.34*g,95,38,.32);this._impactBody(.14*g,180,.2);this._noiseSweep(.13*g,500,3600,.42);this._noiseBurst(.09*g,2600,.09,0,'highpass');if(!rival&&this.music)this.music.duck(.25,.55);}
+    else if(phase==='end'){if(!this._cue(rival?'nitroRivalEnd':'nitroEnd',.2))return;
+      this._noiseSweep((options.empty?.075:.05)*g,3200,420,options.empty?.5:.32);if(options.empty)for(let i=0;i<3;i++)this._thump(.035*g,130+i*10,46,.05,.09+i*.07);}
+    else if(phase==='full'){if(!this._cue('nitroFull',.8))return;this._thump(.04,784,784,.1);this._thump(.04,1174.7,1174.7,.13,.07);this._thump(.03,1568,1568,.2,.14);}
+  }
+  escalate(){if(!this._cue('escalate',2))return;this._focus(.5,.5);this._monsterGrowl(.09,.5);this._thump(.22,82,30,.45);this._noiseSweep(.07,300,2900,.5,.05);this._metal(.05,330,.3,.04);}
+  smash(strength=.5,variant=0) {
+    if(!this._cue('smash',.045))return;const s=TruckAudio.clamp(strength,0,1),kind=[0,1,2,0,1,0,2,1][(variant|0)&7];
+    this._thump(.1+s*.15,kind===1?170:130,48,.11+s*.05);this._impactBody(.04+s*.07,260,.09);
+    if(kind===0){this._noiseBurst(.11+s*.12,1700,.09,0,'bandpass');this._noiseBurst(.06+s*.06,3600,.05,.02,'highpass');this._thump(.06+s*.05,310,180,.05,.015);} // wood: dry crack and splinters
+    else if(kind===1){this._metal(.1+s*.1,520,.2);this._noiseBurst(.07+s*.08,2400,.07,0,'bandpass');} // metal: ringing drum
+    else{this._noiseBurst(.12+s*.12,700,.14);this._thump(.06+s*.07,95,40,.12,.02);} // stone/plastic: dull crumble
+  }
+  slam(strength=1) {
+    if(!this._cue('slam',.5))return;const s=TruckAudio.clamp(strength,.4,1);
+    this._focus(.75,.16);if(this.music)this.music.duck(.8,.14);
+    this._thump(.44*s,150,26,.55);this._impactBody(.26*s,240,.26);this._noiseBurst(.3*s,1600,.2,0,'bandpass');this._noiseBurst(.12*s,3800,.09,0,'highpass');
+    this._metal(.13*s,560,.42);this._metal(.07*s,870,.3,.03);this._noiseSweep(.08*s,3600,380,.45,.05);this._thump(.1*s,70,30,.3,.1);this._noiseBurst(.04*s,900,.4,.2);
+  }
+  wreck(strength=.7,kind='roof') {
+    if(!this._cue('wreck',.6))return;const s=TruckAudio.clamp(strength,.3,1);
+    this._focus(.6,.3);if(this.music)this.music.duck(.7,.25);
+    if(kind==='fall'){this._noiseSweep(.07,1800,260,.7);this._thump(.14,220,45,.6);return;}
+    this._thump(.3*s,120,28,.42);this._impactBody(.17*s,200,.22);this._metal(.1*s,430,.36,.02);this._noiseBurst(.16*s,1200,.26);this._noiseSweep(.06*s,2600,360,.5,.08);this._noiseBurst(.03*s,3000,.3,.18,'highpass');
+  }
+  whoosh(strength=.5){if(!this._cue('whoosh',.12))return;const s=TruckAudio.clamp(strength,0,1);this._noiseSweep(.02+s*.045,900+s*900,2600+s*1400,.16);this._noiseSweep(.015+s*.03,2600,700,.2,.07);}
+  stall(){if(!this._cue('stall',2))return;for(let i=0;i<5;i++)this._thump(.09-i*.012,105-i*9,40,.09,i*.13+i*i*.012);this._noiseSweep(.04,1400,200,.8,.1);}
+  finishLine(won=true) {
+    if(!this._cue('finishLine',1))return;
+    if(won){this._focus(.5,.45);this._thump(.2,98,49,.4);this._noiseSweep(.06,600,5200,.5);for(let i=0;i<4;i++)this._thump(.05,[392,523.25,659.25,783.99][i],[392,523.25,659.25,783.99][i],.22,.05+i*.065);}
+    else{this._thump(.16,110,41,.5);this._noiseSweep(.05,2400,300,.6);this._thump(.05,196,147,.3,.1);}
+  }
   flip(count=1){if(!this._cue('flip',.2))return;this._thump(.035,330+count*70,490+count*80,.14);this._noiseBurst(.012,2200,.10,0,'bandpass');}
   perfect(){if(!this._cue('perfect',.25))return;this._thump(.035,660,660,.14);this._thump(.025,880,880,.12,.04);}
   combo(n=2){if(!this._cue('combo',.18))return;const f=300+Math.min(8,n)*70;this._thump(.025,f,f*1.25,.11);}
@@ -1344,7 +1595,7 @@ globalThis.TruckAudio = TruckAudio;
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0)),LEVEL=.68;
   class TruckMusic{
     constructor(context,destination){
-      this.context=context;this.destination=destination;this.state={biome:0,intensity:.2,mood:'menu',playing:false,timeScale:1};
+      this.context=context;this.destination=destination;this.state={biome:0,intensity:.2,mood:'menu',playing:false,timeScale:1,boost:0,tension:0};
       this.volume=1;this.active=false;this._stopped=false;this.timer=null;this.nextTime=0;this.step=0;this._drums=new Set();this._gainParams=[];this._color=-1;this._duckUntil=0;this._duckDepth=1;
       this.output=context.createGain();this.output.gain.value=LEVEL;
       this.tone=context.createBiquadFilter();this.tone.type='lowpass';this.tone.frequency.value=6800;this.tone.Q.value=.5;
@@ -1382,7 +1633,7 @@ globalThis.TruckAudio = TruckAudio;
     _schedule(t){
       const s=this.state,mood=s.mood,menu=mood==='menu',boss=mood==='boss',danger=mood==='danger';
       const bpm=menu?104:TEMPOS[s.biome]+(boss?6:0),sixteenth=15/bpm*(1+(1-s.timeScale)*.25),n=this.step%16,bar=Math.floor(this.step/16)%8,chord=bar%4;
-      const root=55*Math.pow(2,((s.biome%3)-1)/12),chordRoot=root*Math.pow(2,ROOTS[chord]/12),energy=menu?.46:.72+s.intensity*.28;
+      const root=55*Math.pow(2,((s.biome%3)-1)/12),chordRoot=root*Math.pow(2,ROOTS[chord]/12),boost=menu?0:s.boost||0,tension=menu?0:s.tension||0,energy=menu?.46:.72+s.intensity*.28+boost*.1;
       const groove=menu?[0,8].includes(n):n===0||n===8||n===6||boss&&n===10;
       if(groove){this._note(this.kick,55,t,.17,energy*(menu?.7:1));this.kick.osc.frequency.setValueAtTime(140,t);this.kick.osc.frequency.exponentialRampToValueAtTime(42,t+.17);}
       if(!menu&&(n===4||n===12)){
@@ -1391,11 +1642,14 @@ globalThis.TruckAudio = TruckAudio;
       if(n%2===0&&(!menu||n%4===2))this._drum(t,n===14&&!menu?'open':'hat',(n%4===0?.026:.018)*energy);
       if(!menu&&(boss||s.intensity>.75)&&n%4===3)this._drum(t,'hat',.012*energy);
       if(!menu&&bar===7&&n>=14)this._drum(t,'snare',n===14?.07:.1);
+      // Nitro drives a sixteenth pulse; tension adds an urgent off-beat kick.
+      if(boost>.25&&n%2===1)this._drum(t,'hat',.02*energy*boost);
+      if(tension>.45&&(n===3||n===11)){this._note(this.kick,55,t,.12,energy*tension*.7);this.kick.osc.frequency.setValueAtTime(120,t);this.kick.osc.frequency.exponentialRampToValueAtTime(44,t+.12);}
       const bass=BASS[n];if(bass>=0&&(!menu||n%4===0))this._note(this.bass,chordRoot*Math.pow(2,bass/12),t,sixteenth*(n%4===0?1.65:.78),energy);
       if(n===0){for(let i=0;i<3;i++){const semitone=[0,THIRDS[chord],7][i];this._note(this.pads[i],chordRoot*4*Math.pow(2,semitone/12),t,sixteenth*14,menu?.65:danger?.7:1);}}
       if(n%2===0){
         const hook=(bar<4?HOOK:ANSWER)[Math.floor(this.step/2)%32];
-        if(hook>=0){const hz=root*4*Math.pow(2,hook/12),amount=energy*(menu?.75:1);this._note(this.lead,hz,t,sixteenth*1.65,amount);if(!menu)this._note(this.leadTop,hz/2,t,sixteenth*1.45,amount);}
+        if(hook>=0){const hz=root*4*Math.pow(2,hook/12),amount=energy*(menu?.75:1);this._note(this.lead,hz,t,sixteenth*1.65,amount);if(!menu)this._note(this.leadTop,boost>.5?hz:hz/2,t,sixteenth*1.45,amount*(1+boost*.4));}
       }
       if(!menu&&n%2===1){const degrees=[0,7,12,THIRDS[chord]+12],note=degrees[Math.floor(n/2)%4];this._note(this.arp,chordRoot*4*Math.pow(2,note/12),t,sixteenth*.7,energy*(danger?.5:.8));}
       this.step++;this.nextTime=t+sixteenth;this.stats.scheduledUntil=this.nextTime;
@@ -1412,6 +1666,7 @@ globalThis.TruckAudio = TruckAudio;
       if(MOODS.includes(next.mood))old.mood=next.mood;
       if(next.timeScale!==undefined)old.timeScale=clamp(next.timeScale,.1,1);
       if(next.playing!==undefined)old.playing=!!next.playing;
+      if(next.boost!==undefined)old.boost=clamp(next.boost,0,1);if(next.tension!==undefined)old.tension=clamp(next.tension,0,1);
       if(this.context.state==='running'&&Math.abs(this._color-old.timeScale)>.015){this._color=old.timeScale;this.tone.frequency.setTargetAtTime(850+5950*Math.sqrt(old.timeScale),this.context.currentTime,.09);}
       if(old.playing&&this.volume>0&&this.context.state==='running')this.start();else this.stop();
     }
@@ -1436,6 +1691,12 @@ globalThis.TruckAudio = TruckAudio;
       this._duckDepth=t<this._duckUntil?Math.min(this._duckDepth,depth):depth;this._duckUntil=Math.max(this._duckUntil,t+seconds);
       if(p.cancelAndHoldAtTime)p.cancelAndHoldAtTime(t);else{const value=p.value;p.cancelScheduledValues(t);p.setValueAtTime(value,t);}
       p.linearRampToValueAtTime(LEVEL*this.volume*this._duckDepth,t+.006);p.setValueAtTime(LEVEL*this.volume*this._duckDepth,t+.04);p.linearRampToValueAtTime(LEVEL*this.volume,this._duckUntil);
+    }
+    // Short stingers on the lead voice for the biggest moments.
+    hit(kind='slam'){
+      if(!this.active||this.volume<=0||this.context.state!=='running')return;const t=this.context.currentTime+.01;
+      if(kind==='finish'){this._note(this.lead,523.25,t,.12,.9);this._note(this.lead,659.25,t+.1,.12,.9);this._note(this.lead,783.99,t+.2,.34,.95);}
+      else{this._note(this.lead,146.83,t,.2,.9);this._note(this.lead,110,t+.12,.3,.9);}
     }
     stinger(won=true){
       if(!this.active||this.volume<=0)return;const t=this.context.currentTime,root=won?440:293.66;
@@ -1519,7 +1780,7 @@ globalThis.TruckAudio = TruckAudio;
   ].map(Object.freeze));
   function createRun(stageIndex) {
     return { stageIndex: integer(stageIndex, 0, 9), score: 0, combo: 0, comboLeft: 0, comboMax: 3, maxCombo: 0, elapsed: 0,
-      buckets: { zombies: 0, tricks: 0, perfect: 0, air: 0, monster: 0, fuel: 0, checkpoints: 0, rival: 0 }, rivalScores: 0, finalized: false, result: null };
+      buckets: { zombies: 0, tricks: 0, perfect: 0, air: 0, monster: 0, fuel: 0, checkpoints: 0, rival: 0, smashes: 0, slams: 0 }, rivalScores: 0, finalized: false, result: null };
   }
   function tick(run, dt) {
     if (!run || run.finalized) return;
@@ -1547,6 +1808,15 @@ globalThis.TruckAudio = TruckAudio;
         label = flips ? `${flips > 1 ? `${flips}× ` : ''}${event.dir === 'front' ? 'FRONTFLIP' : 'BACKFLIP'}${event.perfect ? ' · PERFECT' : ''}` : event.perfect ? 'PERFECT LANDING' : 'BIG AIR';
         kind = 'trick'; break;
       }
+      case 'smash': {
+        // Roadside props keep the chain alive between zombies; Iron Maw's smashes score nothing.
+        if (event.owner === 'rival') return null;
+        run.combo = run.comboLeft > 0 ? run.combo + 1 : 1; run.comboLeft = run.comboMax;
+        run.maxCombo = Math.max(run.maxCombo, run.combo);
+        const multiplier = Math.min(5, 1 + Math.floor((run.combo - 1) / 3));
+        points = 25 * multiplier; label = multiplier > 1 ? `SMASH ×${multiplier}` : 'SMASH'; bucket = 'smashes'; break;
+      }
+      case 'slam': points = 500; label = 'NITRO SLAM'; bucket = 'slams'; kind = 'big'; break;
       case 'monsterHit': points = 1000; label = 'GIANT DOWN'; bucket = 'monster'; kind = 'big'; break;
       case 'fuel': points = 100; label = 'FUEL COLLECTED'; bucket = 'fuel'; break;
       case 'checkpoint': points = 150; label = 'CHECKPOINT'; bucket = 'checkpoints'; break;
@@ -1571,16 +1841,27 @@ globalThis.TruckAudio = TruckAudio;
     const newStars = stars.reduce((n, star, i) => n + (star && !previous[i] ? 1 : 0), 0);
     const finishBonus = won ? 500 : 0, fuelBonus = won ? Math.floor(clamp(summary.fuel, 0, 100) * 5) : 0;
     const paceBonus = won ? Math.max(0, Math.floor((PAR_TIMES[stageIndex] - time) * 30)) : 0;
-    const score = run.score + finishBonus + fuelBonus + paceBonus;
+    const stats = summary.stats || {}, nitroBonus = won ? Math.floor(clamp(stats.nitroBurned, 0, 100000)) * 2 : 0;
+    const score = run.score + finishBonus + fuelBonus + paceBonus + nitroBonus;
     const breakdown = [
       ['Zombies & combos', run.buckets.zombies], ['Landed flips', run.buckets.tricks], ['Perfect landings', run.buckets.perfect],
       ['Big air', run.buckets.air], ['Monster stopped', run.buckets.monster], ['Fuel cans', run.buckets.fuel],
-      ['Checkpoints', run.buckets.checkpoints], ['Rival impacts', run.buckets.rival], ['Stage finish', finishBonus],
-      ['Fuel bonus', fuelBonus], ['Pace bonus', paceBonus]
+      ['Checkpoints', run.buckets.checkpoints], ['Rival impacts', run.buckets.rival], ['Roadside smashes', run.buckets.smashes],
+      ['Nitro slams', run.buckets.slams], ['Stage finish', finishBonus],
+      ['Fuel bonus', fuelBonus], ['Pace bonus', paceBonus], ['Nitro burn', nitroBonus]
     ].filter(row => row[1] > 0).map(row => ({ label: row[0], value: row[1] }));
     const scrap = won ? 25 + Math.floor(score / 40) + newStars * 35 : Math.floor(score / 100);
+    const number = value => Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : 0;
+    const awards = [
+      ['topSpeed', 'TOP SPEED', number(stats.topSpeed) ? `${Math.round(number(stats.topSpeed) * 3.6)} KM/H` : ''],
+      ['maxAir', 'LONGEST AIR', number(stats.maxAir) >= 0.3 ? `${number(stats.maxAir).toFixed(1)} S` : ''],
+      ['chain', 'BEST CHAIN', run.maxCombo > 1 ? `×${run.maxCombo}` : ''],
+      ['smashes', 'SMASHES', number(stats.smashes) ? String(Math.floor(number(stats.smashes))) : ''],
+      ['slams', 'NITRO SLAMS', number(stats.slams) ? String(Math.floor(number(stats.slams))) : ''],
+      ['nitro', 'NITRO BURNED', number(stats.nitroBurned) >= 1 ? String(Math.floor(number(stats.nitroBurned))) : '']
+    ].filter(row => row[2]).map(row => ({ id: row[0], label: row[1], value: row[2] }));
     run.finalized = true;
-    run.result = { score, breakdown, stars, newStars, challenge: { id: challenge.id, label: challenge.label, complete: stars[2] }, scrap, maxCombo: run.maxCombo };
+    run.result = { score, breakdown, awards, stars, newStars, challenge: { id: challenge.id, label: challenge.label, complete: stars[2] }, scrap, maxCombo: run.maxCombo };
     return run.result;
   }
   function upgradeCost(track, level) { return KEYS.includes(track) && integer(level, 0, 3) < 3 ? UPGRADE_COSTS[track][integer(level, 0, 3)] : null; }
@@ -1597,8 +1878,8 @@ globalThis.TruckAudio = TruckAudio;
   function defaults() {
     return { version: 3, unlocked: 1, completed: [], best: {}, selected: 0, stars: {}, bestScore: {}, scrap: 0,
       upgrades: { engine: 0, tyres: 0, suspension: 0, tank: 0 },
-      settings: { master: .9, music: .55, sfx: .9, quality: 'auto', shake: true, showFps: false, reducedMotion: false },
-      totals: { runs: 0, clears: 0, zombies: 0, flips: 0, cans: 0, scrapEarned: 0 } };
+      settings: { master: .9, music: .55, sfx: .9, quality: 'auto', shake: true, showFps: false, reducedMotion: false, haptics: true, autoNitro: false },
+      totals: { runs: 0, clears: 0, zombies: 0, flips: 0, cans: 0, scrapEarned: 0, smashes: 0, slams: 0 } };
   }
   function migrate(raw) {
     const out = defaults();
@@ -1618,7 +1899,7 @@ globalThis.TruckAudio = TruckAudio;
     const settings = raw.settings && typeof raw.settings === 'object' ? raw.settings : {};
     for (const volume of ['master', 'music', 'sfx']) if (Number.isFinite(Number(settings[volume]))) out.settings[volume] = clamp(settings[volume], 0, 1);
     if (['auto', 'high', 'balanced', 'performance'].includes(settings.quality)) out.settings.quality = settings.quality;
-    for (const key of ['shake', 'showFps', 'reducedMotion']) if (typeof settings[key] === 'boolean') out.settings[key] = settings[key];
+    for (const key of ['shake', 'showFps', 'reducedMotion', 'haptics', 'autoNitro']) if (typeof settings[key] === 'boolean') out.settings[key] = settings[key];
     for (const key of Object.keys(out.totals)) out.totals[key] = integer(raw.totals?.[key], 0, 1000000000);
     return out;
   }
@@ -1640,6 +1921,8 @@ globalThis.TruckAudio = TruckAudio;
     data.totals ||= defaults().totals; data.totals.runs++;
     data.totals.scrapEarned += result.scrap; data.totals.zombies += integer(summary.cleared, 0, 10000);
     data.totals.flips += integer(summary.stats?.flips, 0, 1000); data.totals.cans += integer(summary.cans, 0, 10000);
+    data.totals.smashes = integer(data.totals.smashes, 0, 1000000000) + integer(summary.stats?.smashes, 0, 10000);
+    data.totals.slams = integer(data.totals.slams, 0, 1000000000) + integer(summary.stats?.slams, 0, 1000);
     let newBest = false, newScoreBest = false;
     if (won) {
       data.totals.clears++; data.completed ||= []; if (!data.completed.includes(i)) data.completed.push(i);
@@ -1663,7 +1946,10 @@ globalThis.TruckAudio = TruckAudio;
  * {stageIndex,stageName,progress,distance,length,time,score,ghostDelta,fuel,
  *  cleared,totalZombies,speed,gear,rpm,ammo,locked,monsterDistance,monsterAlive,
  *  monsterProgress,rivalProgress,racePosition,combo,comboLeft,comboMax,
- *  checkpointProgress:[0..1],paused,muted,status,shootingPhase}
+ *  checkpointProgress:[0..1],paused,muted,status,shootingPhase,
+ *  nitro(0..100),boosting,nitroReady,nitroHint,slipstream,gap(m ahead of Iron Maw|null)}
+ * award(kind,{label,value}) shows a kinetic slab (three pooled nodes); tick(dt) expires slabs and
+ * drives the results count-up, emitting 'sfx' ('tick'|'stamp').
  *
  * Screen data:
  * title/stages/garage/settings read setCampaign(save,stages,biomes,rulesInfo).
@@ -1688,6 +1974,7 @@ globalThis.TruckAudio = TruckAudio;
     return `${String(Math.floor(n/6000)).padStart(2,'0')}:${String(Math.floor(n/100)%60).padStart(2,'0')}.${String(n%100).padStart(2,'0')}`;
   };
   const scoreText = value => Math.max(0,Math.floor(Number(value)||0)).toLocaleString('en-US');
+  const AWARDS=Object.freeze({perfect:'cue-star',flip:'cue-trick',air:'cue-air',smash:'cue-burst',chain:'cue-burst',slam:'cue-burst',nitro:'cue-bolt',giant:'cue-target',checkpoint:'cue-checkpoint',wreck:'cue-error',start:'cue-bolt'});
   const CUES=Object.freeze({target:'Target locked',shot:'Shot fired',hit:'Monster cleared',miss:'Shot missed',fuel:'Fuel',checkpoint:'Checkpoint',recover:'Recovered',trick:'Trick',success:'Success',error:'Unavailable',upgrade:'Upgrade installed'});
   const icon = kind => {
     const paths={target:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M12 1v6M12 17v6M1 12h6M17 12h6',checkpoint:'M5 22V3m0 1h14l-3 4 3 4H5',engine:'M4 8h3V5h8v3h4v9h-3v3H7v-3H4zM9 3h5M2 11v4M22 10v7M10 10l-2 4h4l-2 4',tyre:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 7v3M12 14v3M7 12h3M14 12h3M8.5 8.5l2 2M13.5 13.5l2 2M8.5 15.5l2-2M13.5 10.5l2-2',suspension:'M5 3l4 3-3 3 7 3-3 3 7 3-2 3M14 3l5 3-3 3 3 3-5 3 3 3-3 3',fuel:'M5 21V4h9v17M4 21h12M5 9h9M16 5l3 3v9c0 2 3 2 3 0v-5l-3-3'};
@@ -1758,6 +2045,11 @@ globalThis.TruckAudio = TruckAudio;
       if(v.combo!==undefined){this._hidden('hudCombo',v.combo<2);this._text('hudComboValue',`×${v.combo||1}`);}
       if(v.comboLeft!==undefined)this._bar('hudComboFill',v.comboLeft/(v.comboMax||3));
       if(v.checkpointProgress){const signature=v.checkpointProgress.join(',');if(this.values.checkpoints!==signature){this.values.checkpoints=signature;this.nodes.hudCheckpointTicks.replaceChildren();for(const progress of v.checkpointProgress){const tick=this.document.createElement('i');tick.className='hud-checkpoint';tick.style.left=`${clamp(progress,0,1)*100}%`;this.nodes.hudCheckpointTicks.appendChild(tick);}}}
+      if(v.nitro!==undefined){const nitro=clamp(v.nitro,0,100);this._bar('nitroFill',nitro/100);this._class('nitroHud','full',nitro>=99.5);this._class('nitroHud','empty',nitro<8);this._attr('nitroHud','aria-valuenow',Math.round(nitro));}
+      if(v.boosting!==undefined)this._class('nitroHud','burning',v.boosting);
+      if(v.nitroReady!==undefined)this._class('nitroHud','ready',v.nitroReady);
+      if(v.nitroHint!==undefined)this._text('nitroHint',v.nitroHint);
+      if(v.gap!==undefined){const active=v.gap!==null&&Number.isFinite(Number(v.gap));this._hidden('hudGap',!active);if(active){const gap=Math.round(Number(v.gap));this._text('hudGap',`${gap>=0?'+':'−'}${Math.abs(gap)} M`);this._class('hudGap','behind',gap<0);}}
       if(v.paused!==undefined){this._attr('pauseButton','aria-label',v.paused?'Resume game':'Pause game');this._class('pauseButton','active',v.paused);}
       if(v.muted!==undefined){this._attr('soundButton','aria-label',v.muted?'Enable sound':'Mute sound');this._attr('soundButton','aria-pressed',v.muted);}
     }
@@ -1812,19 +2104,19 @@ globalThis.TruckAudio = TruckAudio;
         const ranges=[['master','Master volume',.9],['music','Music volume',.55],['sfx','Engine & effects',.9]];
         for(const [key,label,def]of ranges){const value=Math.round(clamp(settings[key]??def,0,1)*100);html+=`<div class="setting-item"><label for="setting-${key}">${label}<output id="setting-value-${key}">${value}%</output></label><input id="setting-${key}" type="range" min="0" max="100" step="1" value="${value}" data-setting="${key}" aria-label="${label}"></div>`;}
         html+=`<div class="setting-item"><label for="setting-quality">Graphics quality<select id="setting-quality" data-setting="quality" aria-label="Graphics quality">${[['auto','Auto · adaptive'],['high','High'],['balanced','Balanced'],['performance','Performance']].map(([value,label])=>`<option value="${value}" ${settings.quality===value?'selected':''}>${label}</option>`).join('')}</select></label><small>Auto adjusts resolution and effects to keep motion smooth.</small></div>`;
-        for(const [key,label,help]of [['shake','Camera shake','Physical impacts with a little extra punch.'],['showFps','Performance display','Show FPS, CPU time and rendering detail.'],['reducedMotion','Reduced motion','Quiet menu animation and camera effects.']])html+=`<div class="setting-item"><label for="setting-${key}">${label}<input id="setting-${key}" type="checkbox" data-setting="${key}" ${settings[key]?'checked':''}></label><small>${help}</small></div>`;
+        for(const [key,label,help]of [['shake','Camera shake','Physical impacts with a little extra punch.'],['showFps','Performance display','Show FPS, CPU time and rendering detail.'],['reducedMotion','Reduced motion','Quiet menu animation and camera effects.'],['haptics','Controller vibration','Rumble on landings, hits and nitro.'],['autoNitro','Auto nitro','Burns a healthy nitro meter for you on the ground.']])html+=`<div class="setting-item"><label for="setting-${key}">${label}<input id="setting-${key}" type="checkbox" data-setting="${key}" ${(settings[key]??(key==='haptics'))?'checked':''}></label><small>${help}</small></div>`;
         html+='<div class="setting-item sound-check"><button type="button" class="secondary-button sound-test" data-ui="testSound" aria-label="Test sound"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM17 8q4 4 0 8M20 5q7 7 0 14"/></svg>Test sound</button><div class="sound-test-feedback"><div id="soundTestMeter" class="sound-meter" role="meter" aria-label="Audio output level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="soundTestLevel"></i></div><output id="soundTestStatus" role="status">Tap to enable sound</output></div></div>';
         html+='</div>';primary='Save & return';action='back';secondary=this._button('Stage select','stages')+this._button('Title','title');
       }else if(name==='brief'){
         const par=d.par??this._par(i),challenge=typeof d.challenge==='string'?d.challenge:d.challenge?.label||this._challenge(i),best=d.best??this.save.best?.[i];
-        html=`<div class="brief-layout"><div><p class="brief-kicker">STAGE ${String(i+1).padStart(2,'0')} / 10 ${i===9?'· FINAL BOSS':''}</p><h1 id="screenHeading" class="brief-name">${esc(d.name||stage.name||this._stageName(i))}</h1><p class="brief-description">${esc(d.description||stage.subtitle||'Find your line.')}</p><div class="brief-facts"><span>DISTANCE<strong>${d.length||stage.length||0}<small> M</small></strong></span><span>PAR TIME<strong>${timeText(par)}</strong></span><span>BEST<strong>${best?timeText(best):'—'}</strong></span></div><div class="onboarding"><span aria-label="Throttle with Up or W">↑ W</span><span aria-label="Balance with Left and Right">↶ ↷</span><span class="onboarding-shot" aria-label="Wait for the crosshair to lock, then fire with X or J"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 1v5m0 12v5M1 12h5m12 0h5"/></svg> X / J</span><span aria-label="Recover with C for 12 fuel">↻ C · −12</span></div></div><div class="brief-objectives"><div class="objective"><span class="star">★</span><div>Finish<small>One shot. One giant.</small></div></div><div class="objective"><span class="star">★</span><div>Beat the clock<small>${timeText(par)} OR FASTER</small></div></div><div class="objective"><span class="star">★</span><div>${esc(challenge)}<small>CHALLENGE</small></div></div></div></div>`;
+        html=`<div class="brief-layout"><div><p class="brief-kicker">STAGE ${String(i+1).padStart(2,'0')} / 10 ${i===9?'· FINAL BOSS':''}</p><h1 id="screenHeading" class="brief-name">${esc(d.name||stage.name||this._stageName(i))}</h1><p class="brief-description">${esc(d.description||stage.subtitle||'Find your line.')}</p><div class="brief-facts"><span>DISTANCE<strong>${d.length||stage.length||0}<small> M</small></strong></span><span>PAR TIME<strong>${timeText(par)}</strong></span><span>BEST<strong>${best?timeText(best):'—'}</strong></span></div><div class="onboarding"><span aria-label="Throttle with Up or W">↑ W</span><span aria-label="Balance with Left and Right">↶ ↷</span><span class="onboarding-nitro" aria-label="Hold Z or N to burn nitro"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#cue-bolt"/></svg> Z / N</span><span class="onboarding-shot" aria-label="Wait for the crosshair to lock, then fire with X or J"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 1v5m0 12v5M1 12h5m12 0h5"/></svg> X / J</span><span aria-label="Recover with C for 12 fuel">↻ C · −12</span></div></div><div class="brief-objectives"><div class="objective"><span class="star">★</span><div>Finish<small>One shot. One giant.</small></div></div><div class="objective"><span class="star">★</span><div>Beat the clock<small>${timeText(par)} OR FASTER</small></div></div><div class="objective"><span class="star">★</span><div>${esc(challenge)}<small>CHALLENGE</small></div></div></div></div>`;
         primary=i===9?'Challenge Iron Maw':'Start this run';action='play';secondary=this._button('Stage select','stages')+this._button('Garage','garage');
       }else if(name==='pause'){
         html=`<div class="pause-layout"><div><p class="menu-eyebrow">${esc(d.stageName||this._stageName(this.save.selected||0))}</p><h1 id="screenHeading" class="pause-heading">PARKED.<br>FOR NOW.</h1><p class="menu-copy">Take a breath.</p></div><div class="pause-data"><span>RUN TIME<strong>${timeText(d.time||0)}</strong></span><span>FUEL<strong>${Math.ceil(d.fuel??100)}%</strong></span></div></div>`;
         primary='Back to the trail';action='resume';secondary=this._button('Retry stage','retry')+this._button('Settings','settings')+this._button('Stage select','stages');
       }else if(name==='results'){
         const stars=d.stars||[true,false,false],par=d.par??this._par(i),challenge=typeof d.challenge==='string'?d.challenge:d.challenge?.label||this._challenge(i);
-        html=`<div class="result-layout"><div><div class="hero-trophy" aria-label="Ojas’s trophy"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M19 8h26v17c0 12-7 18-13 18s-13-6-13-18V8Z" fill="#f5cb65" stroke="#fff0b5" stroke-width="2"/><path d="M19 13H8v9c0 10 10 13 15 12M45 13h11v9c0 10-10 13-15 12M32 43v11M20 57h24" fill="none" stroke="#f5cb65" stroke-width="5" stroke-linecap="round"/><path d="m32 17 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z" fill="#a52a39"/></svg></div><p class="menu-eyebrow">${i===9?'OJAS’S MONSTER RALLY COMPLETE':`STAGE ${String(i+1).padStart(2,'0')} CLEARED`} · ${esc(d.name||this._stageName(i))}</p><h1 id="screenHeading" class="menu-title">${i===9?'Ojas, king of the trail!':'Super driving, Ojas!'}</h1><div class="result-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${this._stars(stars,true)}</div><div class="result-summary">YOUR TIME <b>${timeText(d.time||0)}</b><br>PAR TIME ${timeText(par)}<br>${esc(challenge)} ${stars[2]?'✓':'· —'}</div><div class="result-badges">${d.newBest?'<span class="result-badge">BEST TIME</span>':''}${d.newScoreBest?'<span class="result-badge">BEST SCORE</span>':''}</div><div class="result-big-score">${scoreText(d.score)}<small>TOTAL SCORE</small></div></div><div><div class="score-breakdown">${(d.breakdown||[]).map(row=>`<div class="breakdown-row"><span>${esc(row.label)}</span><b>${scoreText(row.value)}</b></div>`).join('')||'<div class="breakdown-row"><span>Run complete</span><b>0</b></div>'}<div class="scrap-earned"><span>SCRAP EARNED</span><strong>+${scoreText(d.scrap)}</strong></div></div></div></div>`;
+        html=`<div class="result-layout"><div><div class="hero-trophy" aria-label="Ojas’s trophy"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M19 8h26v17c0 12-7 18-13 18s-13-6-13-18V8Z" fill="#f5cb65" stroke="#fff0b5" stroke-width="2"/><path d="M19 13H8v9c0 10 10 13 15 12M45 13h11v9c0 10-10 13-15 12M32 43v11M20 57h24" fill="none" stroke="#f5cb65" stroke-width="5" stroke-linecap="round"/><path d="m32 17 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z" fill="#a52a39"/></svg></div><p class="menu-eyebrow">${i===9?'OJAS’S MONSTER RALLY COMPLETE':`STAGE ${String(i+1).padStart(2,'0')} CLEARED`} · ${esc(d.name||this._stageName(i))}</p><h1 id="screenHeading" class="menu-title">${i===9?'Ojas, king of the trail!':'Super driving, Ojas!'}</h1><div class="result-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${this._stars(stars,true)}</div><div class="result-summary">YOUR TIME <b>${timeText(d.time||0)}</b><br>PAR TIME ${timeText(par)}<br>${esc(challenge)} ${stars[2]?'✓':'· —'}</div><div class="result-badges">${d.newBest?'<span class="result-badge">BEST TIME</span>':''}${d.newScoreBest?'<span class="result-badge">BEST SCORE</span>':''}</div><div class="result-big-score"><span data-count="${Math.max(0,Math.floor(Number(d.score)||0))}">${scoreText(d.score)}</span><small>TOTAL SCORE</small></div>${Array.isArray(d.awards)&&d.awards.length?`<div class="result-awards">${d.awards.slice(0,6).map(a=>`<span class="result-award">${esc(a.label)}<b>${esc(a.value)}</b></span>`).join('')}</div>`:''}</div><div><div class="score-breakdown">${(d.breakdown||[]).map(row=>`<div class="breakdown-row"><span>${esc(row.label)}</span><b data-count="${Math.max(0,Math.floor(Number(row.value)||0))}">${scoreText(row.value)}</b></div>`).join('')||'<div class="breakdown-row"><span>Run complete</span><b>0</b></div>'}<div class="scrap-earned"><span>SCRAP EARNED</span><strong>+${scoreText(d.scrap)}</strong></div></div></div></div>`;
         primary=d.nextAvailable!==false&&i<9?`Continue to stage ${String(i+2).padStart(2,'0')}`:'Back to the stages';action=d.nextAvailable!==false&&i<9?'next':'stages';secondary=this._button('Run it again','retry')+this._button('Garage','garage')+this._button('Stage select','stages');
       }else if(name==='failed'){
         const reason=d.reason||'fuel',tips={fuel:'Collect the amber cans.',monster:'Wait for the green crosshair. X / J to fire.',rival:'Keep your speed through the jumps.'};
@@ -1834,8 +2126,14 @@ globalThis.TruckAudio = TruckAudio;
       }else{this.showScreen('title');return;}
       this.nodes.menuBody.innerHTML=html;this.nodes.secondaryActions.innerHTML=secondary;
       this.nodes.playButton.innerHTML=`${esc(primary)} <span aria-hidden="true">→</span>`;this._primary={name:action,args};
-      this.nodes.menuHint.textContent=name==='title'?'↑ / WASD · X / J · GAMEPAD':name==='garage'?'◆ SCRAP → UPGRADES':'↑ ↓ · ENTER · ESC';
+      this.nodes.menuHint.textContent=name==='title'?'↑ / WASD · Z / N NITRO · X / J · GAMEPAD':name==='garage'?'◆ SCRAP → UPGRADES':'↑ ↓ · ENTER · ESC';
       this.nodes.menuPanel.scrollTop=0;this.nodes.playButton.focus({preventScroll:true});
+      this._count=null;
+      if(name==='results'&&!this.save.settings?.reducedMotion){
+        // Score rows roll up from zero; tick(dt) owns the clock so a hidden tab never races ahead.
+        const nodes=Array.from(this.nodes.menuBody.querySelectorAll('[data-count]'));
+        if(nodes.length){this._count={nodes,targets:nodes.map(node=>Number(node.dataset.count)||0),time:0,duration:1.15,tickClock:0};for(const node of nodes)node.textContent='0';}
+      }
     }
     _setting(event){
       const target=event.target,key=target.dataset.setting;if(!key)return;
@@ -1863,7 +2161,25 @@ globalThis.TruckAudio = TruckAudio;
     }
     activate(){if(this.screen===null)return false;const active=this.document.activeElement;if(active&&this.nodes.screenLayer.contains(active)&&!active.disabled){if(active.tagName==='BUTTON')active.click();else if(active.tagName==='INPUT'){if(active.type==='checkbox'){active.checked=!active.checked;active.dispatchEvent(new global.Event('change',{bubbles:true}));}return true;}else if(active.tagName==='SELECT'){active.selectedIndex=(active.selectedIndex+1)%active.options.length;active.dispatchEvent(new global.Event('change',{bubbles:true}));return true;}}else this.nodes.playButton.click();return true;}
     back(){this.emit('back');return true;}
+    award(kind,{label='',value=''}={}){
+      const pool=this._awards||(this._awards=Array.from(this.nodes.hudAwards?.children||[]).map(node=>({node,use:node.querySelector('use'),label:node.querySelector('.award-label'),value:node.querySelector('.award-value'),left:0})));
+      if(!pool.length)return;
+      let slot=pool[0];for(const candidate of pool)if(candidate.left<slot.left)slot=candidate;
+      const key=AWARDS[kind]?kind:'perfect';this._awardFlip=!this._awardFlip;this._awardOrder=(this._awardOrder||0)-1;
+      slot.use.setAttribute('href','#'+AWARDS[key]);slot.label.textContent=String(label??'');slot.value.textContent=String(value??'');
+      slot.node.style.order=this._awardOrder;slot.node.className=`award-slab award-${key} show ${this._awardFlip?'a':'b'}`;slot.left=1.45;
+    }
+    tick(dt){
+      dt=clamp(dt,0,.25);
+      if(this._awards)for(const slot of this._awards)if(slot.left>0){slot.left-=dt;if(slot.left<=0){slot.left=0;slot.node.className='award-slab';}}
+      const count=this._count;if(!count||this.screen!=='results')return;
+      count.time+=dt;const k=Math.min(1,count.time/count.duration),eased=1-(1-k)*(1-k);
+      for(let i=0;i<count.nodes.length;i++){const text=scoreText(count.targets[i]*eased);if(count.nodes[i].textContent!==text)count.nodes[i].textContent=text;}
+      count.tickClock-=dt;if(k<1&&count.tickClock<=0){count.tickClock=.05;this.emit('sfx','tick');}
+      if(k>=1){this._count=null;this.emit('sfx','stamp');}
+    }
     clearFeedback(){
+      if(this._awards)for(const slot of this._awards){slot.left=0;slot.node.className='award-slab';}
       if(this._toastTimer)global.clearTimeout(this._toastTimer);if(this._bannerTimer)global.clearTimeout(this._bannerTimer);if(this._cueTimer)global.clearTimeout(this._cueTimer);this._toastTimer=null;this._bannerTimer=null;this._cueTimer=null;this._hidden('hudCue',true);this._text('cueValue','');this._text('cueLabel','');this.nodes.hudCue.className='hud-cue';this._text('hudToast','');this._text('hudBanner','');this.nodes.hudToast.className='hud-toast';this.nodes.hudBanner.className='hud-banner';
     }
     cue(kind,{value,seconds=1.05}={}){
@@ -1929,6 +2245,8 @@ globalThis.TruckAudio = TruckAudio;
       this._ox=0;this._oy=0;this._left=0;this._right=0;this._top=0;this._bottom=0;
       this._clock=0;this._worldClock=0;this._trauma=0;this._zoomPunch=0;this._kick=0;this._muzzle=0;this._flashTime=0;this._flashDuration=1;this._flashColor='#fff2c4';
       this._impactTime=0;this._impactX=0;this._impactY=0;this._focus=0;this._worldDetail=2;
+      // Redline presentation state: smoothed nitro, camera kick, letterbox, landing ring and breakables.
+      this._boost=0;this._rivalBoost=0;this._kickX=0;this._kickY=0;this._bars=0;this._cineZoom=0;this._ringTime=0;this._ringX=0;this._ringY=0;this._ringPower=0;this._emberClock=0;this._breakables=[];this._motion=true;this._lastFlash=-1;
       this._particles=new Float32Array(MAX_PARTICLES*PS);this._particleHead=0;this._particleCount=0;
       this._popupData=new Float32Array(POPUPS*5);this._popupText=new Array(POPUPS).fill('');this._popupHead=0;
       this._fallbackPose=new Float64Array(64);this._scratch=new Float64Array(3);this._screenPoint=new Float64Array(2);
@@ -1949,7 +2267,7 @@ globalThis.TruckAudio = TruckAudio;
       const length=Math.max(21,finite(physics.poseLength,3*(7+(physics.zombies?physics.zombies.length:0))));
       if(this._fallbackPose.length<length)this._fallbackPose=new Float64Array(length);
       this._particles.fill(0);this._popupData.fill(0);this._particleCount=0;this._dustClock=0;this._exhaustClock=0;this._weatherClock=0;
-      this._kick=0;this._muzzle=0;this._trauma=0;this._clock=0;this._worldClock=0;this._impactTime=0;this._focus=0;this.snapCamera();
+      this._kick=0;this._muzzle=0;this._trauma=0;this._clock=0;this._worldClock=0;this._impactTime=0;this._focus=0;this._boost=0;this._rivalBoost=0;this._kickX=0;this._kickY=0;this._bars=0;this._cineZoom=0;this._ringTime=0;this._lastFlash=-1;this.snapCamera();
     }
     resize(cssWidth,cssHeight){
       this.width=Math.max(1,finite(cssWidth,960));this.height=Math.max(1,finite(cssHeight,540));
@@ -1975,7 +2293,9 @@ globalThis.TruckAudio = TruckAudio;
     }
     snapCamera(){this._snap=true;this._cameraVX=0;this._cameraVY=0;}
     addTrauma(amount){this._trauma=clamp(this._trauma+finite(amount),0,1);}
-    flash(color='#fff2c4',seconds=.12){this._flashColor=color;this._flashTime=clamp(seconds,0,2);this._flashDuration=Math.max(.001,this._flashTime);}
+    flash(color='#fff2c4',seconds=.12){if(this._clock-this._lastFlash<.25)return;this._lastFlash=this._clock;this._flashColor=color;this._flashTime=clamp(seconds,0,2);this._flashDuration=Math.max(.001,this._flashTime);}
+    // Directional camera jolt in CSS pixels; decays in _updateCamera and obeys the shake/motion settings.
+    kick(x,y){this._kickX=clamp(this._kickX+finite(x),-26,26);this._kickY=clamp(this._kickY+finite(y),-26,26);}
     worldToScreen(x,y,out){
       const result=out||{};const px=x*this._cameraScale+this._ox,py=-y*this._cameraScale+this._oy;
       if(ArrayBuffer.isView(result)||Array.isArray(result)){result[0]=px;result[1]=py;}else{result.x=px;result.y=py;}
@@ -2032,6 +2352,10 @@ globalThis.TruckAudio = TruckAudio;
     }
     _buildLayout(){
       this._props=[];this._signs=[];this._flags=[];const biome=this._biome,track=this._track;
+      this._breakables=Array.isArray(this._physics.breakables)?this._physics.breakables:[];
+      // Variants 0..7 map to smashable art: three universal props plus this biome's small scenery.
+      const small=[];for(let i=0;i<biome.props.length;i++){const k=biome.props[i].kind;if(k==='cactus'||k==='tombstone'||k==='cross'||k==='bones'||k==='fence'||k==='drum')small.push(k);}
+      this._breakKinds=['crate','barrel','cone',small[0]||'crate',small[1]||'barrel','crate',small[2]||small[0]||'cone','barrel'];
       let totalWeight=0;for(let i=0;i<biome.props.length;i++)totalWeight+=biome.props[i].weight;
       const spacing=4.8/biome.propDensity;
       for(let x=-25,i=0;x<track.finishX+20;x+=spacing,i++){
@@ -2039,6 +2363,7 @@ globalThis.TruckAudio = TruckAudio;
         for(let j=0;j<track.segments.length;j++){const s=track.segments[j];if(px>s[0].x+1&&px<s[s.length-1].x-1){onTrack=true;break;}}
         if(!onTrack)continue;let pick=hash(i+197)*totalWeight,kind=biome.props[0].kind;
         for(let j=0;j<biome.props.length;j++){pick-=biome.props[j].weight;if(pick<=0){kind=biome.props[j].kind;break;}}
+        let crowded=false;for(let j=0;j<this._breakables.length;j++)if(Math.abs(this._breakables[j].x-px)<2.5){crowded=true;break;}if(crowded)continue;
         this._props.push({x:px,y:this._heightAt(px),kind,scale:.7+hash(i+191)*.6,flip:hash(i+198)>.5?-1:1,detail:i%3});
       }
       for(let d=50;d<track.length;d+=100){const x=track.startX+d;this._signs.push({x,y:this._heightAt(x),label:String(d)+' M',jump:false});}
@@ -2094,7 +2419,12 @@ globalThis.TruckAudio = TruckAudio;
         const g=c.createLinearGradient(0,0,9.5,0);g.addColorStop(0,'#fff0a643');g.addColorStop(1,'#fff0a600');poly(c,[[0,-.08],[9.5,-2.1],[9.5,1.1],[0,.08]],g);
       });
       bank.brake=this._worldSprite(Math.min(ppu,60),-.35,-.35,.7,.7,c=>{const g=c.createRadialGradient(0,0,.02,0,0,.35);g.addColorStop(0,'#ffb07d');g.addColorStop(.25,'#ed614ecf');g.addColorStop(1,'#ed614e00');c.fillStyle=g;c.fillRect(-.35,-.35,.7,.7);});
-      const kinds=['cactus','rock','deadTree','tombstone','cross','bones','wreck','drum','fence','ruin','lamp','chimney','pine'];
+      const kinds=['cactus','rock','deadTree','tombstone','cross','bones','wreck','drum','fence','ruin','lamp','chimney','pine','crate','barrel','cone'];
+      bank.flame=this._worldSprite(Math.min(ppu,60),-3,-.5,3.1,1,c=>{
+        const g=c.createLinearGradient(0,0,-3,0);g.addColorStop(0,'#eafcff');g.addColorStop(.18,'#4fd6ffee');g.addColorStop(.55,'#1f8fff88');g.addColorStop(1,'#1f8fff00');
+        poly(c,[[.08,-.2],[-.5,-.42],[-1.5,-.3],[-3,0],[-1.5,.3],[-.5,.42],[.08,.2]],g);poly(c,[[.06,-.1],[-.9,-.14],[-1.5,0],[-.9,.14],[.06,.1]],'#f4feff');
+      });
+      bank.glow=this._worldSprite(Math.min(ppu,40),-2.4,-2.4,4.8,4.8,c=>{const g=c.createRadialGradient(0,0,.1,0,0,2.4);g.addColorStop(0,'#4fd6ff66');g.addColorStop(.5,'#1f8fff2e');g.addColorStop(1,'#1f8fff00');c.fillStyle=g;c.fillRect(-2.4,-2.4,4.8,4.8);});
       for(let i=0;i<kinds.length;i++){const kind=kinds[i];bank.props[kind]=this._worldSprite(Math.min(ppu,60),-1.8,-.08,3.6,4.45,c=>this._paintProp(c,kind));}
       for(let i=0;i<this._signs.length;i++){const sign=this._signs[i];if(!bank.signs[sign.label])bank.signs[sign.label]=this._worldSprite(ppu,-.8,-.05,1.6,2.5,c=>this._paintSign(c,sign.label));}
       for(let i=0;i<this._flags.length;i++)for(let passed=0;passed<2;passed++)bank.flags.push(this._worldSprite(ppu,-.12,-.05,1.45,3.6,c=>{
@@ -2205,6 +2535,12 @@ globalThis.TruckAudio = TruckAudio;
         poly(c,[[-1.45,0],[-1.45,2.34],[-1.1,2.34],[-1.1,1.95],[-.65,1.95],[-.65,3.45],[-.2,3.45],[-.2,3.05],[.38,3.05],[.38,2.45],[.85,2.45],[.85,1.65],[1.4,1.65],[1.4,0]],stone,o,.07);c.fillStyle=o;c.fillRect(-.35,.85,.48,.8);c.fillRect(-1.11,1.27,.32,.53);line(c,-1.2,.45,1.21,.45,b.ground.body,.065);
       }else if(kind==='lamp'){
         line(c,0,0,0,3.7,o,.13);line(c,0,3.7,.7,3.7,o,.13);poly(c,[[.42,3.62],[.88,3.62],[1.05,3.35],[.26,3.35]],'#9c8c60',o,.05);const grad=c.createRadialGradient(.66,3.34,.03,.66,3.34,.85);grad.addColorStop(0,'#f9dd9977');grad.addColorStop(1,'#f9dd9900');c.fillStyle=grad;c.fillRect(-.2,2.49,1.72,1.72);circle(c,.66,3.35,.1,'#f5dfa3');
+      }else if(kind==='crate'){
+        poly(c,[[-.62,0],[-.62,1.12],[.62,1.12],[.62,0]],'#b98a52',o,.07);line(c,-.58,.06,.58,1.06,'#7a5632',.09);line(c,.58,.06,-.58,1.06,'#7a5632',.09);poly(c,[[-.62,0],[-.62,.16],[.62,.16],[.62,0]],'#8d6539',o,.04);poly(c,[[-.62,.96],[-.62,1.12],[.62,1.12],[.62,.96]],'#8d6539',o,.04);
+      }else if(kind==='barrel'){
+        poly(c,[[-.4,0],[-.46,.55],[-.4,1.15],[.4,1.15],[.46,.55],[.4,0]],'#d8483f',o,.07);line(c,-.44,.34,.44,.34,'#fff0e2',.09);line(c,-.44,.8,.44,.8,'#fff0e2',.09);poly(c,[[-.05,.47],[.12,.62],[0,.62],[.08,.74],[-.12,.57],[0,.57]],'#ffe27a');
+      }else if(kind==='cone'){
+        poly(c,[[-.5,0],[-.5,.13],[.5,.13],[.5,0]],'#2a2c35',o,.05);poly(c,[[-.34,.13],[-.09,1.2],[.09,1.2],[.34,.13]],'#ff8a2a',o,.07);poly(c,[[-.27,.42],[-.2,.72],[.2,.72],[.27,.42]],'#fff3e0');
       }else if(kind==='chimney'){
         poly(c,[[-.6,0],[-.5,3.25],[-.65,3.25],[-.65,3.53],[.57,3.53],[.57,3.25],[.43,3.25],[.56,0]],'#6b5b4d',o,.07);for(let i=0;i<5;i++)line(c,-.47,.45+i*.53,.45,.45+i*.53,'#99795a',.06);poly(c,[[-1.3,0],[-1.3,.95],[.9,1.22],[1.4,.53],[1.4,0]],'#4f5346',o,.055);
       }else{
@@ -2244,9 +2580,14 @@ globalThis.TruckAudio = TruckAudio;
       for(let i=0;i<b.clouds.count;i++){const x=i/b.clouds.count*1024+40,y=20+hash(i+8)*75;cc.beginPath();cc.ellipse(x,y,65+hash(i)*45,4+hash(i+9)*7,0,0,TAU);cc.fill();cc.beginPath();cc.ellipse(x+34,y-4,36,8,0,0,TAU);cc.fill();}
       this._screenBytes+=1024*128*4;
       this._stars=new Path2D();for(let i=0;i<100*b.stars;i++){const x=hash(i+871)*this.width,y=hash(i+432)*this.height*.6,r=.5+hash(i+32)*1.1;this._stars.rect(x,y,r,r);}
+      // Foreground silhouettes whip past faster than the world: a cheap, strong speed cue.
+      this._fore=makeCanvas(1024*s,96*s);{const fc=this._fore.getContext('2d');fc.scale(s,s);fc.fillStyle=b.outline;
+        for(let i=0;i<30;i++){const x=hash(i+611+this._stageIndex*13)*1024,w=18+hash(i+9)*46,h2=12+hash(i+41)*34;
+          fc.beginPath();fc.moveTo(x,96);fc.lineTo(x+w*.16,96-h2);fc.lineTo(x+w*.34,96-h2*.4);fc.lineTo(x+w*.52,96-h2*.95);fc.lineTo(x+w*.7,96-h2*.35);fc.lineTo(x+w*.84,96-h2*.7);fc.lineTo(x+w,96);fc.closePath();fc.fill();}
+        this._screenBytes+=this._fore.width*this._fore.height*4;}
       this._chasm=makeCanvas(32,256);const gc=this._chasm.getContext('2d'),gg=gc.createLinearGradient(0,0,0,256);gg.addColorStop(0,b.ground.chasm[1]);gg.addColorStop(1,b.ground.chasm[0]);gc.fillStyle=gg;gc.fillRect(0,0,32,256);this._screenBytes+=32*256*4;
-      this._particleSprites=[];const colors=[b.dust,'#92a19a','#f8da8c','#f3df9d','#ac9271',b.accent,'#dce8c3',b.dust];
-      for(let i=0;i<8;i++){
+      this._particleSprites=[];const colors=[b.dust,'#92a19a','#f8da8c','#f3df9d','#ac9271',b.accent,'#dce8c3',b.dust,'#4fd6ff'];
+      for(let i=0;i<9;i++){
         const canvas=makeCanvas(48,48),c=canvas.getContext('2d');
         if(i===0||i===1||i===7){const g=c.createRadialGradient(24,24,1,24,24,23);g.addColorStop(0,colors[i]+'bb');g.addColorStop(.45,colors[i]+'77');g.addColorStop(1,colors[i]+'00');c.fillStyle=g;c.fillRect(0,0,48,48);}
         else if(i===3){poly(c,[[24,2],[29,18],[46,19],[33,29],[38,45],[24,35],[10,45],[15,29],[2,19],[19,18]],colors[i]);}
@@ -2260,6 +2601,7 @@ globalThis.TruckAudio = TruckAudio;
       const c=this.ctx,b=this._biome;c.setTransform(this.renderScale,0,0,this.renderScale,0,0);
       this._skyGradient=c.createLinearGradient(0,0,0,this.height);this._skyGradient.addColorStop(0,b.sky[0]);this._skyGradient.addColorStop(.57,b.sky[1]);this._skyGradient.addColorStop(1,b.sky[2]);
       this._vignette=c.createRadialGradient(this.width*.48,this.height*.46,this.height*.12,this.width*.5,this.height*.5,Math.max(this.width*.68,this.height*.75));this._vignette.addColorStop(0,'#0c202500');this._vignette.addColorStop(1,'#0c2025'+Math.round(b.light.vignette*255).toString(16).padStart(2,'0'));
+      this._nitroVignette=c.createRadialGradient(this.width*.5,this.height*.5,this.height*.34,this.width*.5,this.height*.5,Math.max(this.width*.62,this.height*.7));this._nitroVignette.addColorStop(0,'#1f8fff00');this._nitroVignette.addColorStop(1,'#4fd6ff5c');
       this._haze=c.createLinearGradient(0,this.height*.45,0,this.height*.88);this._haze.addColorStop(0,b.haze+'00');this._haze.addColorStop(.7,b.haze+'35');this._haze.addColorStop(1,b.haze+'00');
     }
     _sprite(sprite,x,y,angle=0,scale=1){
@@ -2287,7 +2629,8 @@ globalThis.TruckAudio = TruckAudio;
     }
     _updateCamera(frame,dt){
       const p=this._pose,state=this._state,layout=frame.layout||EMPTY;let px=finite(p&&p[0],finite(state.x)),py=finite(p&&p[1],finite(state.y,1.43));
-      const speed=Math.abs(finite(state.speed)),flight=finite(state.airtime),zoom=1-Math.min(.12,speed/210)-((flight>.4&&!state.grounded)?Math.min(.08,(flight-.4)*.07):0);
+      const motion=this._motion,boost=motion?this._boost:0;
+      const speed=Math.abs(finite(state.speed)),flight=finite(state.airtime),zoom=1-Math.min(.17,speed/190)-boost*.05-((flight>.4&&!state.grounded)?Math.min(.08,(flight-.4)*.07):0);
       const settings=frame.settings||EMPTY,encounter=frame.encounter||EMPTY,m=state.monster;
       const requested=frame.mode==='playing'&&m&&encounter.phase!=='idle'?clamp(finite(encounter.intensity),0,1):0;
       this._focus+=(requested-this._focus)*(1-Math.exp(-dt*9));
@@ -2295,14 +2638,15 @@ globalThis.TruckAudio = TruckAudio;
       // Fit both ends of the shot instead of letting the target live outside the
       // phone viewport. The minimum-size reticle below stays legible when wide.
       const focus=settings.reducedMotion?0:this._focus;
-      let targetScale=this._baseScale*zoom*(1+(settings.reducedMotion?0:this._zoomPunch*.035));
+      const cine=frame.cinema||EMPTY;this._cineZoom+=((motion?clamp(finite(cine.zoom),0,1):0)-this._cineZoom)*(1-Math.exp(-dt*7));if(this._snap)this._cineZoom=0;
+      let targetScale=this._baseScale*zoom*(1+(settings.reducedMotion?0:this._zoomPunch*.035))*(1+this._cineZoom*.24);
       if(focus>.001&&m){
         const span=Math.max(8,Math.abs(m.x-px)+7),fit=(this.width-Math.max(34,this.width*.13)*2)/span;
         targetScale+=(Math.min(targetScale,layout.touch&&encounter.phase!=='aim'?Math.max(fit,this._baseScale*.78):fit)-targetScale)*focus;
       }
       if(this._snap)this._cameraScale=targetScale;else this._cameraScale+=(targetScale-this._cameraScale)*(1-Math.exp(-dt*(focus>.01?9:3.7)));
-      const s=this._cameraScale,view=this.width/s,look=clamp(finite(state.vx,finite(state.speed))*.35,-3,7);
-      let tx=px+clamp(view*.14+look,-view*.15,view*.3);
+      const s=this._cameraScale,view=this.width/s,look=clamp(finite(state.vx,finite(state.speed))*.38,-3,9)+boost*1.6;
+      let tx=px+clamp(view*.14+look,-view*.15,view*.34)*(1-this._cineZoom*.75);
       const safeTop=clamp(finite(layout.safeTop),0,this.height*.45),safeBottom=clamp(finite(layout.safeBottom),0,this.height*.55);
       const desired=clamp(this.height*(layout.touch?.64:.67),safeTop+s*1.7,Math.max(safeTop+s*1.7,this.height-safeBottom-s*1.4));
       let ty=py+(desired-this.height*.73)/s;
@@ -2323,8 +2667,9 @@ globalThis.TruckAudio = TruckAudio;
         this._cameraY=ty+(dy+jy*dt)*e;this._cameraVY=(this._cameraVY-omega*jy*dt)*e;
       }
       this._trauma=Math.max(0,this._trauma-dt*1.4);this._zoomPunch*=Math.exp(-dt*10);
-      const shake=settings.shake!==false&&!settings.reducedMotion?this._trauma*this._trauma*14:0;
-      const sx=Math.sin(this._clock*39.7)*Math.cos(this._clock*17.3)*shake,sy=Math.sin(this._clock*31.1+.7)*Math.cos(this._clock*13.7)*shake;
+      const shaking=settings.shake!==false&&!settings.reducedMotion,shake=shaking?this._trauma*this._trauma*14+boost*1.1:0;
+      const decay=Math.exp(-dt*11);this._kickX*=decay;this._kickY*=decay;if(!shaking){this._kickX=0;this._kickY=0;}
+      const sx=Math.sin(this._clock*39.7)*Math.cos(this._clock*17.3)*shake+this._kickX,sy=Math.sin(this._clock*31.1+.7)*Math.cos(this._clock*13.7)*shake+this._kickY;
       // Translation is snapped AFTER interpolating the physical pose/camera.
       this._ox=Math.round((this.width*.5-this._cameraX*s+sx)*this.renderScale)/this.renderScale;
       this._oy=Math.round((this.height*.73+this._cameraY*s+sy)*this.renderScale)/this.renderScale;
@@ -2365,6 +2710,7 @@ globalThis.TruckAudio = TruckAudio;
         this._fill(ch.top,b.ground.top);this._fill(ch.rim,b.ground.rim);if(this._worldDetail>0)this._fill(ch.grass,b.ground.grass);
       }
       for(let i=0;i<this._signs.length;i++){const p=this._signs[i];if(p.x>=left-1&&p.x<=right+1)this._sprite(bank.signs[p.label],p.x,p.y);}
+      const breakables=this._breakables;for(let i=0;i<breakables.length;i++){const p=breakables[i];if(p.broken||p.active===false||p.x<left-1||p.x>right+1)continue;this._sprite(bank.props[this._breakKinds[p.variant&7]]||bank.props.crate,p.x,p.y,0,.82);}
       const cp=finite(this._state.checkpointIndex,finite(this._physics.checkpointIndex));
       for(let i=0;i<this._flags.length;i++){const p=this._flags[i];if(p.x>=left-1&&p.x<=right+1)this._sprite(bank.flags[i*2+(cp>=i?1:0)],p.x,p.y);}
       if(this._track.finishX>=left-3&&this._track.finishX<=right+3)this._sprite(bank.finish,this._track.finishX,this._heightAt(this._track.finishX));
@@ -2383,6 +2729,16 @@ globalThis.TruckAudio = TruckAudio;
         c.beginPath();for(let i=0;i<2;i++){const local=i?1.26:-1.26,mx=x+cos*local-sin*.12,my=y+sin*local+cos*.12,n=offset+3+i*3,dx=pose[n]-mx,dy=pose[n+1]-my,len=Math.hypot(dx,dy)||1,nx=-dy/len*.055,ny=dx/len*.055;c.moveTo(mx,my);for(let j=1;j<8;j++){const side=j%2?1:-1;c.lineTo(mx+dx*j/8+nx*side,my+dy*j/8+ny*side);}c.lineTo(pose[n],pose[n+1]);}
         c.strokeStyle=rival?'#d3ac79':'#e9d58b';c.lineWidth=.028;c.stroke();this._stats.drawOps++;
       }
+      const burn=ghost?0:rival?this._rivalBoost:this._boost;
+      if(burn>.03){
+        // Additive nitro exhaust with per-frame flicker; the player also lights the ground and leaves afterimages.
+        const flick=.82+hash(Math.floor(this._clock*60)+(rival?7:0))*.36,fx=x-cos*2.2+sin*.08,fy=y-sin*2.2-cos*.08;
+        c.globalCompositeOperation='lighter';c.globalAlpha=Math.min(1,burn*1.2);this._sprite(bank.flame,fx,fy,angle,(.85+burn*.5)*flick);
+        if(!rival&&y-ground<3){c.globalAlpha=burn*.5*flick;this._sprite(bank.glow,fx-cos*.8,ground+.1);}
+        c.globalCompositeOperation='source-over';
+        if(!rival&&this._motion){const speed=Math.min(1.4,Math.abs(finite(state.speed))/26);for(let i=1;i<=2;i++){c.globalAlpha=burn*(.26-i*.08);this._sprite(bank.player,x-cos*i*.55*speed,y-sin*i*.55*speed,angle);}}
+        c.globalAlpha=1;
+      }
       this._sprite(rival?bank.rival:bank.player,x,y,angle);
       const blur=Math.abs(finite(state.wheelSpeed))>18?1:0;
       for(let i=0;i<2;i++){const n=offset+3+i*3;if(Number.isFinite(pose[n]))this._sprite(bank.wheels[(rival?2:0)+blur],pose[n],pose[n+1],finite(pose[n+2]));}
@@ -2397,14 +2753,18 @@ globalThis.TruckAudio = TruckAudio;
       for(let i=0;i<cans.length;i++){const can=cans[i];if(can.collected||can.x<this._left-1||can.x>this._right+1)continue;this._sprite(bank.fuel,can.x,can.y+Math.sin(this._clock*2.6+i)*.08);}
       const zombies=physics.zombies||EMPTY;
       for(let i=0;i<zombies.length;i++){
-        const z=zombies[i],n=(ZOMBIES+i)*3,x=Number.isFinite(pose[n])?pose[n]:z.x,y=Number.isFinite(pose[n+1])?pose[n+1]:z.y;
+        const z=zombies[i],n=(ZOMBIES+i)*3;let x=Number.isFinite(pose[n])?pose[n]:z.x,y=Number.isFinite(pose[n+1])?pose[n+1]:z.y,spin=0;
+        if(z.hit&&z.punt){
+          // Cosmetic punt: a cartoon arc layered on the physical tumble, scaled by the hitting truck's speed.
+          const t=Math.min(2.2,finite(z.timeSinceHit)),v=clamp(finite(z.punt),-40,40);x+=v*.5*t;y=Math.max(this._heightAt(x)+.35,y+(3.4+Math.abs(v)*.22)*t-7*t*t);spin=-v*.42*t;
+        }
         if(x<this._left-1||x>this._right+1||(z.hit&&z.timeSinceHit>2.2))continue;
         c.globalAlpha=z.hit?clamp(1-finite(z.timeSinceHit)/2.2,0,1):1;
-        const walk=z.hit?0:((Math.floor(this._worldClock*5+i)&1));this._sprite(bank.zombies[(i%3)*2+walk],x,y,Number.isFinite(pose[n+2])?pose[n+2]:finite(z.angle));
+        const walk=z.hit?0:((Math.floor(this._worldClock*5+i)&1));this._sprite(bank.zombies[(i%3)*2+walk],x,y,(Number.isFinite(pose[n+2])?pose[n+2]:finite(z.angle))+spin);
       }
       c.globalAlpha=1;const m=state.monster;
       if(m&&m.x>=this._left-3&&m.x<=this._right+3&&(m.alive||finite(m.timeSinceHit)<1.2)){
-        const t=finite(m.timeSinceHit);c.globalAlpha=m.alive?1:clamp(1-t/1.2,0,1);this._sprite(bank.monster,m.x,m.y,m.alive?0:-Math.min(1.3,t*1.7));c.globalAlpha=1;
+        const t=finite(m.timeSinceHit);c.globalAlpha=m.alive?1:clamp(1-t/1.2,0,1);this._sprite(bank.monster,m.x,m.y,m.alive?0:-Math.min(1.3,t*1.7),m.alive&&this._motion?1+Math.sin(this._clock*2.3)*.014:1);c.globalAlpha=1;
         if(m.alive){const tx=m.weakpoint?m.weakpoint.x:m.x,ty=m.weakpoint?m.weakpoint.y:m.y+2.85,locked=state.weapon&&state.weapon.canHit;c.globalAlpha=locked?1:.55;this._sprite(bank.target,tx,ty,Math.sin(this._clock)*.07);if(locked){const radius=Math.max(.65,18/this._cameraScale)*(1+Math.sin(this._clock*6)*.08);c.strokeStyle='#e4f5ab';c.lineWidth=2/this._cameraScale;c.beginPath();for(let i=0;i<4;i++)c.arc(tx,ty,radius,i*Math.PI/2+.14,i*Math.PI/2+1.1);c.stroke();this._stats.drawOps++;}c.globalAlpha=1;}
       }
     }
@@ -2419,36 +2779,41 @@ globalThis.TruckAudio = TruckAudio;
       const n=PROJECTILE*3;
       if(state.projectile){const px=Number.isFinite(this._pose[n])?this._pose[n]:state.projectile.x,py=Number.isFinite(this._pose[n+1])?this._pose[n+1]:state.projectile.y;const a=finite(state.projectile.angle);this.ctx.strokeStyle='#f9e9ac';this.ctx.lineWidth=2/this._cameraScale;this.ctx.beginPath();this.ctx.moveTo(px-Math.cos(a)*2,py-Math.sin(a)*2);this.ctx.lineTo(px,py);this.ctx.stroke();this._stats.drawOps++;this._sprite(this._bank.projectile,px,py,a);}
     }
-    _spawn(x,y,count,kind,power=1){
+    _spawn(x,y,count,kind,power=1,vx=0){
       const total=Math.min(MAX_PARTICLES,Math.ceil(count*this.particleScale));
       for(let i=0;i<total;i++){
         const n=this._particleHead*PS;this._particleHead=(this._particleHead+1)%MAX_PARTICLES;
         const angle=Math.random()*TAU,speed=(.35+Math.random()*2.5)*power,d=this._particles;
-        d[n]=finite(x);d[n+1]=finite(y);d[n+2]=Math.cos(angle)*speed;d[n+3]=Math.sin(angle)*speed+power*.5;
+        d[n]=finite(x);d[n+1]=finite(y);d[n+2]=Math.cos(angle)*speed+vx;d[n+3]=Math.sin(angle)*speed+power*.5;
         d[n+4]=d[n+5]=kind===1?.65+Math.random()*.45:kind===5?1.3+Math.random():.38+Math.random()*.55;
-        d[n+6]=kind===0||kind===1||kind===7?.13+Math.random()*.18:kind===2?.055+Math.random()*.07:.08+Math.random()*.1;
+        d[n+6]=kind===0||kind===1||kind===7?.13+Math.random()*.18:kind===2||kind===8?.055+Math.random()*.07:.08+Math.random()*.1;
         d[n+7]=kind;d[n+8]=Math.random()*TAU;d[n+9]=(Math.random()-.5)*9;
       }
     }
     popup(text,x,y,style='score'){
       if(text==null)return;const i=this._popupHead;this._popupHead=(i+1)%POPUPS;
       const n=i*5,p=this._popupData;p[n]=finite(x);p[n+1]=finite(y);p[n+2]=0;p[n+3]=style==='big'?1.6:1.15;
-      p[n+4]=style==='trick'?1:style==='fuel'?2:style==='warn'?3:style==='big'?4:0;this._popupText[i]=String(text);
+      p[n+4]=style==='trick'?1:style==='fuel'?2:style==='warn'?3:style==='big'?4:style==='nitro'?5:0;this._popupText[i]=String(text);
     }
     onEvent(event,state=EMPTY){
       if(!event||typeof event.type!=='string')return;
       const x=finite(event.x,finite(state.x)),y=finite(event.y,finite(state.y)),s=clamp(finite(event.strength,.5),0,1);
       switch(event.type){
-        case 'shot':this._kick=1.5;this._muzzle=.12;this._shotAngle=finite(event.angle,state.weapon?finite(state.weapon.angle):0);this._spawn(x,y,9,1,.85);this._spawn(x,y,6,2,1.6);this.addTrauma(.16);break;
-        case 'land':this._spawn(x,y-1,18+Math.floor(s*14),0,.7+s);this._spawn(x,y-1,Math.floor(s*7),4,s);this.addTrauma(s*.2);break;
+        case 'shot':this.kick(-9,2);this._kick=1.5;this._muzzle=.12;this._shotAngle=finite(event.angle,state.weapon?finite(state.weapon.angle):0);this._spawn(x,y,9,1,.85);this._spawn(x,y,6,2,1.6);this.addTrauma(.16);break;
+        case 'land':this._spawn(x,y-1,18+Math.floor(s*14),0,.7+s);this._spawn(x,y-1,Math.floor(s*7),4,s);this.addTrauma(s*.2);this.kick(0,4+s*13);if(s>.35){this._ringTime=.42;this._ringX=x;this._ringY=this._heightAt(x)+.05;this._ringPower=s;}break;
         case 'landing':if(event.perfect){this._spawn(x,y-.7,9,2,.8);this._zoomPunch=.55;}if(event.bigAir)this.addTrauma(.14);break;
         case 'takeoff':this._spawn(x,y-.7,6,0,.6);break;
         case 'fuel':this._spawn(x,y,11,2,1.1);this.popup('+'+Math.round(finite(event.amount,32))+' FUEL',x,y+1,'fuel');break;
         case 'zombie':this._spawn(x,y,7,7,.8);this._spawn(x,y+.5,4,3,.65);break;
         case 'collision':this._spawn(x,y,18+Math.floor(s*20),2,1.1+s*1.3);this._spawn(x,y,9,4,s+1.2);this.addTrauma(s*.42);break;
-        case 'monsterHit':this._impactTime=.6;this._impactX=x;this._impactY=y;this._spawn(x,y,35,7,2.3);this._spawn(x,y,18,2,2);this._spawn(x,y,10,4,2);this.addTrauma(.35);this._zoomPunch=1;this.flash('#f7df9b',.09);break;
+        case 'monsterHit':this._spawn(x,y,14,4,3.2);this.kick(-8,5);this._impactTime=.6;this._impactX=x;this._impactY=y;this._spawn(x,y,35,7,2.3);this._spawn(x,y,18,2,2);this._spawn(x,y,10,4,2);this.addTrauma(.35);this._zoomPunch=1;this.flash('#f7df9b',.09);break;
         case 'monsterCrash':this._spawn(x,y,28,4,2.2);this._spawn(x,y,25,0,2.5);this._spawn(x,y,14,2,2);this.addTrauma(.85);this.flash('#df8264',.12);break;
         case 'flip':this._spawn(x,y,4,3,.8);break;
+        case 'nitro':if(event.owner==='rival'){if(event.phase==='start')this._spawn(x-2,y,8,8,1.6,-3);}else if(event.phase==='start'){this._spawn(x-2,y,14,8,2,-4);this.kick(-11,0);this._zoomPunch=-.6;}else if(event.phase==='full')this._spawn(x,y+1,8,8,1.2);break;
+        case 'escalate':this._spawn(x,y,16,8,2.2);this._spawn(x,y,8,2,1.6);this.addTrauma(.2);break;
+        case 'smash':{const vx=finite(event.vx)*.55;this._spawn(x,y,5+Math.floor(s*5),4,1.3+s,vx);this._spawn(x,y-.4,4,0,.8,vx*.5);if((event.variant&7)===1||(event.variant&7)===7)this._spawn(x,y,5,2,1.5,vx);if(event.owner!=='rival'){this.addTrauma(.05+s*.07);this.kick(-2-s*3,0);}break;}
+        case 'slam':this._spawn(x,y,34,2,2.6);this._spawn(x,y,12,4,2.4);this._spawn(x,y,10,8,2);this.addTrauma(.75);this.kick(14,-5);this._zoomPunch=1;this.flash('#fff1c9',.1);this._impactTime=.6;this._impactX=x;this._impactY=y;break;
+        case 'wreck':this._spawn(x,y,22,2,2);this._spawn(x,y,10,4,1.8);this._spawn(x,y-.5,12,0,1.6);this.addTrauma(.55);this.kick(0,10);break;
         case 'checkpoint':this._spawn(x,y+2.5,10,2,1.3);break;
         default:break;
       }
@@ -2459,6 +2824,9 @@ globalThis.TruckAudio = TruckAudio;
     }
     _emitAmbient(dt){
       if(!(dt>0))return;const state=this._state,p=this._pose,playing=this._frame.mode==='playing',speed=Math.abs(finite(state.speed));
+      if(playing&&this._boost>.2){
+        this._emberClock+=dt;if(this._emberClock>.03){this._emberClock=0;const a=finite(p[2]);this._spawn(p[0]-Math.cos(a)*2.5,p[1]-Math.sin(a)*2.5,1,8,.9,-finite(state.vx,speed)*.25);}
+      }
       if(playing){
         this._dustClock+=dt;this._exhaustClock+=dt;
         if(this._dustClock>.055&&state.grounded&&speed>1){this._dustClock=0;const contacts=state.wheelContact;for(let i=0;i<2;i++)if(!contacts||contacts[i])this._spawn(p[3+i*3],p[4+i*3]-.62,1+Math.floor(finite(state.slip)*2),0,.35+speed/30);}
@@ -2495,7 +2863,7 @@ globalThis.TruckAudio = TruckAudio;
         if(dt>0)p[n+2]+=dt;if(p[n+2]>=p[n+3]){p[n+3]=0;continue;}
         if(drawn>=8)continue;const x=p[n]*this._cameraScale+this._ox,y=-(p[n+1]+p[n+2]*.9)*this._cameraScale+this._oy;
         if(x<-100||x>this.width+100||y<-40||y>this.height+40)continue;
-        const style=p[n+4];c.globalAlpha=clamp((p[n+3]-p[n+2])/.28,0,1);c.font=style===4?'900 18px Arial':'700 13px monospace';c.textAlign='center';c.lineJoin='round';c.lineWidth=3.5;c.strokeStyle=this._biome.outline;c.strokeText(this._popupText[i],x,y);c.fillStyle=style===2?'#f4d487':style===3?'#f0aa83':style===1?'#e8efb1':'#f3edcb';c.fillText(this._popupText[i],x,y);this._stats.drawOps+=2;drawn++;
+        const style=p[n+4];c.globalAlpha=clamp((p[n+3]-p[n+2])/.28,0,1);c.font=style===4?'900 18px Arial':'700 13px monospace';c.textAlign='center';c.lineJoin='round';c.lineWidth=3.5;c.strokeStyle=this._biome.outline;c.strokeText(this._popupText[i],x,y);c.fillStyle=style===5?'#7fe2ff':style===2?'#f4d487':style===3?'#f0aa83':style===1?'#e8efb1':'#f3edcb';c.fillText(this._popupText[i],x,y);this._stats.drawOps+=2;drawn++;
       }
       c.globalAlpha=1;
     }
@@ -2510,15 +2878,30 @@ globalThis.TruckAudio = TruckAudio;
     _drawScreen(dt){
       const c=this.ctx,w=this.width,h=this.height,state=this._state,settings=this._frame.settings||EMPTY,speed=Math.abs(finite(state.speed))*3.6;
       c.setTransform(this.renderScale,0,0,this.renderScale,0,0);
-      if(speed>75&&this._frame.mode==='playing'&&!settings.reducedMotion&&this._detail>0){
-        const strength=clamp((speed-75)/45,0,.45);c.globalAlpha=strength;c.strokeStyle='#ecebd0';c.lineWidth=1;c.beginPath();
-        for(let i=0;i<12;i++){const y=(hash(i+471)*h+this._clock*(17+i*3))%h,left=i%2===0,x=left?hash(i+911)*w*.13:w-hash(i+811)*w*.13;c.moveTo(x,y);c.lineTo(x+(left?30:-30),y);}
-        c.stroke();this._stats.drawOps++;c.globalAlpha=1;
+      const playing=this._frame.mode==='playing',motion=this._motion,boost=this._boost,k=clamp((speed-52)/70,0,1)+boost*.45;
+      if(playing&&motion&&this._detail>0&&k>.03){
+        // Velocity streaks: one batched stroke across the sky and the lower edge, never over the track band.
+        c.globalAlpha=Math.min(.5,k*.4);c.strokeStyle='#ecebd0';c.lineWidth=1.5;c.beginPath();
+        for(let i=0;i<22;i++){const y=i%3===2?h*(.8+hash(i+471)*.16):h*(.05+hash(i+471)*.38),phase=(hash(i+911)+this._clock*(.9+hash(i+3)*1.5))%1,x=w*(1.12-phase*1.3),len=(26+hash(i+77)*84)*k;c.moveTo(x,y);c.lineTo(x+len,y);}
+        c.stroke();this._stats.drawOps++;
+        if(boost>.05){c.globalAlpha=Math.min(.65,boost*.6);c.strokeStyle='#7fe2ff';c.lineWidth=2;c.beginPath();
+          for(let i=0;i<9;i++){const y=i%3===2?h*(.82+hash(i+71)*.14):h*(.06+hash(i+71)*.36),phase=(hash(i+11)+this._clock*(1.6+hash(i+5)*1.4))%1,x=w*(1.15-phase*1.35),len=(70+hash(i+7)*120)*boost;c.moveTo(x,y);c.lineTo(x+len,y);}
+          c.stroke();this._stats.drawOps++;}
+        c.globalAlpha=1;
+      }
+      if(playing&&motion&&this._detail>0&&this._fore){
+        const alpha=clamp(speed/60,0,1)*.42;
+        if(alpha>.03){const offset=((this._cameraX*this._cameraScale*1.8)%1024+1024)%1024,y=h-96;c.globalAlpha=alpha;for(let x=-offset;x<w;x+=1024){c.drawImage(this._fore,x,y,1024,96);this._stats.drawOps++;}c.globalAlpha=1;}
       }
       if(this._biome.weather.kind==='fog'&&this._detail>0){c.globalAlpha=.6;c.fillStyle=this._haze;c.fillRect(0,h*.45,w,h*.55);c.globalAlpha=1;this._stats.drawOps++;}
       c.fillStyle=this._vignette;c.fillRect(0,0,w,h);this._stats.drawOps++;
+      if(playing&&motion&&boost>.03){c.globalAlpha=boost*(.75+.25*Math.sin(this._clock*21));c.fillStyle=this._nitroVignette;c.fillRect(0,0,w,h);c.globalAlpha=1;this._stats.drawOps++;}
+      if(this._ringTime>0){const t=1-this._ringTime/.42,x=this._ringX*this._cameraScale+this._ox,y=-this._ringY*this._cameraScale+this._oy,r=(.8+t*3.2*(.6+this._ringPower))*this._cameraScale;c.globalAlpha=(1-t)*.5;c.strokeStyle=this._biome.dust;c.lineWidth=3;c.beginPath();c.ellipse(x,y,r,r*.16,0,0,TAU);c.stroke();this._stats.drawOps++;c.globalAlpha=1;this._ringTime=Math.max(0,this._ringTime-dt);}
+      // Letterbox for the cannon shot, slams, wrecks and run endings.
+      const bars=motion?clamp(finite((this._frame.cinema||EMPTY).bars),0,1):0;this._bars+=(bars-this._bars)*(1-Math.exp(-dt*9));
+      if(this._bars>.01){const bar=Math.round(this._bars*h*((this._frame.layout||EMPTY).touch?.06:.09));c.fillStyle='#07070b';c.fillRect(0,0,w,bar);c.fillRect(0,h-bar,w,bar);this._stats.drawOps+=2;}
       this._drawPopups(dt);this._drawIndicators();
-      if(this._impactTime>0){const t=1-this._impactTime/.6,x=this._impactX*this._cameraScale+this._ox,y=-this._impactY*this._cameraScale+this._oy;c.globalAlpha=(1-t)*.8;c.strokeStyle='#f3e6a3';c.lineWidth=3;c.beginPath();c.arc(x,y,10+t*65,0,TAU);c.stroke();this._stats.drawOps++;c.globalAlpha=1;this._impactTime=Math.max(0,this._impactTime-dt);}
+      if(this._impactTime>0){const t=1-this._impactTime/.6,x=this._impactX*this._cameraScale+this._ox,y=-this._impactY*this._cameraScale+this._oy;c.globalAlpha=(1-t)*.8;c.strokeStyle='#f3e6a3';c.lineWidth=3;c.beginPath();c.arc(x,y,10+t*65,0,TAU);if(t>.18){c.moveTo(x+6+(t-.18)*78,y);c.arc(x,y,6+(t-.18)*78,0,TAU);}c.stroke();this._stats.drawOps++;c.globalAlpha=1;this._impactTime=Math.max(0,this._impactTime-dt);}
 
       if(this._flashTime>0){c.globalCompositeOperation='screen';c.globalAlpha=clamp(this._flashTime/this._flashDuration,0,1)*.16;c.fillStyle=this._flashColor;c.fillRect(0,0,w,h);c.globalAlpha=1;c.globalCompositeOperation='source-over';this._stats.drawOps++;this._flashTime=Math.max(0,this._flashTime-dt);}
     }
@@ -2527,10 +2910,18 @@ globalThis.TruckAudio = TruckAudio;
       if(!this._biome||!this._banks.length){this.ctx.fillStyle='#152a2d';this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);this._stats.drawOps=1;this._stats.renderMs=performance.now()-start;return;}
       this._frame=frame;this._state=frame.state||EMPTY;this._input=frame.input||EMPTY;
       const dt=clamp(finite(frame.dt),0,.1);this._clock+=dt;this._worldClock+=Number.isFinite(frame.worldDt)?frame.worldDt:dt;this._kick*=Math.exp(-dt*19);this._muzzle=Math.max(0,this._muzzle-dt);
+      const settings=frame.settings||EMPTY,rival=this._state.rival;this._motion=!settings.reducedMotion;
+      this._boost+=((this._state.boosting?1:0)-this._boost)*(1-Math.exp(-dt*(this._state.boosting?14:7)));this._rivalBoost+=((rival&&rival.boosting?1:0)-this._rivalBoost)*(1-Math.exp(-dt*10));
       this._preparePose(this._state,frame.pose);this._updateCamera(frame,dt);this._drawBackground();this._worldTransform();this._drawWorld();
       this._drawEntities();
       if(frame.ghost&&frame.ghost.pose&&frame.ghost.pose.length>=9){this.ctx.globalAlpha=.35*clamp(finite(frame.ghost.alpha,1),0,1);this._drawTruck(frame.ghost.pose,0,false,true);this.ctx.globalAlpha=1;}
       if(this._state.rival||Number.isFinite(this._pose[RIVAL*3]))this._drawTruck(this._pose,RIVAL*3,true);
+      if(this._motion&&finite(this._state.slipstream)>.05&&Number.isFinite(this._pose[RIVAL*3])){
+        // Slipstream: air flowing from Iron Maw's tail to the player's nose.
+        const c=this.ctx,p=this._pose,ax=p[9]-2.2,ay=p[10]+.3,bx=p[0]+2.2,by=p[1]+.3;c.globalAlpha=finite(this._state.slipstream)*.55;c.strokeStyle='#bfefff';c.lineWidth=2/this._cameraScale;c.beginPath();
+        for(let i=0;i<4;i++){const phase=(this._clock*2.4+i*.25)%1,off=(i-1.5)*.32,x1=ax+(bx-ax)*phase,x2=ax+(bx-ax)*Math.min(1,phase+.3);c.moveTo(x1,ay+(by-ay)*phase+off);c.lineTo(x2,ay+(by-ay)*Math.min(1,phase+.3)+off);}
+        c.stroke();c.globalAlpha=1;this._stats.drawOps++;
+      }
       this._drawTruck(this._pose,PLAYER*3);this._drawCannon();this._emitAmbient(Number.isFinite(frame.worldDt)?frame.worldDt:dt);this._drawParticles(Number.isFinite(frame.worldDt)?frame.worldDt:dt);this._drawScreen(dt);
       this._stats.spriteBytes=this._spriteBytes+this._screenBytes;this._stats.renderScale=this.renderScale;this._stats.renderMs=performance.now()-start;
     }
@@ -2541,11 +2932,13 @@ globalThis.TruckAudio = TruckAudio;
 </script>
 <script>
 /* IRONTRAIL v3 runtime. Fixed-step simulation, interpolation, menus and progression.
- * The small pure helpers export in Node for pacing/ghost regression tests.
+ * Redline (v4) adds nitro input, impact/finish direction, coasting outros, haptics and reward wiring.
+ * The small pure helpers export in Node for pacing/ghost/director regression tests.
  */
 (function(global){
   'use strict';
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),STEP=1/120,REFRESH=[60,90,120,144,165,240];
+  const smooth=x=>{x=clamp(x,0,1);return x*x*(3-2*x);};
   const QUALITY=Object.freeze([
     {factor:1,particleScale:1,detail:'high'},{factor:.85,particleScale:1,detail:'high'},
     {factor:.72,particleScale:1,detail:'high'},{factor:.6,particleScale:1,detail:'high'},
@@ -2593,7 +2986,6 @@ globalThis.TruckAudio = TruckAudio;
       if(v.phase==='shot'&&!state.projectile&&this.elapsed>.1)this.start(state.monster.alive?'miss':'impact');
       const duration={aim:1.35,shot:3.2,impact:.64,miss:.38}[v.phase]||1;
       v.progress=Math.min(1,this.elapsed/duration);
-      const smooth=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
       if(v.phase==='aim'){v.intensity=smooth(this.elapsed/.18)*(1-smooth((this.elapsed-.95)/.4));v.timeScale=1-.55*v.intensity;}
       else if(v.phase==='shot'){v.intensity=1;v.timeScale=this.entryScale-(this.entryScale-.22)*smooth(this.elapsed/.1);}
       else if(v.phase==='impact'){v.intensity=1-smooth(this.elapsed/.64);v.timeScale=.14+.86*smooth((this.elapsed-.08)/.56);}
@@ -2604,33 +2996,90 @@ globalThis.TruckAudio = TruckAudio;
       return v;
     }
   }
-  if(typeof document==='undefined'){if(typeof module!=='undefined')module.exports={FramePacer,GhostTape,ShotDirector,QUALITY};return;}
+  // Slams, wrecks and run endings. `scale` is the slowest world speed, `bars`/`zoom` frame the
+  // moment. Sticky kinds keep their final framing until the runtime swaps to a results screen.
+  const IMPACTS=Object.freeze({
+    slam:Object.freeze({priority:2,duration:.62,attack:.03,release:.24,scale:.16,recover:1,bars:.35,zoom:.55,sticky:false}),
+    wreck:Object.freeze({priority:1,duration:.85,attack:.05,release:.42,scale:.3,recover:1,bars:.6,zoom:.5,sticky:false}),
+    finish:Object.freeze({priority:3,duration:1.45,attack:.07,release:0,scale:.3,recover:.62,bars:1,zoom:.75,sticky:true}),
+    fail:Object.freeze({priority:3,duration:1.3,attack:.05,release:0,scale:.26,recover:.55,bars:1,zoom:.65,sticky:true}),
+    stall:Object.freeze({priority:3,duration:1.4,attack:.3,release:0,scale:1,recover:1,bars:1,zoom:.45,sticky:true})
+  });
+  class ImpactDirector{
+    constructor(){this.state={kind:'idle',timeScale:1,bars:0,zoom:0,progress:0};this.reset();}
+    reset(){this.elapsed=0;this.strength=1;Object.assign(this.state,{kind:'idle',timeScale:1,bars:0,zoom:0,progress:0});}
+    get done(){return !IMPACTS[this.state.kind]||this.state.progress>=1;}
+    trigger(kind,strength=1){
+      const next=IMPACTS[kind],current=IMPACTS[this.state.kind];if(!next)return false;
+      if(current&&current.priority>next.priority)return false;
+      this.elapsed=0;this.strength=clamp(Number(strength)||0,.3,1);this.state.kind=kind;this.state.progress=0;return true;
+    }
+    update(dt,reduced=false){
+      const v=this.state,e=IMPACTS[v.kind];dt=clamp(Number(dt)||0,0,.1);
+      if(!e){v.timeScale=1;v.bars=0;v.zoom=0;v.progress=0;return v;}
+      this.elapsed+=dt;const t=this.elapsed;v.progress=Math.min(1,t/e.duration);
+      let k=smooth(t/e.attack);
+      if(e.sticky)v.timeScale=e.scale+(e.recover-e.scale)*smooth((t-e.attack)/Math.max(.001,e.duration-e.attack));
+      else{k=Math.min(k,1-smooth((t-e.release)/Math.max(.001,e.duration-e.release)));v.timeScale=1-(1-e.scale)*k*this.strength;}
+      v.bars=e.bars*k;v.zoom=e.zoom*k*(e.sticky?1:this.strength);
+      if(v.progress>=1&&!e.sticky){v.kind='idle';v.timeScale=1;v.bars=0;v.zoom=0;v.progress=0;}
+      if(reduced){v.timeScale=1;v.bars=0;v.zoom=0;}
+      return v;
+    }
+  }
+  if(typeof document==='undefined'){if(typeof module!=='undefined')module.exports={FramePacer,GhostTape,ShotDirector,ImpactDirector,IMPACTS,QUALITY};return;}
   const Rules=global.IronRules,stages=global.TruckPhysics.STAGES,biomes=global.IRON_BIOMES;
   const canvas=document.getElementById('gameCanvas'),app=document.getElementById('app');
   const ui=new global.IronUI(document),audio=new global.TruckAudio(),pacer=new FramePacer(),ghost=new GhostTape();
   let storage;try{storage=global.localStorage;}catch(_){storage=null;}
   const save=Rules.Save.load(storage);let stageIndex=clamp(save.selected|0,0,save.unlocked-1);
   let physics=new global.TruckPhysics(stageIndex,{tuning:save.upgrades}),state=physics.getState(),pose=new Float64Array(physics.poseLength);
-  const renderer=new global.IronRenderer(canvas,{biomes}),shotDirector=new ShotDirector();
+  const renderer=new global.IronRenderer(canvas,{biomes}),shotDirector=new ShotDirector(),impactDirector=new ImpactDirector();
   let mode='title',screen='title',pausedFrom='playing';const navigation=[];
   let run=Rules.createRun(stageIndex),runTime=0,recoveries=0,accumulator=0,last=performance.now();
-  let countdownLeft=0,countdownNumber=0,hitStop=0,slowLeft=0,flippedTime=0,fallenTime=0;
-  let hudClock=0,musicClock=0,lowFuelWarned=false,monsterWarned=false,lockWarned=false,stageResult=null;
+  let countdownLeft=0,countdownNumber=0,countdownStep=.62,hitStop=0,slowLeft=0,flippedTime=0,fallenTime=0;
+  let hudClock=0,musicClock=0,lowFuelWarned=false,monsterWarned=false,lockWarned=false,stageResult=null,outro=null;
   let width=innerWidth,height=innerHeight,touch=false,layout={touch:false,safeTop:88,safeBottom:96};
   let renderScale=1,qualityName='high',lastQuality='',warmReady=false,ignoreBlurUntil=0;
-  const keys=new Set(),pointerMap=new Map(),pedal={gas:0,reverse:0,brake:0,left:0,right:0};
-  const input={throttle:0,brake:false,lean:0},padPrevious=new Uint8Array(20),padState={gas:0,reverse:0,brake:false,lean:0};
-  let padMenuDirection='',padRepeat=0,lastPadTime=0;
-  const view={stageIndex,stageName:'',progress:0,time:0,score:0,ghostDelta:null,fuel:100,cleared:0,totalZombies:0,speed:0,gear:1,rpm:820,ammo:1,locked:false,monsterDistance:0,monsterAlive:true,monsterProgress:null,rivalProgress:null,racePosition:1,combo:0,comboLeft:0,comboMax:3,checkpointProgress:[],paused:false,muted:false};
-  const frame={state,pose,alpha:1,dt:0,time:0,mode,input,ghost:null,layout,settings:save.settings};
-  const musicState={biome:stageIndex,intensity:.2,mood:'menu',playing:true,timeScale:1};
+  const keys=new Set(),pointerMap=new Map(),pedal={gas:0,reverse:0,brake:0,left:0,right:0,nitro:0};
+  const input={throttle:0,brake:false,lean:0,boost:false,timeScale:1},coastInput={throttle:0,brake:false,lean:0,boost:false,timeScale:1};
+  const padPrevious=new Uint8Array(20),padState={gas:0,reverse:0,brake:false,lean:0,boost:false};
+  let padMenuDirection='',padRepeat=0;
+  // Redline feel state: auto-nitro latch, rocket start window, chain awards, haptics and pass-by cues.
+  let autoBoost=false,everBoosted=false,nitroTip=false,gasHeld=false,lastGasEdge=-1e9,goTime=-1e9,rocketDone=true;
+  let chainMultiplier=1,boostRumble=0,musicBoost=0,worldDt=0,whooshXs=[],whooshIndex=0;
+  const view={stageIndex,stageName:'',progress:0,time:0,score:0,ghostDelta:null,fuel:100,cleared:0,totalZombies:0,speed:0,gear:1,rpm:820,ammo:1,locked:false,monsterDistance:0,monsterAlive:true,monsterProgress:null,rivalProgress:null,racePosition:1,combo:0,comboLeft:0,comboMax:3,checkpointProgress:[],paused:false,muted:false,nitro:0,boosting:false,nitroReady:false,nitroHint:'',slipstream:0,gap:null};
+  const cinema={kind:'idle',bars:0,zoom:0,progress:0};
+  const frame={state,pose,alpha:1,dt:0,time:0,mode,input,ghost:null,layout,settings:save.settings,cinema};
+  const musicState={biome:stageIndex,intensity:.2,mood:'menu',playing:true,timeScale:1,boost:0,tension:0};
   const perf={fps:60,refreshHz:60,renderScale:1,quality:'high',cpuMs:0,drawOps:0,trace:()=>pacer.trace()};
   const NO_PADS=[];let activePad=null;const gamepadProvider=()=>navigator.getGamepads?navigator.getGamepads():NO_PADS;
   const pressed=i=>!!activePad?.buttons[i]?.pressed,value=i=>activePad?.buttons[i]?.value||0,edge=i=>pressed(i)&&!padPrevious[i];
+  const TIPS={monster:'One charge. Wait for the green LOCKED signal, then press X / J or FIRE.',fuel:'Keep moving, collect amber fuel cans and save recovery for when you need it.',rival:'Iron Maw took the flag. Keep your momentum and land with the wheels underneath you.'};
   function primeAudio(){return audio.context?.state==='running'?Promise.resolve(true):audio.prime();}
   function persist(){Rules.Save.save(storage,save);}
   function refreshCampaign(){ui.setCampaign(save,stages,biomes,Rules);}
-  function clearInput(){keys.clear();pointerMap.clear();for(const key of Object.keys(pedal))pedal[key]=0;for(const button of ui.pedals)button.classList.remove('pressed');input.throttle=0;input.brake=false;input.lean=0;padState.gas=0;padState.reverse=0;padState.brake=false;padState.lean=0;}
+  function clearInput(){keys.clear();pointerMap.clear();for(const key of Object.keys(pedal))pedal[key]=0;for(const button of ui.pedals)button.classList.remove('pressed');input.throttle=0;input.brake=false;input.lean=0;input.boost=false;padState.gas=0;padState.reverse=0;padState.brake=false;padState.lean=0;padState.boost=false;autoBoost=false;gasHeld=false;}
+  const nitroHint=()=>touch?'':activePad?'RB':'Z / N';
+  const award=(kind,data)=>{if(ui.award)ui.award(kind,data);};
+  const stop=seconds=>{if(!save.settings.reducedMotion)hitStop=Math.max(hitStop,seconds);};
+  // Dual-rumble on a connected pad; a short buzz for the heaviest hits on touch devices.
+  function rumble(strong,weak,ms){
+    if(save.settings.haptics===false||mode!=='playing')return;
+    try{
+      const actuator=activePad&&activePad.vibrationActuator;
+      if(actuator&&actuator.playEffect){const done=actuator.playEffect('dual-rumble',{startDelay:0,duration:Math.round(ms),weakMagnitude:clamp(weak,0,1),strongMagnitude:clamp(strong,0,1)});if(done&&done.catch)done.catch(()=>{});}
+      else if(touch&&strong>=.7&&navigator.vibrate)navigator.vibrate(Math.min(70,Math.round(ms*.4)));
+    }catch(_){}
+  }
+  function buildWhoosh(){
+    const track=physics.track,xs=[];
+    for(let d=50;d<track.length;d+=100)xs.push(track.startX+d);
+    for(let i=0;i<track.segments.length-1;i++){const s=track.segments[i];xs.push(s[s.length-1].x-5);}
+    for(let i=1;i<track.checkpoints.length;i++)xs.push(track.checkpoints[i].x);
+    whooshXs=xs.sort((a,b)=>a-b);whooshIndex=0;
+  }
+  function seekWhoosh(){whooshIndex=0;while(whooshIndex<whooshXs.length&&whooshXs[whooshIndex]<=state.x)whooshIndex++;}
   function applyQuality(force=false){
     const setting=save.settings.quality;let q=QUALITY[pacer.level];
     if(setting==='high')q=QUALITY[0];else if(setting==='balanced')q={factor:.85,particleScale:.7,detail:'medium'};else if(setting==='performance')q={factor:.6,particleScale:.35,detail:'low'};
@@ -2649,7 +3098,7 @@ globalThis.TruckAudio = TruckAudio;
   function show(name,data={}){
     screen=name;ui.clearFeedback();ui.showScreen(name,data);ui.hud.setVisible(false);ui.setRecoverVisible(false);clearInput();
     if(name==='pause'){mode='paused';audio.setPaused(true);}
-    else if(name==='results'||name==='failed'){/* finishRun already chose its mode */}
+    else if(name==='results'||name==='failed'){/* endOutro already chose its mode */}
     else {mode=name;audio.setPaused(false);}
     musicClock=1;
   }
@@ -2657,9 +3106,10 @@ globalThis.TruckAudio = TruckAudio;
     index=clamp(index|0,0,9);if(!bypass&&index>=save.unlocked)return false;
     ui.clearFeedback();
     stageIndex=index;save.selected=index;persist();physics=new global.TruckPhysics(index,{tuning:save.upgrades});state=physics.getState();pose=new Float64Array(physics.poseLength);
-    shotDirector.reset();frame.state=state;frame.pose=pose;physics.getPose(pose);renderer.setStage(physics,index);renderer.snapCamera();
+    shotDirector.reset();impactDirector.reset();outro=null;frame.state=state;frame.pose=pose;physics.getPose(pose);renderer.setStage(physics,index);renderer.snapCamera();
     view.checkpointProgress=physics.track.checkpoints.slice(1).map(p=>(p.x-physics.track.startX)/physics.track.length);
     run=Rules.createRun(index);run.previousStars=save.stars[index]||[false,false,false];runTime=0;recoveries=0;accumulator=0;countdownLeft=0;hitStop=0;slowLeft=0;flippedTime=0;fallenTime=0;stageResult=null;lowFuelWarned=false;monsterWarned=false;lockWarned=false;ghost.reset();
+    nitroTip=false;chainMultiplier=1;boostRumble=0;rocketDone=true;buildWhoosh();
     try{ghost.load(storage?.getItem(`irontrail-ghost-v1-${index}`));}catch(_){ghost.replay=null;}
     ghost.record(0,pose);clearInput();refreshCampaign();musicClock=1;
     if(brief)showBrief();return true;
@@ -2667,11 +3117,12 @@ globalThis.TruckAudio = TruckAudio;
   function showBrief(){
     const stage=stages[stageIndex];show('brief',{stageIndex,name:stage.name,length:stage.length,par:Rules.PAR_TIMES[stageIndex],challenge:Rules.CHALLENGES[stageIndex].label,best:save.best[stageIndex]||null});
   }
-  function countdown(skip=false){
+  // A retry counts down faster than a first start: back in the action in about a second.
+  function countdown(skip=false,quick=false){
     primeAudio();screen=null;ui.showScreen(null);ui.setRecoverVisible(false);accumulator=0;last=performance.now();
-    audio.setPaused(false);clearInput();
+    audio.setPaused(false);clearInput();rocketDone=true;
     if(skip){mode='playing';countdownLeft=0;ui.hud.setVisible(true);audio.go();}
-    else{mode='countdown';countdownLeft=3;countdownNumber=3;ui.hud.setVisible(false);ui.banner('3','countdown',.9);audio.countdown(3);}
+    else{mode='countdown';countdownStep=quick?.4:.62;countdownLeft=3*countdownStep;countdownNumber=3;ui.hud.setVisible(false);ui.banner('3','countdown',countdownStep*1.3);audio.countdown(3);}
     musicClock=1;
   }
   function play(){
@@ -2684,7 +3135,7 @@ globalThis.TruckAudio = TruckAudio;
     if(screen==='results'){if(stageIndex<9)next();else retry();return;}
     if(screen==='failed')retry();
   }
-  function retry(){navigation.length=0;audio.ui('confirm');loadStage(stageIndex,{brief:false,bypass:true});countdown();}
+  function retry(){navigation.length=0;audio.ui('confirm');loadStage(stageIndex,{brief:false,bypass:true});countdown(false,true);}
   function next(){if(stageIndex<9){navigation.length=0;navigation.push('stages');loadStage(stageIndex+1,{brief:true});audio.ui('confirm');}}
   function pause(){if(mode!=='playing'&&mode!=='countdown')return;pausedFrom=mode;show('pause',{stageName:stages[stageIndex].name,time:runTime,fuel:state.fuel});}
   function resume(){if(mode!=='paused')return;ui.showScreen(null);screen=null;mode=pausedFrom;clearInput();accumulator=0;last=performance.now();audio.setPaused(false);ui.hud.setVisible(mode==='playing');musicClock=1;}
@@ -2699,11 +3150,11 @@ globalThis.TruckAudio = TruckAudio;
     if(target==='brief'){showBrief();return;}if(['stages','garage','settings'].includes(target)){show(target);refreshCampaign();return;}title();
   }
   function recover(){
-    if(mode!=='playing')return;const ok=physics.reset(physics.checkpointIndex);state=physics.getState();
-    if(!ok){if(physics.failed)finishRun(false,physics.failed);return;}
-    recoveries++;accumulator=0;flippedTime=0;fallenTime=0;physics.getPose(pose);renderer.snapCamera();ui.cue('recover',{value:'−12'});audio.ui('back');ui.setRecoverVisible(false);
+    if(mode!=='playing'||outro)return;const ok=physics.reset(physics.checkpointIndex);state=physics.getState();
+    if(!ok){if(physics.failed)beginOutro(false,physics.failed);return;}
+    recoveries++;accumulator=0;flippedTime=0;fallenTime=0;hitStop=0;impactDirector.reset();autoBoost=false;physics.getPose(pose);renderer.snapCamera();seekWhoosh();ui.cue('recover',{value:'−12'});audio.ui('back');ui.setRecoverVisible(false);
   }
-  function fire(){if(mode!=='playing')return;if(physics.fire()){state=physics.getState();shotDirector.shoot();ui.clearFeedback();ui.cue('shot');}else audio.ui('error');}
+  function fire(){if(mode!=='playing'||outro)return;if(physics.fire()){state=physics.getState();shotDirector.shoot();ui.clearFeedback();ui.cue('shot');}else audio.ui('error');}
   function toggleSound(){
     if(audio.muted||audio.context?.state!=='running'){audio.setMuted(false);primeAudio().then(ok=>{if(ok)audio.ui('confirm');});}
     else audio.setMuted(true);
@@ -2728,18 +3179,19 @@ globalThis.TruckAudio = TruckAudio;
   function setting(key,value){
     if(!(key in save.settings))return;
     if(['master','music','sfx'].includes(key))value=clamp(Number(value)||0,0,1);
-    else if(['shake','showFps','reducedMotion'].includes(key))value=!!value;
+    else if(['shake','showFps','reducedMotion','haptics','autoNitro'].includes(key))value=!!value;
     else if(key==='quality'&&!['auto','high','balanced','performance'].includes(value))return;
     const previousScale=renderScale;save.settings[key]=value;persist();applySettings();
     if(key==='quality'&&renderScale>previousScale)renderer.resize(width,height);
     audio.ui('move');
   }
   ui.on('play',play);ui.on('selectStage',i=>{navigation.length=0;navigation.push('stages');if(loadStage(i))audio.ui('confirm');});ui.on('retry',retry);ui.on('next',next);ui.on('resume',resume);ui.on('pause',pause);ui.on('title',title);ui.on('stages',()=>openScreen('stages'));ui.on('garage',()=>openScreen('garage'));ui.on('settings',()=>openScreen('settings'));ui.on('dedication',()=>openScreen('dedication'));ui.on('back',back);ui.on('buy',buy);ui.on('setting',setting);ui.on('fire',fire);ui.on('recover',recover);ui.on('restart',retry);ui.on('sound',toggleSound);ui.on('testSound',testSound);ui.on('fullscreen',fullscreen);
+  ui.on('sfx',kind=>{if(kind==='tick')audio.scoreTick();else if(kind==='stamp')audio.ui('buy');});
   function firstGesture(){primeAudio();}
   for(const type of ['pointerdown','touchend','click','keydown'])window.addEventListener(type,firstGesture,{capture:true,passive:true});
   function menuMove(direction){if(ui.navigate){ui.navigate(direction);audio.ui('move');return;}const buttons=Array.from(document.querySelectorAll('button,input,select')).filter(e=>!e.disabled&&e.getClientRects().length);if(!buttons.length)return;let i=buttons.indexOf(document.activeElement);i=(i+(direction==='up'||direction==='left'?-1:1)+buttons.length)%buttons.length;buttons[i].focus();audio.ui('move');}
   function menuActivate(){if(ui.activate){ui.activate();return;}const el=document.activeElement;if(el instanceof HTMLButtonElement&&!el.disabled)el.click();else document.getElementById('playButton')?.click();}
-  const CODES=new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD','Space','KeyR','KeyC','KeyP','KeyM','KeyF','KeyX','KeyJ','Escape','Enter']);
+  const CODES=new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD','Space','KeyR','KeyC','KeyP','KeyM','KeyF','KeyX','KeyJ','KeyZ','KeyN','ShiftLeft','ShiftRight','Escape','Enter']);
   window.addEventListener('keydown',event=>{
     if(event.metaKey||event.ctrlKey||event.altKey||!CODES.has(event.code))return;
     const el=event.target,editing=el instanceof HTMLInputElement||el instanceof HTMLSelectElement;
@@ -2749,26 +3201,35 @@ globalThis.TruckAudio = TruckAudio;
     if(!event.repeat){
       if(event.code==='KeyM')return toggleSound();if(event.code==='KeyF')return fullscreen();
       if(event.code==='Escape')return back();if(event.code==='KeyP')return mode==='paused'?resume():pause();
-      if(mode==='playing'){if(event.code==='KeyX'||event.code==='KeyJ')return fire();if(event.code==='KeyC')return recover();if(event.code==='KeyR')return retry();}
+      if(mode==='playing'){
+        if(outro){if(event.code==='Enter')skipOutro();else if(event.code==='KeyR')retry();return;}
+        if(event.code==='KeyX'||event.code==='KeyJ')return fire();if(event.code==='KeyC')return recover();if(event.code==='KeyR')return retry();
+      }
       else if(event.code==='Enter')return menuActivate();
       else if(screen&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code))return menuMove(event.code.slice(5).toLowerCase());
     }
-    if(mode==='playing')keys.add(event.code);
+    // Keys pressed during the countdown are already down when GO lands.
+    if(mode==='playing'||mode==='countdown')keys.add(event.code);
   });
   window.addEventListener('keyup',event=>keys.delete(event.code));
+  canvas.addEventListener('pointerdown',()=>{if(outro)skipOutro();});
   for(const button of ui.pedals){
-    button.addEventListener('pointerdown',event=>{event.preventDefault();if(mode!=='playing')return;button.setPointerCapture(event.pointerId);pointerMap.set(event.pointerId,button.dataset.input);pedal[button.dataset.input]++;button.classList.add('pressed');});
+    button.addEventListener('pointerdown',event=>{event.preventDefault();if(mode!=='playing'&&mode!=='countdown')return;const name=button.dataset.input;if(!(name in pedal))return;button.setPointerCapture(event.pointerId);pointerMap.set(event.pointerId,name);pedal[name]++;button.classList.add('pressed');});
     for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,event=>{const name=pointerMap.get(event.pointerId);if(name){pedal[name]=Math.max(0,pedal[name]-1);pointerMap.delete(event.pointerId);}button.classList.remove('pressed');});
     button.addEventListener('contextmenu',event=>event.preventDefault());
   }
   function pollPad(dt){
-    padState.gas=0;padState.reverse=0;padState.brake=false;padState.lean=0;
+    padState.gas=0;padState.reverse=0;padState.brake=false;padState.lean=0;padState.boost=false;
     const list=gamepadProvider();let pad=null;for(let i=0;i<list.length;i++)if(list[i]?.connected){pad=list[i];break;}if(!pad){activePad=null;padPrevious.fill(0);return;}activePad=pad;
     if(edge(9)){if(mode==='paused')resume();else pause();}
-    if(mode==='playing'){
+    if(mode==='playing'||mode==='countdown'){
       padState.gas=value(7);const left=value(6);padState.brake=left>.1&&state.speed>1;padState.reverse=padState.brake?0:left;
       const axis=pad.axes[0]||0;padState.lean=Math.abs(axis)>.18?axis:Number(pressed(15))-Number(pressed(14));
-      if(edge(0))fire();if(edge(2))recover();if(edge(3))retry();if(edge(1))pause();
+      padState.boost=pressed(5)||pressed(4);
+      if(mode==='playing'){
+        if(edge(0)){if(outro)skipOutro();else fire();}
+        if(edge(2))recover();if(edge(3))retry();if(edge(1))pause();
+      }
     }else if(screen){
       const x=pad.axes[0]||0,y=pad.axes[1]||0;let direction=pressed(12)||y<-.55?'up':pressed(13)||y>.55?'down':pressed(14)||x<-.55?'left':pressed(15)||x>.55?'right':'';
       padRepeat-=dt;if(direction&&(direction!==padMenuDirection||padRepeat<=0)){menuMove(direction);padRepeat=.23;}padMenuDirection=direction;
@@ -2776,43 +3237,106 @@ globalThis.TruckAudio = TruckAudio;
     }
     for(let i=0;i<padPrevious.length;i++)padPrevious[i]=pressed(i)?1:0;
   }
-  function readInput(){
+  function readInput(now){
     const gas=keys.has('ArrowUp')||keys.has('KeyW')||pedal.gas>0?1:padState.gas;
     const reverse=keys.has('ArrowDown')||keys.has('KeyS')||pedal.reverse>0?1:padState.reverse;
     input.throttle=clamp(gas-reverse,-1,1);input.brake=keys.has('Space')||pedal.brake>0||padState.brake;
     input.lean=clamp(Number(keys.has('ArrowRight')||keys.has('KeyD')||pedal.right>0)-Number(keys.has('ArrowLeft')||keys.has('KeyA')||pedal.left>0)+padState.lean,-1,1);
+    const held=keys.has('KeyZ')||keys.has('KeyN')||keys.has('ShiftLeft')||keys.has('ShiftRight')||pedal.nitro>0||padState.boost;
+    // Auto nitro (setting): light a healthy meter on the ground and ride it until it is spent.
+    if(save.settings.autoNitro&&mode==='playing'&&!outro){
+      if(!autoBoost&&state.nitro>=60&&state.grounded&&!state.inverted&&input.throttle>.5&&Math.abs(state.speed)>6)autoBoost=true;
+      else if(autoBoost&&(!(state.nitro>1)||input.throttle<=.5))autoBoost=false;
+    }else autoBoost=false;
+    input.boost=held||autoBoost;
+    const down=input.throttle>.5;if(down&&!gasHeld)lastGasEdge=now;gasHeld=down;
   }
   window.addEventListener('blur',()=>{clearInput();if(performance.now()>ignoreBlurUntil)pause();});
   document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();pause();}});
+  // Throttle pressed within a quarter second of GO: a small nitro head start.
+  function rocketStart(){
+    rocketDone=true;if(typeof physics.grantNitro!=='function')return;physics.grantNitro(20);state=physics.getState();
+    award('start',{label:'ROCKET START',value:'+NITRO'});audio.perfect();renderer.popup('ROCKET START',state.x,state.y+2.4,'nitro');rumble(.6,.8,170);
+  }
   function physicsEvent(event){
     renderer.onEvent(event,state);audio.setScene(state,event);
+    const s=clamp(Number(event.strength)||0,0,1),mine=event.owner!=='rival';
     switch(event.type){
       case 'takeoff':audio.takeoff(event.strength);break;
-      case 'land':audio.landing(event.strength);break;
-      case 'landing':if(event.perfect){audio.perfect();ui.cue('trick',{value:'★'});}if(event.flips>0)ui.cue('trick',{value:'↻ ×'+event.flips});break;
-      case 'flip':audio.flip(event.count);if(!save.settings.reducedMotion)slowLeft=.10;break;
+      case 'land':audio.landing(event.strength);rumble(.25+s*.65,.2+s*.4,70+s*130);if(s>.8)stop(.02);break;
+      case 'landing':
+        if(event.perfect){audio.perfect();if(ui.award)ui.award('perfect',{label:'PERFECT',value:'+250'});else ui.cue('trick',{value:'★'});}
+        if(event.flips>0){if(ui.award)ui.award('flip',{label:`${event.flips>1?event.flips+'× ':''}${event.dir==='front'?'FRONTFLIP':'BACKFLIP'}`,value:'+'+event.flips*350});else ui.cue('trick',{value:'↻ ×'+event.flips});}
+        if(event.bigAir&&event.upright)award('air',{label:'BIG AIR',value:Number(event.airtime||0).toFixed(1)+' s'});
+        break;
+      case 'flip':audio.flip(event.count);if(!save.settings.reducedMotion)slowLeft=.10;rumble(.3,.6,90);break;
       case 'fuel':audio.pickup();lowFuelWarned=false;break;
-      case 'zombie':audio.zombieHit(event.strength);break;
-      case 'collision':audio.collision(event.strength);break;
-      case 'shot':audio.gunshot();break;
-      case 'monsterHit':audio.monsterHit();shotDirector.hit();ui.cue('hit',{value:'+1000'});break;
-      case 'monsterCrash':audio.monsterCrash();break;
+      case 'zombie':audio.zombieHit(event.strength);if(s>.55)stop(.026);rumble(.2+s*.4,.5,60);break;
+      case 'smash':if(audio.smash)audio.smash(Math.max(.2,s),event.variant|0);if(mine)rumble(.15+s*.25,.45,45);break;
+      case 'collision':audio.collision(event.strength);rumble(.3+s*.7,.6,150);break;
+      case 'slam':
+        if(audio.slam)audio.slam(Math.max(.6,s));else audio.collision(1);
+        if(audio.music&&audio.music.hit)audio.music.hit('slam');
+        impactDirector.trigger('slam',Math.max(.6,s));stop(.07);rumble(1,1,340);award('slam',{label:'NITRO SLAM',value:'+500'});break;
+      case 'wreck':
+        if(audio.wreck)audio.wreck(Math.max(.4,s),event.kind);
+        impactDirector.trigger('wreck',Math.max(.5,s));rumble(.9,.7,280);award('wreck',{label:event.kind==='fall'?'OVER THE EDGE':'WRECKED'});break;
+      case 'nitro':
+        if(audio.nitro)audio.nitro(event.phase,{owner:event.owner||'player',empty:!!event.empty});
+        if(mine){if(event.phase==='start'){everBoosted=true;boostRumble=.11;rumble(.45,.9,200);}else if(event.phase==='full')award('nitro',{label:'NITRO FULL'});}
+        break;
+      case 'escalate':if(audio.escalate)audio.escalate();ui.banner('IRON MAW IGNITES!','big',1.5);rumble(.5,.9,260);break;
+      case 'shot':audio.gunshot();rumble(1,.8,170);break;
+      case 'monsterHit':audio.monsterHit();shotDirector.hit();ui.cue('hit',{value:'+1000'});award('giant',{label:'GIANT DOWN',value:'+1000'});rumble(1,1,380);break;
+      case 'monsterCrash':audio.monsterCrash();rumble(1,1,420);break;
       case 'checkpoint':audio.checkpoint();ui.cue('checkpoint');break;
+      case 'empty':if(audio.stall)audio.stall();break;
     }
     audio.setScene();
     const reward=Rules.onEvent(run,event,{state,time:runTime,recoveries});
-    if(reward){if(event.type!=='monsterHit')renderer.popup(`+${reward.points}`,event.x??state.x,event.y??state.y+1,reward.kind);if(reward.combo>1)audio.combo(reward.combo);}
+    if(reward){
+      if(event.type!=='monsterHit')renderer.popup(`+${reward.points}`,event.x??state.x,event.y??state.y+1,reward.kind);
+      if(reward.combo>1)audio.combo(reward.combo);
+      if(event.type==='zombie'||event.type==='smash'){
+        const multiplier=Math.min(5,1+Math.floor((Math.max(1,reward.combo)-1)/3));
+        if(multiplier>chainMultiplier)award('chain',{label:'CHAIN',value:'×'+multiplier});
+        chainMultiplier=multiplier;
+      }
+    }
   }
-  function finishRun(won,reason){
-    if(mode!=='playing')return;clearInput();ui.setRecoverVisible(false);
-    const summary={time:runTime,fuel:state.fuel,won,recoveries,cleared:state.cleared,totalZombies:state.totalZombies,cans:state.stats.cans,totalCans:physics.fuelCans.length,stats:state.stats,rivalGap:state.rival?state.x-state.rival.x:0,previousStars:save.stars[stageIndex]||[false,false,false]};
+  // Presentation only: the run is already decided while the world coasts.
+  function outroEvent(event){
+    renderer.onEvent(event,state);audio.setScene(state,event);
+    if(event.type==='land')audio.landing(event.strength);else if(event.type==='collision')audio.collision(event.strength);else if(event.type==='takeoff')audio.takeoff(event.strength);
+    audio.setScene();
+  }
+  // The result is computed and saved the instant the run ends; the world then coasts under a
+  // finish/fail envelope before the screen appears. Reduced motion goes straight to the screen.
+  function beginOutro(won,reason){
+    if(mode!=='playing'||outro)return;clearInput();ui.setRecoverVisible(false);hitStop=0;slowLeft=0;
+    const summary={time:runTime,fuel:state.fuel,won,recoveries,cleared:state.cleared,totalZombies:state.totalZombies,cans:state.stats.cans,totalCans:physics.fuelCans.length,stats:state.stats,maxCombo:run.maxCombo,rivalGap:state.rival?state.x-state.rival.x:0,previousStars:save.stars[stageIndex]||[false,false,false]};
     const result=Rules.finish(run,summary),record=Rules.Save.recordResult(save,stageIndex,result,summary);persist();refreshCampaign();
     if(won&&record.newBest&&ghost.count>1){try{storage?.setItem(`irontrail-ghost-v1-${stageIndex}`,ghost.serialize());}catch(_){}}
-    mode=won?(stageIndex===9?'victory':'cleared'):'failed';audio.result(won);if(won){renderer.celebrate(stageIndex===9?'victory':'clear');audio.celebrate();}
-    stageResult={stageIndex,name:stages[stageIndex].name,time:runTime,par:Rules.PAR_TIMES[stageIndex],score:result.score,stars:result.stars,breakdown:result.breakdown,scrap:result.scrap,newBest:record.newBest,newScoreBest:record.newScoreBest,challenge:result.challenge,nextAvailable:won&&stageIndex<9,reason,tip:reason==='monster'?'One charge. Wait for the green LOCKED signal, then press X / J or FIRE.':reason==='fuel'?'Keep moving, collect amber fuel cans and save recovery for when you need it.':'Iron Maw took the flag. Keep your momentum and land with the wheels underneath you.'};
-    show(won?'results':'failed',stageResult);musicClock=1;
-    if(won)for(let i=0;i<3;i++)if(result.stars[i])setTimeout(()=>{if(screen==='results')audio.star(i);},180+i*220);
+    stageResult={stageIndex,name:stages[stageIndex].name,time:runTime,par:Rules.PAR_TIMES[stageIndex],score:result.score,stars:result.stars,breakdown:result.breakdown,awards:result.awards||[],scrap:result.scrap,newBest:record.newBest,newScoreBest:record.newScoreBest,challenge:result.challenge,nextAvailable:won&&stageIndex<9,reason,tip:TIPS[reason]||TIPS.rival};
+    const kind=won?'finish':reason==='fuel'?'stall':'fail',instant=save.settings.reducedMotion||typeof physics.coast!=='function';
+    outro={won,elapsed:0,duration:instant?0:IMPACTS[kind].duration};
+    impactDirector.reset();impactDirector.trigger(kind,1);
+    if(won){
+      renderer.celebrate(stageIndex===9?'victory':'clear');if(audio.finishLine)audio.finishLine(true);audio.celebrate();if(audio.music&&audio.music.hit)audio.music.hit('finish');
+      if(!instant)ui.banner(stageIndex===9?'IRON MAW BEATEN!':'FINISH!','big',1.3);rumble(.8,1,420);
+    }else{
+      if(reason==='rival'&&audio.finishLine)audio.finishLine(false);
+      if(!instant)ui.banner(reason==='fuel'?'OUT OF FUEL':reason==='monster'?'WRECKED!':'IRON MAW WINS','big',1.3);rumble(1,.6,360);
+    }
+    if(instant)endOutro();
   }
+  function endOutro(){
+    if(!outro)return;const won=outro.won;outro=null;impactDirector.reset();
+    mode=won?(stageIndex===9?'victory':'cleared'):'failed';audio.result(won);
+    show(won?'results':'failed',stageResult);musicClock=1;
+    if(won)for(let i=0;i<3;i++)if(stageResult.stars[i])setTimeout(()=>{if(screen==='results')audio.star(i);},180+i*220);
+  }
+  function skipOutro(){if(outro&&outro.elapsed>.35)outro.elapsed=outro.duration;}
   function tick(){
     physics.step(STEP,input);state=physics.getState();runTime+=STEP;Rules.tick(run,STEP);
     for(const event of physics.drainEvents())physicsEvent(event);
@@ -2820,10 +3344,13 @@ globalThis.TruckAudio = TruckAudio;
     if(state.fuel<22&&!lowFuelWarned){lowFuelWarned=true;audio.lowFuel();ui.cue('fuel');}
     if(state.monster.alive&&state.weapon.distance<70&&!monsterWarned){monsterWarned=true;ui.cue('target',{value:'1'});}
     if(state.weapon.canHit&&state.ammo>0&&!lockWarned){lockWarned=true;ui.cue('target',{value:'X / J'});}
+    while(whooshIndex<whooshXs.length&&state.x>=whooshXs[whooshIndex]){whooshIndex++;if(audio.whoosh&&Math.abs(state.speed)>15)audio.whoosh(clamp((Math.abs(state.speed)-12)/18,.2,1));}
+    if(run.combo===0)chainMultiplier=1;
+    if(!nitroTip&&!everBoosted&&state.nitro>=60&&runTime>1.5){nitroTip=true;award('nitro',{label:'NITRO READY',value:nitroHint()||'HOLD'});}
     const angle=Math.abs(Math.atan2(Math.sin(state.angle),Math.cos(state.angle)));
     flippedTime=angle>1.7&&Math.abs(state.speed)<2?flippedTime+STEP:0;fallenTime=state.y<-9?fallenTime+STEP:0;
     const needRecover=state.inverted||flippedTime>1.2||state.y<-3||state.stalledTime>2.5;ui.setRecoverVisible(needRecover);
-    if(physics.failed){finishRun(false,physics.failed);return;}if(physics.finished){finishRun(true);return;}
+    if(physics.failed){beginOutro(false,physics.failed);return;}if(physics.finished){beginOutro(true);return;}
     if(fallenTime>.45||state.x<-31)recover();
   }
   function updateHud(ghostFrame){
@@ -2831,25 +3358,48 @@ globalThis.TruckAudio = TruckAudio;
     view.distance=clamp(state.x-track.startX,0,track.length);view.length=track.length;
     view.shootingPhase=shotDirector.state.phase;view.time=runTime;view.score=stageResult?stageResult.score:run.score;view.ghostDelta=ghostFrame?(ghostFrame.pose[0]-state.x)/Math.max(8,Math.abs(state.speed)):null;
     view.fuel=state.fuel;view.cleared=state.cleared;view.totalZombies=state.totalZombies;view.speed=state.speed;view.gear=audio.gear;view.rpm=audio.rpm;view.ammo=state.ammo;view.locked=state.weapon.canHit;view.monsterDistance=state.weapon.distance;view.monsterAlive=state.monster.alive;
-    view.monsterProgress=state.monster.alive?clamp((state.monster.x-track.startX)/track.length,0,1):null;view.rivalProgress=state.rival?clamp((state.rival.x-track.startX)/track.length,0,1):null;view.racePosition=state.racePosition;view.combo=run.combo;view.comboLeft=run.comboLeft;view.comboMax=run.comboMax;view.paused=mode==='paused';view.muted=audio.muted;ui.hud.update(view);
+    view.monsterProgress=state.monster.alive?clamp((state.monster.x-track.startX)/track.length,0,1):null;view.rivalProgress=state.rival?clamp((state.rival.x-track.startX)/track.length,0,1):null;view.racePosition=state.racePosition;view.combo=run.combo;view.comboLeft=run.comboLeft;view.comboMax=run.comboMax;view.paused=mode==='paused';view.muted=audio.muted;
+    view.nitro=Number(state.nitro)||0;view.boosting=!!state.boosting;view.nitroReady=!!state.nitroReady;view.nitroHint=nitroHint();view.slipstream=Number(state.slipstream)||0;view.gap=state.rival?state.x-state.rival.x:null;
+    ui.hud.update(view);
   }
-  function updateMusic(){musicState.timeScale=mode==='playing'?shotDirector.state.timeScale:1;musicState.biome=stageIndex;musicState.intensity=mode==='playing'?clamp(Math.abs(state.speed)/30+(run.combo>2?.18:0),0,1):.18;musicState.mood=mode==='playing'?(state.fuel<20?'danger':stages[stageIndex].boss?'boss':'drive'):screen==='results'?'results':'menu';musicState.playing=mode!=='paused'&&!document.hidden;audio.setMusicState(musicState);}
+  function updateMusic(){
+    const playing=mode==='playing',gap=state.rival?Math.abs(state.x-state.rival.x):99,progress=clamp((state.x-physics.track.startX)/physics.track.length,0,1);
+    musicBoost+=((playing&&state.boosting?1:0)-musicBoost)*.4;
+    musicState.timeScale=playing?Math.min(shotDirector.state.timeScale,impactDirector.state.timeScale):1;musicState.biome=stageIndex;
+    musicState.intensity=playing?clamp(Math.abs(state.speed)/30+(run.combo>2?.18:0)+musicBoost*.2,0,1):.18;
+    musicState.boost=playing?musicBoost:0;
+    musicState.tension=playing?clamp((state.rival?clamp(1-gap/14,0,1)*(.4+.6*progress):0)+(state.fuel<25?(25-state.fuel)/25*.6:0),0,1):0;
+    musicState.mood=playing?(state.fuel<20?'danger':stages[stageIndex].boss?'boss':'drive'):screen==='results'?'results':'menu';musicState.playing=mode!=='paused'&&!document.hidden;audio.setMusicState(musicState);
+  }
   function animation(now){
-    const begin=performance.now(),dt=clamp((now-last)/1000,0,.1);last=now;pollPad(dt);readInput();let steps=0;
+    const begin=performance.now(),dt=clamp((now-last)/1000,0,.1),reduced=save.settings.reducedMotion;last=now;pollPad(dt);readInput(now);let steps=0;worldDt=0;
     if(mode==='countdown'){
-      countdownLeft-=dt;const n=Math.ceil(countdownLeft);
-      if(n>0&&n!==countdownNumber){countdownNumber=n;ui.banner(String(n),'countdown',.9);audio.countdown(n);}
-      if(countdownLeft<=0){mode='playing';accumulator=0;ui.hud.setVisible(true);ui.banner('GO!','go',.7);audio.go();}
+      countdownLeft-=dt;const n=Math.ceil(countdownLeft/countdownStep);
+      if(n>0&&n!==countdownNumber){countdownNumber=n;ui.banner(String(n),'countdown',countdownStep*1.3);audio.countdown(n);}
+      if(countdownLeft<=0){mode='playing';accumulator=0;goTime=now;rocketDone=false;ui.hud.setVisible(true);ui.banner('GO!','go',.7);audio.go();}
     }
-    if(mode==='playing'){
-      const oldPhase=shotDirector.state.phase,encounter=shotDirector.update(dt,state,save.settings.reducedMotion);if(encounter.phase==='miss'&&oldPhase!=='miss')ui.cue('miss');
-      let simulationDt=dt*encounter.timeScale;if(hitStop>0){hitStop=Math.max(0,hitStop-dt);simulationDt=0;}else if(slowLeft>0){slowLeft=Math.max(0,slowLeft-dt);simulationDt*=.75;}
-      accumulator+=simulationDt;while(accumulator>=STEP&&steps<8&&mode==='playing'){tick();accumulator-=STEP;steps++;}if(accumulator<0)accumulator=0;if(steps>=8&&accumulator>=STEP)accumulator%=STEP;
-      if(mode==='playing'){input.timeScale=shotDirector.state.timeScale;audio.update(state,dt,input);}
+    if(mode==='playing'&&outro){
+      const scale=impactDirector.update(dt,reduced).timeScale;outro.elapsed+=dt;worldDt=dt*scale;accumulator+=worldDt;
+      while(accumulator>=STEP&&steps<8){if(!physics.coast(STEP)){accumulator=0;break;}state=physics.getState();for(const event of physics.drainEvents())outroEvent(event);accumulator-=STEP;steps++;}
+      if(steps>=8&&accumulator>=STEP)accumulator%=STEP;
+      coastInput.timeScale=scale;audio.update(state,dt,coastInput);
+      if(outro.elapsed>=outro.duration)endOutro();
+    }else if(mode==='playing'){
+      const oldPhase=shotDirector.state.phase,encounter=shotDirector.update(dt,state,reduced),impact=impactDirector.update(dt,reduced);if(encounter.phase==='miss'&&oldPhase!=='miss')ui.cue('miss');
+      const scale=Math.min(encounter.timeScale,impact.timeScale);
+      let simulationDt=dt*scale;if(hitStop>0){hitStop=Math.max(0,hitStop-dt);simulationDt=0;}else if(slowLeft>0){slowLeft=Math.max(0,slowLeft-dt);simulationDt*=.75;}
+      if(!rocketDone){if(now-goTime>250)rocketDone=true;else if(gasHeld&&lastGasEdge>=goTime-250)rocketStart();}
+      worldDt=simulationDt;accumulator+=simulationDt;while(accumulator>=STEP&&steps<8&&mode==='playing'&&!outro){tick();accumulator-=STEP;steps++;}if(accumulator<0)accumulator=0;if(steps>=8&&accumulator>=STEP)accumulator%=STEP;
+      if(mode==='playing'){
+        input.timeScale=scale;audio.update(state,dt,outro?coastInput:input);
+        if(state.boosting&&!outro){boostRumble-=dt;if(boostRumble<=0){boostRumble=.11;rumble(.16,.5,130);}}
+      }
     }else accumulator=0;
-    const alpha=mode==='playing'?clamp(accumulator/STEP,0,1):1;physics.interpolatePose(alpha,pose);
-    const ghostFrame=mode==='playing'?ghost.at(runTime):null;
-    frame.state=state;frame.pose=pose;frame.alpha=alpha;frame.dt=mode==='paused'?0:dt;frame.worldDt=mode==='playing'?dt*shotDirector.state.timeScale:0;frame.encounter=shotDirector.state;frame.time=runTime;frame.mode=mode;frame.ghost=ghostFrame;renderer.render(frame);
+    const playing=mode==='playing',alpha=playing?clamp(accumulator/STEP,0,1):1;physics.interpolatePose(alpha,pose);
+    const ghostFrame=playing&&!outro?ghost.at(runTime):null,shot=shotDirector.state,impact=impactDirector.state;
+    cinema.kind=playing?impact.kind:'idle';cinema.zoom=playing?impact.zoom:0;cinema.progress=playing?impact.progress:0;
+    cinema.bars=playing&&!reduced?Math.max(impact.bars,shot.phase==='shot'||shot.phase==='impact'?shot.intensity*.85:shot.phase==='aim'?shot.intensity*.3:0):0;
+    frame.state=state;frame.pose=pose;frame.alpha=alpha;frame.dt=mode==='paused'?0:dt;frame.worldDt=playing?worldDt:0;frame.encounter=shot;frame.time=runTime;frame.mode=mode;frame.ghost=ghostFrame;renderer.render(frame);
     hudClock+=dt;if(hudClock>=1/30){hudClock%=1/30;updateHud(ghostFrame);}
     musicClock+=dt;if(musicClock>=.1){musicClock%=.1;updateMusic();}
     audioStatusClock+=dt;if(audioStatusClock>=.1){audioStatusClock%=.1;updateAudioStatus();}
@@ -2860,8 +3410,8 @@ globalThis.TruckAudio = TruckAudio;
     pacer.push(now,pose[0],alpha,steps,cpu);requestAnimationFrame(animation);
   }
   const qa=Object.freeze({start(index=0){loadStage(index,{brief:false,bypass:true});countdown(true);return true;},get warm(){return warmReady;}});
-  global.irontrail=Object.freeze({get mode(){return mode;},get telemetry(){return {...state,time:runTime,bestAir:state.stats.maxAir,checkpoint:physics.checkpointIndex,recoveries,score:run.score};},get encounter(){return {...shotDirector.state};},get physics(){return physics;},get audio(){return audio;},get campaign(){return Rules.Save.migrate(save);},get stage(){return stageIndex+1;},get perf(){return perf;},qa});
-  refreshCampaign();applySettings();resize();renderer.setStage(physics,stageIndex);physics.getPose(pose);view.checkpointProgress=physics.track.checkpoints.slice(1).map(p=>(p.x-physics.track.startX)/physics.track.length);show('title');updateHud(null);requestAnimationFrame(animation);
+  global.irontrail=Object.freeze({get mode(){return mode;},get telemetry(){return {...state,time:runTime,bestAir:state.stats.maxAir,checkpoint:physics.checkpointIndex,recoveries,score:run.score};},get encounter(){return {...shotDirector.state};},get cinema(){return {...impactDirector.state};},get outro(){return !!outro;},get physics(){return physics;},get audio(){return audio;},get campaign(){return Rules.Save.migrate(save);},get stage(){return stageIndex+1;},get perf(){return perf;},qa});
+  refreshCampaign();applySettings();resize();renderer.setStage(physics,stageIndex);physics.getPose(pose);buildWhoosh();view.checkpointProgress=physics.track.checkpoints.slice(1).map(p=>(p.x-physics.track.startX)/physics.track.length);show('title');updateHud(null);requestAnimationFrame(animation);
   const warm=()=>{global.TruckPhysics.warmUp(65);warmReady=true;};if(global.requestIdleCallback)requestIdleCallback(warm,{timeout:350});else setTimeout(warm,30);
 })(globalThis);
 

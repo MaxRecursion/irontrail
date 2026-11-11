@@ -65,6 +65,35 @@ renderer._trauma=1;renderer.render(impactFrame);const displacement=Math.hypot(re
 impactFrame.settings.shake=false;renderer.render(impactFrame);assert.deepEqual([renderer._ox,renderer._oy],origin,'Camera Shake off suppresses impact motion');
 impactFrame.settings.shake=true;impactFrame.settings.reducedMotion=true;renderer.render(impactFrame);assert.deepEqual([renderer._ox,renderer._oy],origin,'Reduced Motion suppresses impact motion');
 console.log('PASS stronger bounded impact shake; Camera Shake off and Reduced Motion remove displacement');
+// Redline worst case (SPEC §15.2): both trucks burning, slipstream, letterbox, push-in, smashes, slam, wreck,
+// popups and a ghost on stage 10 must stay inside the same draw and font budget, with no hot allocations.
+{
+  const physics=new TruckPhysics(9,{random:()=>.5}),pose=new Float64Array(physics.poseLength);renderer.setStage(physics,9);
+  assert.ok(renderer._breakables.length>=8&&renderer._breakKinds.length===8,'breakables are laid out from physics');
+  assert.ok(renderer._props.every(p=>renderer._breakables.every(b=>Math.abs(b.x-p.x)>=2.5)),'decorative props keep clear of breakables');
+  const frame={state:physics.getState(),pose,dt:1/60,time:0,mode:'playing',input:{throttle:1,boost:true},layout:{touch:false,safeTop:88,safeBottom:96},settings:{shake:true,reducedMotion:false},cinema:{kind:'finish',bars:1,zoom:1,progress:.5}};
+  let worst=0,smashes=0,burning=0;
+  for(let i=0;i<420;i++){
+    if(frame.state.weapon.canHit)physics.fire();physics.player.nitro=100;if(physics.rival)physics.rival.nitro=100;
+    physics.step(1/60,{throttle:1,boost:true});frame.state=physics.getState();frame.state.slipstream=1;physics.interpolatePose(.5,pose);frame.time+=1/60;
+    for(const event of physics.drainEvents()){if(event.type==='smash')smashes++;renderer.onEvent(event,frame.state);}
+    if(frame.state.boosting&&frame.state.rival&&frame.state.rival.boosting)burning++;
+    if(i%60===30){renderer.onEvent({type:'slam',x:frame.state.x,y:frame.state.y,strength:1},frame.state);renderer.onEvent({type:'wreck',kind:'roof',x:frame.state.x,y:frame.state.y,strength:1},frame.state);renderer.onEvent({type:'smash',id:0,variant:1,owner:'player',x:frame.state.x+2,y:frame.state.y,strength:1,vx:30},frame.state);for(let n=0;n<10;n++)renderer.popup('+25',frame.state.x+n*.2,frame.state.y+2,n%2?'nitro':'score');}
+    if(i>200)frame.ghost={pose,alpha:.35};
+    tracking=true;ops=0;fonts.clear();renderer.render(frame);tracking=false;
+    assert.equal(renderer.stats.drawOps,ops);assert.ok(ops<=220,`Redline worst-case draw budget ${ops}`);assert.ok(fonts.size<=3);worst=Math.max(worst,ops);
+  }
+  assert.ok(smashes>0&&burning>60,'the scenario really smashes props and burns both meters');
+  assert.ok(renderer._boost>.9&&renderer._rivalBoost>.5&&renderer._bars>.9&&renderer._cineZoom>.5,'nitro, letterbox and push-in are active');
+  const count=settings=>{frame.settings=settings;frame.dt=0;tracking=true;ops=0;renderer.render(frame);tracking=false;return ops;};
+  const full=count({shake:true,reducedMotion:false}),calm=count({shake:true,reducedMotion:true});
+  assert.ok(calm<=full-7,`Reduced Motion removes streaks, foreground, vignette, afterimages and bars (${full} -> ${calm})`);
+  renderer.kick(20,20);frame.settings={shake:false,reducedMotion:false};frame.dt=1/60;renderer.render(frame);assert.equal(renderer._kickX,0,'Camera Shake off removes kicks');
+  renderer.kick(20,20);frame.settings={shake:true,reducedMotion:true};renderer.render(frame);assert.equal(renderer._kickX,0,'Reduced Motion removes kicks');assert.ok(renderer._bars<.9,'and releases the letterbox');
+  renderer.flash('#fff',.1);const flashed=renderer._lastFlash;renderer.flash('#fff',.1);assert.equal(renderer._lastFlash,flashed,'flashes are rate limited');
+  for(const type of ['nitro','escalate','smash','slam','wreck','unknown'])renderer.onEvent({type},{});
+  console.log(`PASS Redline worst case: both trucks burning + slipstream + letterbox + smashes/slam/wreck/popups/ghost; max${worst}/220drawOps; reduced motion ${full}->${calm} ops; kicks and flashes gated`);
+}
 assert.equal(canvases,0,'no hot canvas allocation');assert.equal(gradients,0,'no hot gradient allocation');
 console.log(`PASS ${rendered} real-physics frames across10biomes +effects/ghosts/fallbacks; max${maximum}/220drawOps, ${maxFonts}/3fonts, current caches ${(maxBytes/1048576).toFixed(1)}MiB; no hotcanvas/gradients; retry/adaptive cache reuse`);
 console.log(records.join(' '));

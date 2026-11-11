@@ -136,6 +136,14 @@ class TruckAudio {
     this.wind = this._noiseLayer('lowpass', 650, 0.35);
     this.skid=this._noiseLayer('bandpass',2200,.5);this.creak=this._noiseLayer('bandpass',360,1.1);
     this.exhaustNoise = this._noiseLayer('lowpass', 240, 0.6);
+    // Nitro: a band of jet noise plus a low afterburner tone, silent until a burn starts.
+    this.jet = this._noiseLayer('bandpass', 900, 0.8);
+    this.burner = ctx.createOscillator(); this.burner.type = 'sawtooth'; this.burner.frequency.value = 72;
+    const burnerFilter = ctx.createBiquadFilter(); burnerFilter.type = 'lowpass'; burnerFilter.frequency.value = 420; burnerFilter.Q.value = 1.2;
+    this.burnerGain = ctx.createGain(); this.burnerGain.gain.value = 0;
+    this.burner.connect(burnerFilter); burnerFilter.connect(this.burnerGain); this.burnerGain.connect(this.engineBus);
+    try{this.burnerGain.gain.automationRate='k-rate';this.burner.frequency.automationRate='k-rate';}catch(_){}
+    this.burner.start();
     this.engine.start();
     this.sub.start();
     this.intake.start();
@@ -288,7 +296,8 @@ class TruckAudio {
     if (absSpeed < 1) this._gearIndex = 0;
     this.gear = speed < -0.5 ? 'R' : this._gearIndex + 1;
     let targetRPM = 820 + wheelSpeed * this._ratios[this._gearIndex] * 9.5493;
-    targetRPM += throttle * 380;
+    const burning = !!state.boosting, burnTime = Math.min(1, TruckAudio.clamp(state.boostTime, 0, 10) / 2.4);
+    targetRPM += throttle * 380 + (burning ? 520 : 0);
     if (!grounded) targetRPM = Math.max(targetRPM, 950 + throttle * 3500);
     if (this._shiftDip > 0) targetRPM *= 0.76;
     targetRPM = TruckAudio.clamp(targetRPM, 780, 5200);
@@ -315,13 +324,21 @@ class TruckAudio {
     this._set(this.gravel.filter.frequency, 750 + absSpeed * 35);
     const air = !grounded ? Math.min(1, TruckAudio.clamp(state.airtime, 0, 5) / .38) : 0;
     const rush=Math.hypot(absSpeed,TruckAudio.clamp(state.vy,-35,35)*1.2);
-    this._set(this.wind.gain.gain, Math.min(.085,rush*.002)*(0.12+air*.88), .12);
+    const draft = TruckAudio.clamp(state.slipstream, 0, 1);
+    this._set(this.wind.gain.gain, Math.min(.085,rush*.002)*(0.12+air*.88)+draft*.028, .12);
+    // The burn climbs in pitch and brightness the longer it is held.
+    this._set(this.jet.gain.gain, burning ? .13 + burnTime * .06 : 0, burning ? .05 : .12);
+    this._set(this.jet.filter.frequency, (650 + burnTime * 1700) * (.6 + .4 * Math.sqrt(scale)), .12);
+    this._set(this.burnerGain.gain, burning ? .075 + burnTime * .035 : 0, burning ? .04 : .1);
+    this._set(this.burner.frequency, (68 + burnTime * 46) * pitch, .09);
     this._set(this.wind.filter.frequency, (500+Math.min(2600,rush*60))*(.65+.35*Math.sqrt(scale)), .14);
     this._set(this.skid.gain.gain,grounded?Math.min(.055,slip*.06+(input?.brake?absSpeed*.001:0)):0,.07);
     const compression=state.suspension?Math.abs(state.suspension[0])+Math.abs(state.suspension[1]):0;
     this._set(this.creak.gain.gain,grounded?Math.min(.025,Math.abs(compression-this._lastCompression)*.18):0,.05);this._lastCompression=compression;
     if(this.context.state==='running'&&this._lastThrottle>.7&&throttle<.1&&this.rpm>2600&&this.context.currentTime-this._lastBackfire>.8&&this._canPlay()){
       this._lastBackfire=this.context.currentTime;this._thump(.055,100,42,.07);this._noiseBurst(.04,900,.055);
+      // Lift-off: turbo blow-off and a short crackle of pops instead of a single thud.
+      this._noiseSweep(.026,3400,900,.2,.02);for(let i=1;i<4;i++)this._thump(.03-i*.006,120+i*14,48,.045,.07*i+Math.random()*.03);
     }this._lastThrottle=throttle;
   }
 
@@ -574,6 +591,42 @@ class TruckAudio {
     }
   }
   _cue(name,cooldown=.12){if(!this._canPlay())return false;const now=this.context.currentTime;if(now-(this._cueTimes[name]??-10)<cooldown)return false;this._cueTimes[name]=now;return true;}
+  // ---- Redline cues (SPEC §15.3). All pass through _cue: gated by mute/pause/volume and cooled down. ----
+  nitro(phase='start',options={}) {
+    const rival=options.owner==='rival',g=rival?.45:1;
+    if(phase==='start'){if(!this._cue(rival?'nitroRival':'nitroStart',.25))return;
+      this._thump(.34*g,95,38,.32);this._impactBody(.14*g,180,.2);this._noiseSweep(.13*g,500,3600,.42);this._noiseBurst(.09*g,2600,.09,0,'highpass');if(!rival&&this.music)this.music.duck(.25,.55);}
+    else if(phase==='end'){if(!this._cue(rival?'nitroRivalEnd':'nitroEnd',.2))return;
+      this._noiseSweep((options.empty?.075:.05)*g,3200,420,options.empty?.5:.32);if(options.empty)for(let i=0;i<3;i++)this._thump(.035*g,130+i*10,46,.05,.09+i*.07);}
+    else if(phase==='full'){if(!this._cue('nitroFull',.8))return;this._thump(.04,784,784,.1);this._thump(.04,1174.7,1174.7,.13,.07);this._thump(.03,1568,1568,.2,.14);}
+  }
+  escalate(){if(!this._cue('escalate',2))return;this._focus(.5,.5);this._monsterGrowl(.09,.5);this._thump(.22,82,30,.45);this._noiseSweep(.07,300,2900,.5,.05);this._metal(.05,330,.3,.04);}
+  smash(strength=.5,variant=0) {
+    if(!this._cue('smash',.045))return;const s=TruckAudio.clamp(strength,0,1),kind=[0,1,2,0,1,0,2,1][(variant|0)&7];
+    this._thump(.1+s*.15,kind===1?170:130,48,.11+s*.05);this._impactBody(.04+s*.07,260,.09);
+    if(kind===0){this._noiseBurst(.11+s*.12,1700,.09,0,'bandpass');this._noiseBurst(.06+s*.06,3600,.05,.02,'highpass');this._thump(.06+s*.05,310,180,.05,.015);} // wood: dry crack and splinters
+    else if(kind===1){this._metal(.1+s*.1,520,.2);this._noiseBurst(.07+s*.08,2400,.07,0,'bandpass');} // metal: ringing drum
+    else{this._noiseBurst(.12+s*.12,700,.14);this._thump(.06+s*.07,95,40,.12,.02);} // stone/plastic: dull crumble
+  }
+  slam(strength=1) {
+    if(!this._cue('slam',.5))return;const s=TruckAudio.clamp(strength,.4,1);
+    this._focus(.75,.16);if(this.music)this.music.duck(.8,.14);
+    this._thump(.44*s,150,26,.55);this._impactBody(.26*s,240,.26);this._noiseBurst(.3*s,1600,.2,0,'bandpass');this._noiseBurst(.12*s,3800,.09,0,'highpass');
+    this._metal(.13*s,560,.42);this._metal(.07*s,870,.3,.03);this._noiseSweep(.08*s,3600,380,.45,.05);this._thump(.1*s,70,30,.3,.1);this._noiseBurst(.04*s,900,.4,.2);
+  }
+  wreck(strength=.7,kind='roof') {
+    if(!this._cue('wreck',.6))return;const s=TruckAudio.clamp(strength,.3,1);
+    this._focus(.6,.3);if(this.music)this.music.duck(.7,.25);
+    if(kind==='fall'){this._noiseSweep(.07,1800,260,.7);this._thump(.14,220,45,.6);return;}
+    this._thump(.3*s,120,28,.42);this._impactBody(.17*s,200,.22);this._metal(.1*s,430,.36,.02);this._noiseBurst(.16*s,1200,.26);this._noiseSweep(.06*s,2600,360,.5,.08);this._noiseBurst(.03*s,3000,.3,.18,'highpass');
+  }
+  whoosh(strength=.5){if(!this._cue('whoosh',.12))return;const s=TruckAudio.clamp(strength,0,1);this._noiseSweep(.02+s*.045,900+s*900,2600+s*1400,.16);this._noiseSweep(.015+s*.03,2600,700,.2,.07);}
+  stall(){if(!this._cue('stall',2))return;for(let i=0;i<5;i++)this._thump(.09-i*.012,105-i*9,40,.09,i*.13+i*i*.012);this._noiseSweep(.04,1400,200,.8,.1);}
+  finishLine(won=true) {
+    if(!this._cue('finishLine',1))return;
+    if(won){this._focus(.5,.45);this._thump(.2,98,49,.4);this._noiseSweep(.06,600,5200,.5);for(let i=0;i<4;i++)this._thump(.05,[392,523.25,659.25,783.99][i],[392,523.25,659.25,783.99][i],.22,.05+i*.065);}
+    else{this._thump(.16,110,41,.5);this._noiseSweep(.05,2400,300,.6);this._thump(.05,196,147,.3,.1);}
+  }
   flip(count=1){if(!this._cue('flip',.2))return;this._thump(.035,330+count*70,490+count*80,.14);this._noiseBurst(.012,2200,.10,0,'bandpass');}
   perfect(){if(!this._cue('perfect',.25))return;this._thump(.035,660,660,.14);this._thump(.025,880,880,.12,.04);}
   combo(n=2){if(!this._cue('combo',.18))return;const f=300+Math.min(8,n)*70;this._thump(.025,f,f*1.25,.11);}

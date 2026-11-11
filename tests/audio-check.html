@@ -165,6 +165,35 @@
     const bounded=createAudio({effectsOnly:true});for(let i=0;i<500;i++)bounded._noiseSweep(.01,300,1500,.1);assert(bounded._voices.size===96,'Effect voice limit is not bounded');await render(bounded);assert(bounded._voices.size===0,'Effect nodes were not released after playback');
     passes.push('PASS · Flight wind rises, monster impacts pan toward the target, and all event voices are capped/released.');
 
+    // ---- Redline pass (SPEC §15.3): every new cue, the nitro layers, music reactivity and the worst-case stack ----
+    const redlineCues={nitroStart:a=>a.nitro('start',{owner:'player'}),nitroEnd:a=>a.nitro('end',{owner:'player',empty:true}),nitroFull:a=>a.nitro('full'),nitroRival:a=>a.nitro('start',{owner:'rival'}),
+      escalate:a=>a.escalate(),smashWood:a=>a.smash(.8,0),smashMetal:a=>a.smash(.8,1),smashStone:a=>a.smash(.8,2),slam:a=>a.slam(1),wreckRoof:a=>a.wreck(1,'roof'),wreckFall:a=>a.wreck(1,'fall'),
+      whoosh:a=>a.whoosh(1),stall:a=>a.stall(),finishWin:a=>a.finishLine(true),finishLoss:a=>a.finishLine(false)};
+    for(const [name,play] of Object.entries(redlineCues)){
+      const cue=createAudio({effectsOnly:true});play(cue);const used=cue._voices.size;assert(used>0&&used<=30,name+': unexpected source count '+used);
+      play(cue);assert(cue._voices.size===used,name+': repeated call inside its cooldown must be suppressed');
+      reports['redline_'+name]=stats(await render(cue));finiteAndComfortable(reports['redline_'+name],'Redline '+name);reports['redline_'+name].sources=used;assert(cue._voices.size===0,name+': voices released');
+      for(const gate of [{muted:true},{paused:true}]){const silent=createAudio({...gate,effectsOnly:true});play(silent);assert(silent._voices.size===0,name+': scheduled while muted/paused');}
+    }
+    assert(reports.redline_slam.rms>reports.redline_smashWood.rms*1.5,'The nitro slam must be the heaviest impact');
+    const lockedRedline=new TruckAudio();for(const play of Object.values(redlineCues))play(lockedRedline);lockedRedline.update({boosting:true,boostTime:1,slipstream:1},1/60,{throttle:1});assert(!lockedRedline.context,'Redline cues must be safe before unlock');
+    const motion=()=>{const a=new MotionAudio();a.context=new OfflineAudioContext(1,48000,48000);a._buildGraph();a.setPaused(false);a.setMusicState({mood:'drive',playing:false});return a;};
+    const layer=async boosting=>{const a=motion();a.update({speed:22,wheelSpeed:30,grounded:true,boosting,boostTime:boosting?2:0,nitro:60,slipstream:0},1/30,{throttle:1,timeScale:1});return stats(await render(a));};
+    reports.nitroOff=await layer(false);reports.nitroOn=await layer(true);finiteAndComfortable(reports.nitroOn,'Nitro burn layers');
+    assert(reports.nitroOn.rms>reports.nitroOff.rms*1.12,'A burn must be clearly louder than cruising '+JSON.stringify([reports.nitroOff.rms,reports.nitroOn.rms]));assert(reports.nitroOn.peak<.5,'Engine plus nitro stays below 0.5 peak');
+    const idleNitro=createAudio();idleNitro.update({speed:22,wheelSpeed:30,grounded:true},1/30,{throttle:1});assert(idleNitro._targets.get(idleNitro.jet.gain.gain).value===0&&idleNitro._targets.get(idleNitro.burnerGain.gain).value===0,'Nitro layers are silent without a burn');
+    const suspendedNitro=createAudio();for(let i=0;i<5000;i++)suspendedNitro.update({speed:20+i%7,wheelSpeed:30,grounded:true,boosting:i%2===0,boostTime:i%40/20,slipstream:i%3/2},1/60,{throttle:1});assert(suspendedNitro._targets.size<40,'Suspended nitro updates must keep bounded targets');
+    const boostScore=async state=>{const ctx=new OfflineAudioContext(1,48000*6,48000),music=new TruckMusic(ctx,ctx.destination);music.scheduleOffline(6,{biome:4,intensity:.8,mood:'drive',playing:true,timeScale:1,...state});const data=(await ctx.startRendering()).getChannelData(0);return {...stats(data),drums:music.stats.drums,notes:music.stats.notes};};
+    reports.musicCruise=await boostScore({boost:0,tension:0});reports.musicBoost=await boostScore({boost:1,tension:0});reports.musicTension=await boostScore({boost:0,tension:1});
+    finiteAndComfortable(reports.musicBoost,'Boosted score');finiteAndComfortable(reports.musicTension,'Tense score');
+    assert(reports.musicBoost.drums>reports.musicCruise.drums+20,'Nitro must add a driving sixteenth layer');assert(reports.musicTension.notes>reports.musicCruise.notes,'Tension must tighten the arrangement');
+    const clampMusicContext=new OfflineAudioContext(1,4800,48000),clampMusic=new TruckMusic(clampMusicContext,clampMusicContext.destination);clampMusic.setState({boost:9,tension:-4});assert(clampMusic.state.boost===1&&clampMusic.state.tension===0,'Music boost/tension are clamped');clampMusic.hit('slam');clampMusic.hit('finish');
+    const stack=motion();stack.update({speed:30,wheelSpeed:42,grounded:true,boosting:true,boostTime:3,slipstream:1},1/30,{throttle:1,timeScale:1});
+    const stackMusic=new TruckMusic(stack.context,stack.musicBus);stackMusic.scheduleOffline(1,{biome:9,intensity:1,mood:'boss',playing:true,timeScale:1,boost:1,tension:1});
+    stack.slam(1);stack.smash(1,1);stack.wreck(1,'roof');stack.nitro('start',{owner:'player'});stack.escalate();stack.landing(1);stack.collision(1);assert(stack._voices.size<=96,'Worst-case Redline stack exceeds the source cap');
+    reports.redlineStack=stats(await render(stack));finiteAndComfortable(reports.redlineStack,'Worst-case Redline stack');
+    passes.push('PASS · Redline: 15 new cues (cooldowns, gates, pre-unlock, release), nitro burn layers, boost/tension score and the worst-case stack stay finite and below clipping.');
+
     const mutedMusicContext=new OfflineAudioContext(1,48000,48000),mutedMusic=new TruckMusic(mutedMusicContext,mutedMusicContext.destination);
     mutedMusic.setVolume(0);mutedMusic.scheduleOffline(1,{mood:'boss',playing:true,intensity:1});
     const musicZero=stats((await mutedMusicContext.startRendering()).getChannelData(0));assert(musicZero.peak===0,'Music volume0 is not silent');mutedMusic.dispose();

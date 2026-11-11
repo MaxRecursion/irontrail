@@ -38,4 +38,33 @@ const economy=R.Save.defaults();assert.equal(R.buyUpgrade(economy,'engine').ok,f
 assert.equal(R.buyUpgrade(economy,'engine').level,1);assert.equal(economy.scrap,900);R.buyUpgrade(economy,'engine');R.buyUpgrade(economy,'engine');assert.equal(R.buyUpgrade(economy,'engine').reason,'max');
 const progress=R.Save.defaults();const applied=R.Save.recordResult(progress,0,result,summary);assert.equal(applied.applied,true);assert.equal(progress.unlocked,2);assert.deepEqual(progress.stars[0],[true,true,true]);assert.equal(progress.best[0],10);assert.equal(progress.scrap,result.scrap);assert.equal(progress.totals.runs,1);assert.equal(R.Save.recordResult(progress,0,result,summary).applied,false);assert.equal(progress.totals.runs,1,'opening results cannot duplicate rewards');
 assert.equal(R.UPGRADES.tank.drain[3],.79);assert.equal(R.UPGRADES.engine.torque[3],1.3);
+// ---- Redline pass (SPEC §15.4) ----
+{
+  const R = globalThis.IronRules, run = R.createRun(2);
+  const first = R.onEvent(run, { type: 'smash', owner: 'player' });
+  assert.deepEqual([first.points, first.combo, first.label], [25, 1, 'SMASH']);
+  assert.equal(R.onEvent(run, { type: 'smash', owner: 'rival' }), null, "Iron Maw's smashes score nothing");
+  R.onEvent(run, { type: 'zombie' }); R.onEvent(run, { type: 'smash', owner: 'player' });
+  const fourth = R.onEvent(run, { type: 'smash' });
+  assert.deepEqual([fourth.points, fourth.combo], [50, 4], 'smashes and zombies share one chain and its multiplier');
+  R.tick(run, 2.9); assert.equal(run.combo, 4); R.onEvent(run, { type: 'smash', owner: 'player' }); R.tick(run, 2.9); assert.equal(run.combo, 5, 'a smash refreshes the chain timer');
+  R.tick(run, 3.1); assert.equal(run.combo, 0);
+  assert.equal(R.onEvent(run, { type: 'slam' }).points, 500);
+  assert.equal(run.buckets.smashes, 25 + 25 + 50 + 50); assert.equal(run.buckets.slams, 500);
+  const before = run.score, result = R.finish(run, { won: true, time: 18, fuel: 50, stats: { nitroBurned: 61.9, topSpeed: 30, maxAir: 1.26, smashes: 4, slams: 1, flips: 0 } });
+  assert.equal(result.score, before + 500 + 250 + 60 + 122, 'finish + fuel + pace + nitro burn');
+  assert.ok(result.breakdown.some(row => row.label === 'Nitro burn' && row.value === 122) && result.breakdown.some(row => row.label === 'Roadside smashes') && result.breakdown.some(row => row.label === 'Nitro slams'));
+  assert.deepEqual(result.awards, [{ id: 'topSpeed', label: 'TOP SPEED', value: '108 KM/H' }, { id: 'maxAir', label: 'LONGEST AIR', value: '1.3 S' }, { id: 'chain', label: 'BEST CHAIN', value: '×5' },
+    { id: 'smashes', label: 'SMASHES', value: '4' }, { id: 'slams', label: 'NITRO SLAMS', value: '1' }, { id: 'nitro', label: 'NITRO BURNED', value: '61' }]);
+  const lost = R.finish(R.createRun(0), { won: false, stats: { nitroBurned: 80 } });
+  assert.ok(!lost.breakdown.some(row => row.label === 'Nitro burn'), 'no nitro bonus on a failed run'); assert.deepEqual(R.finish(R.createRun(0), {}).awards, []);
+  const d = R.Save.defaults(); assert.equal(d.settings.haptics, true); assert.equal(d.settings.autoNitro, false); assert.equal(d.totals.smashes, 0); assert.equal(d.totals.slams, 0);
+  const old = R.Save.migrate({ unlocked: 3, settings: { shake: false }, totals: { runs: 4 } });
+  assert.equal(old.settings.haptics, true); assert.equal(old.settings.autoNitro, false); assert.equal(old.settings.shake, false); assert.equal(old.totals.smashes, 0);
+  const kept = R.Save.migrate({ settings: { haptics: false, autoNitro: true }, totals: { smashes: 7, slams: 2 } });
+  assert.equal(kept.settings.haptics, false); assert.equal(kept.settings.autoNitro, true); assert.equal(kept.totals.smashes, 7);
+  const data = R.Save.defaults(); R.recordResult(data, 2, result, { won: true, time: 18, stats: { smashes: 4, slams: 1 } });
+  assert.equal(data.totals.smashes, 4); assert.equal(data.totals.slams, 1);
+  console.log('PASS Redline rules: smash chain/multiplier, rival smashes ignored, slam, nitro-burn bonus, awards, new settings/totals and migration');
+}
 console.log('PASS rules: combo decay, landed scoring, stars/challenges, scrap, upgrade costs, v2 migration, corrupt/denied storage, idempotent result rewards');

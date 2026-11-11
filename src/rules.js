@@ -36,7 +36,7 @@
   ].map(Object.freeze));
   function createRun(stageIndex) {
     return { stageIndex: integer(stageIndex, 0, 9), score: 0, combo: 0, comboLeft: 0, comboMax: 3, maxCombo: 0, elapsed: 0,
-      buckets: { zombies: 0, tricks: 0, perfect: 0, air: 0, monster: 0, fuel: 0, checkpoints: 0, rival: 0 }, rivalScores: 0, finalized: false, result: null };
+      buckets: { zombies: 0, tricks: 0, perfect: 0, air: 0, monster: 0, fuel: 0, checkpoints: 0, rival: 0, smashes: 0, slams: 0 }, rivalScores: 0, finalized: false, result: null };
   }
   function tick(run, dt) {
     if (!run || run.finalized) return;
@@ -64,6 +64,15 @@
         label = flips ? `${flips > 1 ? `${flips}× ` : ''}${event.dir === 'front' ? 'FRONTFLIP' : 'BACKFLIP'}${event.perfect ? ' · PERFECT' : ''}` : event.perfect ? 'PERFECT LANDING' : 'BIG AIR';
         kind = 'trick'; break;
       }
+      case 'smash': {
+        // Roadside props keep the chain alive between zombies; Iron Maw's smashes score nothing.
+        if (event.owner === 'rival') return null;
+        run.combo = run.comboLeft > 0 ? run.combo + 1 : 1; run.comboLeft = run.comboMax;
+        run.maxCombo = Math.max(run.maxCombo, run.combo);
+        const multiplier = Math.min(5, 1 + Math.floor((run.combo - 1) / 3));
+        points = 25 * multiplier; label = multiplier > 1 ? `SMASH ×${multiplier}` : 'SMASH'; bucket = 'smashes'; break;
+      }
+      case 'slam': points = 500; label = 'NITRO SLAM'; bucket = 'slams'; kind = 'big'; break;
       case 'monsterHit': points = 1000; label = 'GIANT DOWN'; bucket = 'monster'; kind = 'big'; break;
       case 'fuel': points = 100; label = 'FUEL COLLECTED'; bucket = 'fuel'; break;
       case 'checkpoint': points = 150; label = 'CHECKPOINT'; bucket = 'checkpoints'; break;
@@ -88,16 +97,27 @@
     const newStars = stars.reduce((n, star, i) => n + (star && !previous[i] ? 1 : 0), 0);
     const finishBonus = won ? 500 : 0, fuelBonus = won ? Math.floor(clamp(summary.fuel, 0, 100) * 5) : 0;
     const paceBonus = won ? Math.max(0, Math.floor((PAR_TIMES[stageIndex] - time) * 30)) : 0;
-    const score = run.score + finishBonus + fuelBonus + paceBonus;
+    const stats = summary.stats || {}, nitroBonus = won ? Math.floor(clamp(stats.nitroBurned, 0, 100000)) * 2 : 0;
+    const score = run.score + finishBonus + fuelBonus + paceBonus + nitroBonus;
     const breakdown = [
       ['Zombies & combos', run.buckets.zombies], ['Landed flips', run.buckets.tricks], ['Perfect landings', run.buckets.perfect],
       ['Big air', run.buckets.air], ['Monster stopped', run.buckets.monster], ['Fuel cans', run.buckets.fuel],
-      ['Checkpoints', run.buckets.checkpoints], ['Rival impacts', run.buckets.rival], ['Stage finish', finishBonus],
-      ['Fuel bonus', fuelBonus], ['Pace bonus', paceBonus]
+      ['Checkpoints', run.buckets.checkpoints], ['Rival impacts', run.buckets.rival], ['Roadside smashes', run.buckets.smashes],
+      ['Nitro slams', run.buckets.slams], ['Stage finish', finishBonus],
+      ['Fuel bonus', fuelBonus], ['Pace bonus', paceBonus], ['Nitro burn', nitroBonus]
     ].filter(row => row[1] > 0).map(row => ({ label: row[0], value: row[1] }));
     const scrap = won ? 25 + Math.floor(score / 40) + newStars * 35 : Math.floor(score / 100);
+    const number = value => Number.isFinite(Number(value)) && Number(value) > 0 ? Number(value) : 0;
+    const awards = [
+      ['topSpeed', 'TOP SPEED', number(stats.topSpeed) ? `${Math.round(number(stats.topSpeed) * 3.6)} KM/H` : ''],
+      ['maxAir', 'LONGEST AIR', number(stats.maxAir) >= 0.3 ? `${number(stats.maxAir).toFixed(1)} S` : ''],
+      ['chain', 'BEST CHAIN', run.maxCombo > 1 ? `×${run.maxCombo}` : ''],
+      ['smashes', 'SMASHES', number(stats.smashes) ? String(Math.floor(number(stats.smashes))) : ''],
+      ['slams', 'NITRO SLAMS', number(stats.slams) ? String(Math.floor(number(stats.slams))) : ''],
+      ['nitro', 'NITRO BURNED', number(stats.nitroBurned) >= 1 ? String(Math.floor(number(stats.nitroBurned))) : '']
+    ].filter(row => row[2]).map(row => ({ id: row[0], label: row[1], value: row[2] }));
     run.finalized = true;
-    run.result = { score, breakdown, stars, newStars, challenge: { id: challenge.id, label: challenge.label, complete: stars[2] }, scrap, maxCombo: run.maxCombo };
+    run.result = { score, breakdown, awards, stars, newStars, challenge: { id: challenge.id, label: challenge.label, complete: stars[2] }, scrap, maxCombo: run.maxCombo };
     return run.result;
   }
   function upgradeCost(track, level) { return KEYS.includes(track) && integer(level, 0, 3) < 3 ? UPGRADE_COSTS[track][integer(level, 0, 3)] : null; }
@@ -114,8 +134,8 @@
   function defaults() {
     return { version: 3, unlocked: 1, completed: [], best: {}, selected: 0, stars: {}, bestScore: {}, scrap: 0,
       upgrades: { engine: 0, tyres: 0, suspension: 0, tank: 0 },
-      settings: { master: .9, music: .55, sfx: .9, quality: 'auto', shake: true, showFps: false, reducedMotion: false },
-      totals: { runs: 0, clears: 0, zombies: 0, flips: 0, cans: 0, scrapEarned: 0 } };
+      settings: { master: .9, music: .55, sfx: .9, quality: 'auto', shake: true, showFps: false, reducedMotion: false, haptics: true, autoNitro: false },
+      totals: { runs: 0, clears: 0, zombies: 0, flips: 0, cans: 0, scrapEarned: 0, smashes: 0, slams: 0 } };
   }
   function migrate(raw) {
     const out = defaults();
@@ -135,7 +155,7 @@
     const settings = raw.settings && typeof raw.settings === 'object' ? raw.settings : {};
     for (const volume of ['master', 'music', 'sfx']) if (Number.isFinite(Number(settings[volume]))) out.settings[volume] = clamp(settings[volume], 0, 1);
     if (['auto', 'high', 'balanced', 'performance'].includes(settings.quality)) out.settings.quality = settings.quality;
-    for (const key of ['shake', 'showFps', 'reducedMotion']) if (typeof settings[key] === 'boolean') out.settings[key] = settings[key];
+    for (const key of ['shake', 'showFps', 'reducedMotion', 'haptics', 'autoNitro']) if (typeof settings[key] === 'boolean') out.settings[key] = settings[key];
     for (const key of Object.keys(out.totals)) out.totals[key] = integer(raw.totals?.[key], 0, 1000000000);
     return out;
   }
@@ -157,6 +177,8 @@
     data.totals ||= defaults().totals; data.totals.runs++;
     data.totals.scrapEarned += result.scrap; data.totals.zombies += integer(summary.cleared, 0, 10000);
     data.totals.flips += integer(summary.stats?.flips, 0, 1000); data.totals.cans += integer(summary.cans, 0, 10000);
+    data.totals.smashes = integer(data.totals.smashes, 0, 1000000000) + integer(summary.stats?.smashes, 0, 10000);
+    data.totals.slams = integer(data.totals.slams, 0, 1000000000) + integer(summary.stats?.slams, 0, 1000);
     let newBest = false, newScoreBest = false;
     if (won) {
       data.totals.clears++; data.completed ||= []; if (!data.completed.includes(i)) data.completed.push(i);
