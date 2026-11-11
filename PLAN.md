@@ -276,3 +276,11 @@ Shooting implementation and functional validation complete. GitHub repo and Verc
 - [x] Reskin the real cached player truck/wheels/cannon, Ojas Speedway, flags/finish, garage and trophy/victory text.
 - [x] Preserve gameplay, saves, one charge, slow motion, audio and motion settings; verify nine screens and four responsive sizes.
 - [x] Finish gameplay verification, push main and verify existing Vercel production. Release3556ae9: Vercel success; both HTTPS aliases match the568,125byte build. Live-browser navigation approval was declined, so screenshot proof uses the verified local preview.
+
+
+## Picture interface completion — 11 November 2026
+
+- [x] Preserve Claude’s Redline pass and finish the newer pictogram HUD/menu/renderer changes.
+- [x] Repair reduced-motion feedback, score-details navigation, input-specific onboarding, touch targets and fresh-attempt nitro hints.
+- [x] Validate live objective status against real recovery, fuel and par time; expand the UI harness for nitro, award lifecycle, results and pointer hit areas.
+- [x] Rebuild both portable outputs and record exact final validation and continuation guidance at the top of HANDOFF.md. Publication is outside this local handoff.

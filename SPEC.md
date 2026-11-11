@@ -590,3 +590,24 @@ Same gates as §6/§12/§13 (mute/pause exact silence, pre-unlock safety, cooldo
   terminal step.
 - Hit-stop on heavy hits, gamepad dual-rumble haptics (setting), pass-by whooshes, a snappier countdown and
   instant retry, HUD/award/music wiring for every new event.
+
+
+### 15.6 As shipped (supersedes the draft numbers above)
+
+The values in 15.1 were the design draft. Tuning against always-boost bots settled on these, which `src/physics.js` and `tests/physics-smoke.cjs` now hold:
+
+- `NITRO`: `start 25`, `engage 8`, `drain 34`, `torque 1.6`, `speed 1.27`, `thrustGround 5`, `thrustAir 3`. Gains: air `4/s` after `0.25 s` (none while burning), landing `3`, perfect `8`, flip `14`, big air `5`, zombie `3`, smash `1`, checkpoint `6`, giant `30`, slipstream `6/s`, slam `25`, rival trickle `8/s`.
+- Rival: `nitroPower 0.95`, `nitroBurnAt 40`, `stun 1.1 s`, `slamStrength 0.35`, `slamCooldown 4 s`.
+- Nitro raises wheel torque and speed only while grounded; in the air it adds thrust alone, so a burn cannot flip the truck.
+- The zombie punt is drawn by the renderer from `zombie.punt`; the physics body keeps the original nudge. Moving the body broke bit-identity with the v3 recordings.
+- Engine extras in 15.3 (second combustion voice, turbo whine, limiter flutter) were not built.
+
+## 16. Picture interface completion (11 November 2026)
+
+The Redline game uses pictograms, numbers and colour for gameplay feedback, briefing goals, garage upgrades, retry tips and results. Title/dedication/settings and route names may retain words. Controls and feedback retain descriptive accessible names; hidden copy preserves stage, pause and scoring information. Renderer popups use cached pictogram sprites, bounded to the existing pool, with no new hot-path canvases or gradients.
+
+HUD additions are optional and write only changed values: `par` (seconds), `goal` (current challenge boolean) and `goalId` (the existing rules challenge ID). The clock star remains eligible at exactly par (`time <= par`), matching the final scoring rule. Objective status uses the same recovery count, fuel, collection totals, landing stats and boss gap as `Rules.finish`; it is provisional until the player finishes. Retry and route changes reset it.
+
+`IronUI.setInputMode('keyboard'|'touch'|'gamepad')` changes briefing and retry control hints. Runtime synchronizes it with the connected pad and touch layout; hints must not change the underlying input bindings. Touch driving/FIRE targets are at least 44 CSS px in both axes, nitro is at least 56 px, and no pedal overlaps another or the reserved recovery slot in the checked portrait/landscape sizes.
+
+Both in-app Reduced Motion and the OS animation preference show award badges statically instead of hiding them. Score details remain reachable with Tab/menu navigation and open with Enter, Space or gamepad A. Results count-up is bounded, reaches exact totals once and shows final totals immediately under Reduced Motion.

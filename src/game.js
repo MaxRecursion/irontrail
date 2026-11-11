@@ -115,7 +115,8 @@
   // Redline feel state: auto-nitro latch, rocket start window, chain awards, haptics and pass-by cues.
   let autoBoost=false,everBoosted=false,nitroTip=false,gasHeld=false,lastGasEdge=-1e9,goTime=-1e9,rocketDone=true;
   let chainMultiplier=1,boostRumble=0,musicBoost=0,worldDt=0,whooshXs=[],whooshIndex=0;
-  const view={stageIndex,stageName:'',progress:0,time:0,score:0,ghostDelta:null,fuel:100,cleared:0,totalZombies:0,speed:0,gear:1,rpm:820,ammo:1,locked:false,monsterDistance:0,monsterAlive:true,monsterProgress:null,rivalProgress:null,racePosition:1,combo:0,comboLeft:0,comboMax:3,checkpointProgress:[],paused:false,muted:false,nitro:0,boosting:false,nitroReady:false,nitroHint:'',slipstream:0,gap:null};
+  const liveGoal={won:true,time:0,fuel:100,recoveries:0,cleared:0,totalZombies:0,cans:0,totalCans:0,stats:null,rivalGap:0};
+  const view={par:0,goal:false,goalId:'',stageIndex,stageName:'',progress:0,time:0,score:0,ghostDelta:null,fuel:100,cleared:0,totalZombies:0,speed:0,gear:1,rpm:820,ammo:1,locked:false,monsterDistance:0,monsterAlive:true,monsterProgress:null,rivalProgress:null,racePosition:1,combo:0,comboLeft:0,comboMax:3,checkpointProgress:[],paused:false,muted:false,nitro:0,boosting:false,nitroReady:false,nitroHint:'',slipstream:0,gap:null};
   const cinema={kind:'idle',bars:0,zoom:0,progress:0};
   const frame={state,pose,alpha:1,dt:0,time:0,mode,input,ghost:null,layout,settings:save.settings,cinema};
   const musicState={biome:stageIndex,intensity:.2,mood:'menu',playing:true,timeScale:1,boost:0,tension:0};
@@ -127,7 +128,12 @@
   function persist(){Rules.Save.save(storage,save);}
   function refreshCampaign(){ui.setCampaign(save,stages,biomes,Rules);}
   function clearInput(){keys.clear();pointerMap.clear();for(const key of Object.keys(pedal))pedal[key]=0;for(const button of ui.pedals)button.classList.remove('pressed');input.throttle=0;input.brake=false;input.lean=0;input.boost=false;padState.gas=0;padState.reverse=0;padState.brake=false;padState.lean=0;padState.boost=false;autoBoost=false;gasHeld=false;}
-  const nitroHint=()=>touch?'':activePad?'RB':'Z / N';
+  const nitroHint=()=>activePad?'RB':touch?'':'Z';
+  let droveOnce=false,gasTipAt=1.6;const nudge=on=>{if(ui.setNudge)ui.setNudge('gas',on);};
+  // Kid-proofing: a stray pinch, ctrl-scroll or two-finger drag must never zoom the page away from the HUD.
+  for(const type of ['gesturestart','gesturechange','gestureend'])document.addEventListener(type,event=>event.preventDefault(),{passive:false});
+  window.addEventListener('wheel',event=>{if(event.ctrlKey||event.metaKey)event.preventDefault();},{passive:false});
+  document.addEventListener('touchmove',event=>{if(event.touches&&event.touches.length>1)event.preventDefault();},{passive:false});
   const award=(kind,data)=>{if(ui.award)ui.award(kind,data);};
   const stop=seconds=>{if(!save.settings.reducedMotion)hitStop=Math.max(hitStop,seconds);};
   // Dual-rumble on a connected pad; a short buzz for the heaviest hits on touch devices.
@@ -176,7 +182,7 @@
     shotDirector.reset();impactDirector.reset();outro=null;frame.state=state;frame.pose=pose;physics.getPose(pose);renderer.setStage(physics,index);renderer.snapCamera();
     view.checkpointProgress=physics.track.checkpoints.slice(1).map(p=>(p.x-physics.track.startX)/physics.track.length);
     run=Rules.createRun(index);run.previousStars=save.stars[index]||[false,false,false];runTime=0;recoveries=0;accumulator=0;countdownLeft=0;hitStop=0;slowLeft=0;flippedTime=0;fallenTime=0;stageResult=null;lowFuelWarned=false;monsterWarned=false;lockWarned=false;ghost.reset();
-    nitroTip=false;chainMultiplier=1;boostRumble=0;rocketDone=true;buildWhoosh();
+    nitroTip=false;everBoosted=false;droveOnce=false;gasTipAt=1.6;nudge(false);chainMultiplier=1;boostRumble=0;rocketDone=true;buildWhoosh();
     try{ghost.load(storage?.getItem(`irontrail-ghost-v1-${index}`));}catch(_){ghost.replay=null;}
     ghost.record(0,pose);clearInput();refreshCampaign();musicClock=1;
     if(brief)showBrief();return true;
@@ -219,7 +225,7 @@
   function recover(){
     if(mode!=='playing'||outro)return;const ok=physics.reset(physics.checkpointIndex);state=physics.getState();
     if(!ok){if(physics.failed)beginOutro(false,physics.failed);return;}
-    recoveries++;accumulator=0;flippedTime=0;fallenTime=0;hitStop=0;impactDirector.reset();autoBoost=false;physics.getPose(pose);renderer.snapCamera();seekWhoosh();ui.cue('recover',{value:'−12'});audio.ui('back');ui.setRecoverVisible(false);
+    recoveries++;accumulator=0;flippedTime=0;fallenTime=0;hitStop=0;impactDirector.reset();autoBoost=false;physics.getPose(pose);renderer.snapCamera();seekWhoosh();ui.cue('recover');audio.ui('back');ui.setRecoverVisible(false);
   }
   function fire(){if(mode!=='playing'||outro)return;if(physics.fire()){state=physics.getState();shotDirector.shoot();ui.clearFeedback();ui.cue('shot');}else audio.ui('error');}
   function toggleSound(){
@@ -323,7 +329,7 @@
   // Throttle pressed within a quarter second of GO: a small nitro head start.
   function rocketStart(){
     rocketDone=true;if(typeof physics.grantNitro!=='function')return;physics.grantNitro(20);state=physics.getState();
-    award('start',{label:'ROCKET START',value:'+NITRO'});audio.perfect();renderer.popup('ROCKET START',state.x,state.y+2.4,'nitro');rumble(.6,.8,170);
+    award('start',{label:'Rocket start'});audio.perfect();renderer.popup(0,state.x,state.y+2.4,'nitro');rumble(.6,.8,170);
   }
   function physicsEvent(event){
     renderer.onEvent(event,state);audio.setScene(state,event);
@@ -332,9 +338,9 @@
       case 'takeoff':audio.takeoff(event.strength);break;
       case 'land':audio.landing(event.strength);rumble(.25+s*.65,.2+s*.4,70+s*130);if(s>.8)stop(.02);break;
       case 'landing':
-        if(event.perfect){audio.perfect();if(ui.award)ui.award('perfect',{label:'PERFECT',value:'+250'});else ui.cue('trick',{value:'★'});}
-        if(event.flips>0){if(ui.award)ui.award('flip',{label:`${event.flips>1?event.flips+'× ':''}${event.dir==='front'?'FRONTFLIP':'BACKFLIP'}`,value:'+'+event.flips*350});else ui.cue('trick',{value:'↻ ×'+event.flips});}
-        if(event.bigAir&&event.upright)award('air',{label:'BIG AIR',value:Number(event.airtime||0).toFixed(1)+' s'});
+        if(event.perfect){audio.perfect();if(ui.award)ui.award('perfect',{label:'Perfect landing'});else ui.cue('trick',{value:'★'});}
+        if(event.flips>0){if(ui.award)ui.award('flip',{label:event.dir==='front'?'Front flip':'Back flip',value:event.flips>1?'×'+event.flips:''});else ui.cue('trick',{value:'↻ ×'+event.flips});}
+        if(event.bigAir&&event.upright)award('air',{label:'Big air'});
         break;
       case 'flip':audio.flip(event.count);if(!save.settings.reducedMotion)slowLeft=.10;rumble(.3,.6,90);break;
       case 'fuel':audio.pickup();lowFuelWarned=false;break;
@@ -344,17 +350,17 @@
       case 'slam':
         if(audio.slam)audio.slam(Math.max(.6,s));else audio.collision(1);
         if(audio.music&&audio.music.hit)audio.music.hit('slam');
-        impactDirector.trigger('slam',Math.max(.6,s));stop(.07);rumble(1,1,340);award('slam',{label:'NITRO SLAM',value:'+500'});break;
+        impactDirector.trigger('slam',Math.max(.6,s));stop(.07);rumble(1,1,340);award('slam',{label:'Nitro slam'});break;
       case 'wreck':
         if(audio.wreck)audio.wreck(Math.max(.4,s),event.kind);
-        impactDirector.trigger('wreck',Math.max(.5,s));rumble(.9,.7,280);award('wreck',{label:event.kind==='fall'?'OVER THE EDGE':'WRECKED'});break;
+        impactDirector.trigger('wreck',Math.max(.5,s));rumble(.9,.7,280);award('wreck',{label:event.kind==='fall'?'Over the edge':'Wrecked'});break;
       case 'nitro':
         if(audio.nitro)audio.nitro(event.phase,{owner:event.owner||'player',empty:!!event.empty});
-        if(mine){if(event.phase==='start'){everBoosted=true;boostRumble=.11;rumble(.45,.9,200);}else if(event.phase==='full')award('nitro',{label:'NITRO FULL'});}
+        if(mine){if(event.phase==='start'){everBoosted=true;boostRumble=.11;rumble(.45,.9,200);}else if(event.phase==='full')award('nitro',{label:'Nitro full'});}
         break;
-      case 'escalate':if(audio.escalate)audio.escalate();ui.banner('IRON MAW IGNITES!','big',1.5);rumble(.5,.9,260);break;
+      case 'escalate':if(audio.escalate)audio.escalate();ui.banner('Iron Maw ignites!','big',1.5,'ignite');rumble(.5,.9,260);break;
       case 'shot':audio.gunshot();rumble(1,.8,170);break;
-      case 'monsterHit':audio.monsterHit();shotDirector.hit();ui.cue('hit',{value:'+1000'});award('giant',{label:'GIANT DOWN',value:'+1000'});rumble(1,1,380);break;
+      case 'monsterHit':audio.monsterHit();shotDirector.hit();ui.cue('hit');award('giant',{label:'Giant down'});rumble(1,1,380);break;
       case 'monsterCrash':audio.monsterCrash();rumble(1,1,420);break;
       case 'checkpoint':audio.checkpoint();ui.cue('checkpoint');break;
       case 'empty':if(audio.stall)audio.stall();break;
@@ -362,11 +368,11 @@
     audio.setScene();
     const reward=Rules.onEvent(run,event,{state,time:runTime,recoveries});
     if(reward){
-      if(event.type!=='monsterHit')renderer.popup(`+${reward.points}`,event.x??state.x,event.y??state.y+1,reward.kind);
+      if(event.type!=='monsterHit')renderer.popup(reward.points,event.x??state.x,event.y??state.y+1,reward.kind);
       if(reward.combo>1)audio.combo(reward.combo);
       if(event.type==='zombie'||event.type==='smash'){
         const multiplier=Math.min(5,1+Math.floor((Math.max(1,reward.combo)-1)/3));
-        if(multiplier>chainMultiplier)award('chain',{label:'CHAIN',value:'×'+multiplier});
+        if(multiplier>chainMultiplier)award('chain',{label:'Chain',value:'×'+multiplier});
         chainMultiplier=multiplier;
       }
     }
@@ -390,10 +396,10 @@
     impactDirector.reset();impactDirector.trigger(kind,1);
     if(won){
       renderer.celebrate(stageIndex===9?'victory':'clear');if(audio.finishLine)audio.finishLine(true);audio.celebrate();if(audio.music&&audio.music.hit)audio.music.hit('finish');
-      if(!instant)ui.banner(stageIndex===9?'IRON MAW BEATEN!':'FINISH!','big',1.3);rumble(.8,1,420);
+      if(!instant)ui.banner(stageIndex===9?'Iron Maw beaten!':'Finish!','big',1.3,stageIndex===9?'boss':'finish');rumble(.8,1,420);
     }else{
       if(reason==='rival'&&audio.finishLine)audio.finishLine(false);
-      if(!instant)ui.banner(reason==='fuel'?'OUT OF FUEL':reason==='monster'?'WRECKED!':'IRON MAW WINS','big',1.3);rumble(1,.6,360);
+      if(!instant)ui.banner(reason==='fuel'?'Out of fuel':reason==='monster'?'Wrecked!':'Iron Maw wins','big',1.3,reason==='fuel'?'fuel':reason==='monster'?'giant':'rival');rumble(1,.6,360);
     }
     if(instant)endOutro();
   }
@@ -409,11 +415,13 @@
     for(const event of physics.drainEvents())physicsEvent(event);
     ghost.record(runTime,physics.poseCurr);
     if(state.fuel<22&&!lowFuelWarned){lowFuelWarned=true;audio.lowFuel();ui.cue('fuel');}
-    if(state.monster.alive&&state.weapon.distance<70&&!monsterWarned){monsterWarned=true;ui.cue('target',{value:'1'});}
-    if(state.weapon.canHit&&state.ammo>0&&!lockWarned){lockWarned=true;ui.cue('target',{value:'X / J'});}
+    if(state.monster.alive&&state.weapon.distance<70&&!monsterWarned){monsterWarned=true;ui.cue('target');}
+    if(state.weapon.canHit&&state.ammo>0&&!lockWarned){lockWarned=true;ui.cue('target',{value:touch||activePad?undefined:'X'});}
     while(whooshIndex<whooshXs.length&&state.x>=whooshXs[whooshIndex]){whooshIndex++;if(audio.whoosh&&Math.abs(state.speed)>15)audio.whoosh(clamp((Math.abs(state.speed)-12)/18,.2,1));}
     if(run.combo===0)chainMultiplier=1;
-    if(!nitroTip&&!everBoosted&&state.nitro>=60&&runTime>1.5){nitroTip=true;award('nitro',{label:'NITRO READY',value:nitroHint()||'HOLD'});}
+    // A driver who cannot read gets a picture prompt (and a bouncing pedal) until the truck first moves under power.
+    if(!droveOnce){if(input.throttle>.5){droveOnce=true;nudge(false);}else if(runTime>=gasTipAt){gasTipAt=runTime+4.5;nudge(true);ui.cue('drive',{value:touch?undefined:activePad?'RT':'↑',seconds:2.6});}}
+    if(!nitroTip&&!everBoosted&&state.nitro>=60&&runTime>1.5){nitroTip=true;award('nitro',{label:'Nitro ready',value:nitroHint()});}
     const angle=Math.abs(Math.atan2(Math.sin(state.angle),Math.cos(state.angle)));
     flippedTime=angle>1.7&&Math.abs(state.speed)<2?flippedTime+STEP:0;fallenTime=state.y<-9?fallenTime+STEP:0;
     const needRecover=state.inverted||flippedTime>1.2||state.y<-3||state.stalledTime>2.5;ui.setRecoverVisible(needRecover);
@@ -421,12 +429,16 @@
     if(fallenTime>.45||state.x<-31)recover();
   }
   function updateHud(ghostFrame){
+    ui.setInputMode?.(activePad?'gamepad':touch?'touch':'keyboard');
     const track=physics.track;view.stageIndex=stageIndex;view.stageName=stages[stageIndex].name;view.progress=clamp((state.x-track.startX)/track.length,0,1);
     view.distance=clamp(state.x-track.startX,0,track.length);view.length=track.length;
     view.shootingPhase=shotDirector.state.phase;view.time=runTime;view.score=stageResult?stageResult.score:run.score;view.ghostDelta=ghostFrame?(ghostFrame.pose[0]-state.x)/Math.max(8,Math.abs(state.speed)):null;
     view.fuel=state.fuel;view.cleared=state.cleared;view.totalZombies=state.totalZombies;view.speed=state.speed;view.gear=audio.gear;view.rpm=audio.rpm;view.ammo=state.ammo;view.locked=state.weapon.canHit;view.monsterDistance=state.weapon.distance;view.monsterAlive=state.monster.alive;
     view.monsterProgress=state.monster.alive?clamp((state.monster.x-track.startX)/track.length,0,1):null;view.rivalProgress=state.rival?clamp((state.rival.x-track.startX)/track.length,0,1):null;view.racePosition=state.racePosition;view.combo=run.combo;view.comboLeft=run.comboLeft;view.comboMax=run.comboMax;view.paused=mode==='paused';view.muted=audio.muted;
     view.nitro=Number(state.nitro)||0;view.boosting=!!state.boosting;view.nitroReady=!!state.nitroReady;view.nitroHint=nitroHint();view.slipstream=Number(state.slipstream)||0;view.gap=state.rival?state.x-state.rival.x:null;
+    // Live star goals: the clock star drains against par and the challenge star lights while its rule holds.
+    const challenge=Rules.CHALLENGES&&Rules.CHALLENGES[stageIndex];view.par=(Rules.PAR_TIMES||[])[stageIndex]||0;
+    if(challenge){liveGoal.time=runTime;liveGoal.fuel=state.fuel;liveGoal.recoveries=recoveries;liveGoal.cleared=state.cleared;liveGoal.totalZombies=state.totalZombies;liveGoal.cans=state.stats.cans;liveGoal.totalCans=physics.fuelCans.length;liveGoal.stats=state.stats;liveGoal.rivalGap=state.rival?state.x-state.rival.x:0;view.goal=!!challenge.check(liveGoal);view.goalId=challenge.id;}
     ui.hud.update(view);
   }
   function updateMusic(){

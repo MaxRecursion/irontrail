@@ -1,3 +1,80 @@
+# IRONTRAIL — current handoff (11 November 2026)
+
+## Start here
+
+Claude’s Redline gameplay is the base at local HEAD `3cfdb9e3cd0618faba68491213e63445959ff79d` on `main`. The newer unfinished pictogram interface has now been completed and verified locally in the working tree. Keep both passes. This task did not commit, push or deploy; the files below are ready for review and a later release. Existing production hosting remains GitHub/Vercel; Sites identifiers in the historical notes are obsolete hosting context.
+
+- Workspace: `/Users/akshaykulkarni/NewGame/irontrail`.
+- Source: `src/`; build with `python3 build.py`. Deliverable: `index.html` and the identical `dist/index.html`.
+- Changed source: `src/game.js`, `src/render.js`, `src/shell.html`, `src/ui.js`. Tests: `tests/ui-harness.html`, `tests/integration-harness.html`. Documentation: this file, README, PLAN and SPEC §16.
+- Preserve the current working tree. Do not restore the pre-picture UI or rebuild from an older release.
+
+## What was completed and improved
+
+The picture interface now includes a route strip, speed gauge, fuel/zombie/nitro bars, live par and challenge stars, countdown lights, pictogram rewards, icon-based garage/briefing/retry/results screens and cached renderer popups. Existing Ojas personalization stays. The current challenge badge includes thresholds such as 60%, ×2 or 15 m; its accessible label describes whether the challenge currently holds. These indicators are provisional until a successful finish, and use the same rules/data as final stars.
+
+Follow-through fixes made during this task:
+
+- Reduced Motion now shows static reward badges; previously disabling their animation also left them invisible. OS animation preference suppresses CSS animations consistently.
+- Score details can be focused with Tab or menu navigation and opened with Enter, Space or gamepad A.
+- Briefing and retry guidance follows keyboard, touch or connected-gamepad controls. Phone briefings retain five visible control pictures. Gameplay keycaps use the correct controller bindings.
+- Touch controls have at least 44×44 CSS px hit targets; the nitro pedal is at least 56 px high in portrait and landscape. Pedals, FIRE and recovery do not overlap at the checked sizes.
+- The clock star remains available at exactly par, matching `Rules.finish`. Objective status resets with the stage and responds to recovery and fuel changes.
+- A new attempt resets the nitro onboarding latch, so an earlier boost no longer suppresses the ready hint on retries or later routes.
+- Browser integration assertions now follow the current icon interface rather than removed pause markup/old key-hint text. New checks cover live goals and the nitro onboarding regression.
+
+## Verification for this handoff
+
+- Build/bundle and all source syntax checks pass: 9 inline scripts, 106 real IDs, no external assets, embedded Planck license. Both output files are **650,232 bytes**, SHA-256 `228b02f9486c35516196aacd3e8a48ab128ced6b7d6568835ef216499043828c`. Claude re-ran every suite listed here on this final tree (all pass) and added four small things after Codex's pass: a visible start-light/finish/failure sign hides the small cue badge; pinch, ctrl-scroll and double-tap page zoom are blocked so a child cannot zoom the HUD off screen (menus still scroll); a picture prompt and bouncing gas pedal appear until the truck is first driven; the touch lean pedals use tilt icons. SPEC §15.6 records the nitro tuning as shipped.
+- Full physics smoke passes all ten routes at 60/120 Hz, base/max upgrades, baseline hashes, fuel/recovery/monster invariants, nitro, escalation, slipstream, slam and terminal coasting. Rules, shot/director and pacing suites pass.
+- Renderer stress passes 1,400 frames across ten biomes: max 162/220 draw operations, Redline worst case 179/220, zero hot font changes, current caches 61.3 MiB, no hot canvas/gradient construction. Both motion gates pass.
+- Expanded UI browser harness passes nine screens and four layouts (1440×900, 1280×720, 390×844, 844×390), input hints including HUD controller keycaps, live-star/par boundary, challenge thresholds/labels, nitro/gap states, award pool/expiry/static reduced-motion visibility, exact results count-up, score-details navigation, unchanged-state zero DOM writes, touch target hit/fit/non-overlap and recovery.
+- Full browser integration `phase=all` passes: stage 1 clear 11.91 s; mandatory-monster failure 8.58 s; boss victory 29.07 s with 7.22 m lead; progression, rewards once, garage, countdown, ghost, pause, persistent settings, retries and synthetic gamepad. Redline clear 10.20 s/top 116 km/h with 95 nitro burned and 8 smashes; finish outro, rival escalation and a fresh-attempt nitro tutorial pass. Actual recovery/fuel changes update objective stars; a real idle clock crosses 15 s par and expires the clock star. Final keycap changes were additionally checked through a complete `phase=gamepad` run against the final bundle.
+- Offline audio harness passes all cues, music, bounded sources and silence. Final live-audio harness passes click-only activation, music RMS .01262, V8 RMS .07579, cannon/collision RMS .14450, exact mute and pause/resume. These are measured browser signals; synthesis was unchanged in this task.
+- Desktop gameplay and phone gameplay/briefings were visually inspected. Local screenshots: `/tmp/irontrail-gameplay-desktop.png`, `/tmp/irontrail-final-gameplay-phone.png`, `/tmp/irontrail-final-brief-phone.png`; integration capture: `/tmp/irontrail-final-integration.png`. Ignored preview pages are developer-only and excluded from `dist/`.
+- Browser harnesses have no runtime exceptions. Their logged resource failures are favicon 404s. The no-gesture preview can report a browser vibration restriction; actual controller haptics remain a hardware follow-up.
+
+Available headless Chrome ran at about 60 Hz. Full integration callback mean was 1.13 ms on stage 1 and 1.425 ms on the boss; p99 2.6/2.5 ms respectively, at 1440×710 CSS px, native DPR 1. These observations are not full CPU/GPU traces or a physical 120 Hz certification. `git diff --check` passes.
+
+## Continue from here
+
+No required implementation remains for this interface-completion task. For a later release, review the current diff, rebuild, rerun the listed checks and publish through the existing GitHub/Vercel project when requested. Keep `dist/` limited to the production HTML. Test previews belong under ignored `tests/*-preview.html`; QA uses separate campaign/ghost keys. Do not change DNS or create a new hosting project.
+
+Preserve offline/self-contained output and Planck’s MIT license; one charge and one mandatory random giant per attempt; fuel/can/recovery conservation; independent physical Iron Maw with no position-based catch-up; saves, upgrades, scoring, ghost replay, audio guards and reduced-motion controls. This task does not change vehicle physics, audio synthesis, progression economics or save keys.
+
+Remaining optional work from Claude’s Redline notes: tighter boosted boss balance (the current always-boost lead varies widely), additional engine synthesis ideas in SPEC §15.3, and physical phone/controller/Safari/120 Hz/GPU testing. These are future enhancements or measurement gaps, not unfinished parts of this interface task. Browser screenshots and audio signals do not certify real hardware feel or listening.
+
+## Reproduce the checks
+
+```sh
+cd /Users/akshaykulkarni/NewGame/irontrail
+python3 build.py
+python3 tests/bundle-check.py
+node tests/physics-smoke.cjs
+node tests/rules-check.cjs
+node tests/pacing-check.cjs
+node tests/shot-check.cjs
+node tests/render-check.cjs
+python3 -m http.server 4173 --bind 127.0.0.1
+```
+
+With the server running, in another terminal:
+
+```sh
+node tests/page-check.mjs http://127.0.0.1:4173/tests/ui-harness.html
+node tests/page-check.mjs http://127.0.0.1:4173/tests/audio-check.html --timeout 240
+node tests/page-check.mjs http://127.0.0.1:4173/tests/audio-live-check.html --click '#run' --timeout 120
+node tests/page-check.mjs http://127.0.0.1:4173/tests/integration-harness.html --query phase=all --click '#start' --timeout 300
+```
+
+The integration harness also accepts `phase=goals` for real recovery/fuel/route resets and real-time par expiration, alongside `flow`, `failures`, `boss`, `gamepad` and `redline`. Chrome must be installed; the page runner creates throwaway profiles. A localhost server was already running on port 4173 during this task; it was reused, not replaced.
+
+---
+
+# Historical implementation and release notes
+
+The remaining sections retain previous evidence and release history. Their “current”/“uncommitted” wording describes those earlier sessions; use the current handoff above for continuation.
+
 # IRONTRAIL v3 handoff
 
 ## Current state

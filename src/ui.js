@@ -17,6 +17,8 @@
  *          scrap,newBest,newScoreBest,challenge,nextAvailable}
  * failed:{reason,stageName,time,score,scrap,tip}
  * showScreen(null) hides menus. Menu events are emitted; UI never starts physics.
+ * Pictogram pass: the HUD and menus speak in icons, colour and motion; words stay in aria labels.
+ * HUD extras: par (seconds; drains the clock star's ring), goal (bool: challenge currently met), goalId.
  * cue(kind,{value,seconds}) shows a persistent SVG badge with optional numeric value.
  * clearFeedback() cancels transient cue/toast/banner feedback on screen/run transitions.
  * on(name,fn) returns an unsubscribe. navigate(direction),activate(),back() support
@@ -32,8 +34,16 @@
     return `${String(Math.floor(n/6000)).padStart(2,'0')}:${String(Math.floor(n/100)%60).padStart(2,'0')}.${String(n%100).padStart(2,'0')}`;
   };
   const scoreText = value => Math.max(0,Math.floor(Number(value)||0)).toLocaleString('en-US');
-  const AWARDS=Object.freeze({perfect:'cue-star',flip:'cue-trick',air:'cue-air',smash:'cue-burst',chain:'cue-burst',slam:'cue-burst',nitro:'cue-bolt',giant:'cue-target',checkpoint:'cue-checkpoint',wreck:'cue-error',start:'cue-bolt'});
-  const CUES=Object.freeze({target:'Target locked',shot:'Shot fired',hit:'Monster cleared',miss:'Shot missed',fuel:'Fuel',checkpoint:'Checkpoint',recover:'Recovered',trick:'Trick',success:'Success',error:'Unavailable',upgrade:'Upgrade installed'});
+  // Pictogram maps: the player cannot read yet, so every message is an icon, a colour or a motion. Words stay in aria labels.
+  const AWARDS=Object.freeze({perfect:'cue-star',flip:'cue-trick',air:'cue-air',smash:'ic-crate',chain:'ic-zombie',slam:'cue-burst',nitro:'cue-bolt',giant:'ic-giant',checkpoint:'ic-flag',wreck:'cue-error',start:'cue-bolt'});
+  const SIGNS=Object.freeze({finish:'ic-flag',boss:'ic-trophy',fuel:'ic-can',giant:'ic-giant',rival:'ic-rival',ignite:'cue-bolt'});
+  const GOALS=Object.freeze({'all-zombies':['ic-zombie',''],'all-cans':['ic-can',''],'clean-run':['ic-norecover',''],'no-recovery':['ic-norecover',''],'fuel-60':['ic-can','60%'],'fuel-35':['ic-can','35%'],'land-a-flip':['cue-trick',''],'two-perfect':['cue-star','×2'],'big-air':['cue-air','1.6s'],'boss-gap':['ic-rival','15m']});
+  const ROWS=Object.freeze({'Zombies & combos':'ic-zombie','Landed flips':'cue-trick','Perfect landings':'cue-star','Big air':'cue-air','Monster stopped':'ic-giant','Fuel cans':'ic-can','Checkpoints':'cue-checkpoint','Rival impacts':'ic-rival','Roadside smashes':'ic-crate','Nitro slams':'cue-burst','Stage finish':'ic-flag','Fuel bonus':'ic-can','Pace bonus':'ic-clock','Nitro burn':'cue-bolt'});
+  const STATS=Object.freeze({topSpeed:'ic-gauge',maxAir:'cue-air',chain:'ic-zombie',smashes:'ic-crate',slams:'cue-burst',nitro:'cue-bolt'});
+  const use=(id,cls='')=>`<svg${cls?` class="${cls}"`:''} viewBox="0 0 24 24" aria-hidden="true"><use href="#${id}"/></svg>`;
+  const cap=text=>`<kbd class="keycap">${text}</kbd>`;
+  const TROPHY='<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M19 8h26v17c0 12-7 18-13 18s-13-6-13-18V8Z" fill="#f5cb65" stroke="#fff0b5" stroke-width="2"/><path d="M19 13H8v9c0 10 10 13 15 12M45 13h11v9c0 10-10 13-15 12M32 43v11M20 57h24" fill="none" stroke="#f5cb65" stroke-width="5" stroke-linecap="round"/><path d="m32 17 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z" fill="#a52a39"/></svg>';
+  const CUES=Object.freeze({drive:'Hold to drive',target:'Target locked',shot:'Shot fired',hit:'Monster cleared',miss:'Shot missed',fuel:'Fuel',checkpoint:'Checkpoint',recover:'Recovered',trick:'Trick',success:'Success',error:'Unavailable',upgrade:'Upgrade installed'});
   const icon = kind => {
     const paths={target:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M12 1v6M12 17v6M1 12h6M17 12h6',checkpoint:'M5 22V3m0 1h14l-3 4 3 4H5',engine:'M4 8h3V5h8v3h4v9h-3v3H7v-3H4zM9 3h5M2 11v4M22 10v7M10 10l-2 4h4l-2 4',tyre:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 7v3M12 14v3M7 12h3M14 12h3M8.5 8.5l2 2M13.5 13.5l2 2M8.5 15.5l2-2M13.5 10.5l2-2',suspension:'M5 3l4 3-3 3 7 3-3 3 7 3-2 3M14 3l5 3-3 3 3 3-5 3 3 3-3 3',fuel:'M5 21V4h9v17M4 21h12M5 9h9M16 5l3 3v9c0 2 3 2 3 0v-5l-3-3'};
     return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[kind]||paths.engine}"/></svg>`;
@@ -47,10 +57,11 @@
   class IronUI {
     constructor(doc) {
       this.document=doc;this.app=doc.getElementById('app');if(!this.app)throw new Error('IronUI needs the real shell #app.');
-      this.events=new Map();this.values=Object.create(null);this.nodes=Object.create(null);this.screen=null;this.data={};this._touch=false;
+      this.events=new Map();this.values=Object.create(null);this.nodes=Object.create(null);this.screen=null;this.data={};this._touch=false;this._inputMode='keyboard';
       this.save=global.IronRules?.Save.defaults()||{unlocked:1,completed:[],best:{},stars:{},scrap:0,upgrades:{},settings:{}};
       this.stages=[];this.biomes=[];this.rulesInfo={};this._metrics={safeTop:148,safeBottom:115};this._primary={name:'play',args:[]};
       for(const element of this.app.querySelectorAll('[id]'))this.nodes[element.id]=element;
+      this._controlKeys={fire:this.nodes.fireButton.querySelector('.keycap'),recover:this.nodes.recoverButton.querySelector('.keycap')};
       this.pedals=Array.from(this.app.querySelectorAll('[data-input]'));
       this.hud={setVisible:value=>this._hidden('gameHud',!value),update:view=>this._updateHUD(view||{})};
       const bindings={pauseButton:'pause',restartButton:'restart',soundButton:'sound',fullscreenButton:'fullscreen',fireButton:'fire',recoverButton:'recover'};
@@ -75,31 +86,38 @@
     _hidden(id,hidden){const value=!!hidden,key=`hidden:${id}`;if(this.values[key]!==value){this.values[key]=value;if(this.nodes[id])this.nodes[id].hidden=value;}}
     _class(id,name,value){const bool=!!value,key=`class:${id}:${name}`;if(this.values[key]!==bool){this.values[key]=bool;this.nodes[id]?.classList.toggle(name,bool);}}
     _attr(id,name,value){const text=String(value),key=`attr:${id}:${name}`;if(this.values[key]!==text){this.values[key]=text;this.nodes[id]?.setAttribute(name,text);}}
-    _bar(id,value){const n=Math.round(clamp(value,0,1)*1000)/1000,key=`bar:${id}`;if(this.values[key]!==n){this.values[key]=n;this.nodes[id].style.transform=`scaleX(${n})`;}}
+    _bar(id,value){const n=Math.round(clamp(value,0,1)*1000)/1000,key=`bar:${id}`;if(this.values[key]!==n){this.values[key]=n;if(this.nodes[id])this.nodes[id].style.transform=`scaleX(${n})`;}}
     _marker(id,value){this._hidden(id,value===null||value===undefined||!Number.isFinite(Number(value)));if(value==null)return;const n=Math.round(clamp(value,0,1)*1000)/10,key=`marker:${id}`;if(this.values[key]!==n){this.values[key]=n;this.nodes[id].style.transform=`translateX(${n}%)`;}}
+    _rot(id,degrees){const n=Math.round(degrees/2)*2,key=`rot:${id}`;if(this.values[key]!==n){this.values[key]=n;if(this.nodes[id])this.nodes[id].style.transform=`rotate(${n}deg)`;}}
     _updateHUD(v){
-      if(v.stageIndex!==undefined)this._text('hudStageNumber',`${String(Number(v.stageIndex)+1).padStart(2,'0')} / 10`);
+      if(v.stageIndex!==undefined)this._text('hudStageNumber',`Stage ${Number(v.stageIndex)+1} of 10`);
       if(v.stageName!==undefined)this._text('hudStageName',v.stageName);
-      if(v.progress!==undefined)this._bar('hudProgressFill',v.progress);
-      if(v.distance!==undefined||v.length!==undefined)this._text('hudDistance',`${Math.floor(Math.max(0,Number(v.distance)||0))} / ${Math.floor(Number(v.length)||0)} M`);
-      if(v.time!==undefined)this._text('hudTime',timeText(v.time));
+      if(v.progress!==undefined){this._bar('hudProgressFill',v.progress);this._marker('hudTruckMarker',v.progress);}
+      if(v.distance!==undefined||v.length!==undefined)this._text('hudDistance',`${Math.floor(Math.max(0,Number(v.distance)||0)/10)*10} of ${Math.floor(Number(v.length)||0)} metres`);
+      if(v.time!==undefined){
+        this._text('hudTime',timeText(Math.floor(Number(v.time)||0)));
+        // The clock star wears its par time as a ring that drains; once it is empty the star goes grey.
+        if(v.par!==undefined){const par=Number(v.par)||0,elapsed=Math.max(0,Number(v.time)||0),left=par>0?clamp(1-elapsed/par,0,1):0,within=par>0&&elapsed<=par,step=Math.round((1-left)*100);if(this.values.ring!==step){this.values.ring=step;if(this.nodes.hudClockRing)this.nodes.hudClockRing.style.strokeDashoffset=step;}this._class('hudClock','lost',!within);this._class('hudClock','hurry',within&&left<.25);this._attr('hudClock','aria-label',`Beat the clock: finish in ${par} seconds. ${Math.floor(elapsed)} seconds elapsed. ${within?'Within par.':'Par exceeded.'}`);}
+      }
+      if(v.goal!==undefined)this._class('hudGoal','on',v.goal);
+      if(v.goalId!==undefined&&v.goalId!==this._goalId){this._goalId=v.goalId;const goal=GOALS[v.goalId]||GOALS['all-zombies'];this._attr('hudGoalGlyph','href','#'+goal[0]);this._text('hudGoalTarget',goal[1]);this._goalLabel=(this.rulesInfo.CHALLENGES||global.IronRules?.CHALLENGES||[]).find(rule=>rule.id===v.goalId)?.label||'Complete the stage objective';}
+      if(v.goal!==undefined||v.goalId!==undefined)this._attr('hudGoal','aria-label',`${this._goalLabel||'Stage challenge'}. ${this.values['class:hudGoal:on']?'Currently met.':'Not yet met.'}`);
       if(v.score!==undefined)this._text('hudScore',scoreText(v.score));
-      if(v.ghostDelta!==undefined){const active=v.ghostDelta!==null&&Number.isFinite(Number(v.ghostDelta));this._hidden('hudGhost',!active);if(active){this._text('hudGhost',`${v.ghostDelta<=0?'−':'+'}${Math.abs(v.ghostDelta).toFixed(2)}s`);this._class('hudGhost','ahead',v.ghostDelta<=0);this._class('hudGhost','behind',v.ghostDelta>0);}}
-      if(v.fuel!==undefined){const fuel=clamp(v.fuel,0,100);this._text('fuelValue',`${Math.ceil(fuel)}%`);this._bar('fuelFill',fuel/100);this._attr('fuelMeter','aria-valuenow',Math.ceil(fuel));this._class('fuelHud','low',fuel<23);this._class('fuelHud','critical',fuel<12);}
-      if(v.cleared!==undefined||v.totalZombies!==undefined)this._text('zombieValue',`${v.cleared||0} / ${v.totalZombies||0}`);
-      if(v.speed!==undefined)this._text('speedValue',String(Math.round(Math.abs(v.speed)*3.6)).padStart(2,'0'));
+      if(v.ghostDelta!==undefined){const active=v.ghostDelta!==null&&Number.isFinite(Number(v.ghostDelta));this._hidden('hudGhost',!active);if(active){if(v.ghostDelta>.08)this._ghostBehind=true;else if(v.ghostDelta<-.08)this._ghostBehind=false;this._class('hudGhost','behind',!!this._ghostBehind);this._text('hudGhostText',this._ghostBehind?'Behind your ghost':'Ahead of your ghost');}}
+      if(v.fuel!==undefined){const fuel=clamp(v.fuel,0,100);this._text('fuelValue',`${Math.ceil(fuel)}%`);this._bar('fuelFill',fuel/100);this._attr('fuelMeter','aria-valuenow',Math.ceil(fuel));this._class('fuelHud','mid',fuel<50&&fuel>=23);this._class('fuelHud','low',fuel<23);this._class('fuelHud','critical',fuel<12);}
+      if(v.cleared!==undefined||v.totalZombies!==undefined){this._text('zombieValue',`${v.cleared||0} / ${v.totalZombies||0}`);this._bar('zombieFill',v.totalZombies?(v.cleared||0)/v.totalZombies:0);}
+      if(v.speed!==undefined){const kmh=Math.abs(v.speed)*3.6;this._text('speedValue',String(Math.round(kmh)).padStart(2,'0'));this._rot('speedNeedle',-90+clamp(kmh/130,0,1)*180);}
       if(v.gear!==undefined)this._text('gearValue',v.gear);
-      if(v.rpm!==undefined)this._bar('hudRpmFill',v.rpm/5200);
       if(v.ammo!==undefined){this._text('ammoValue',`${v.ammo} / 1`);const disabled=!v.ammo;const key='disabled:fire';if(this.values[key]!==disabled){this.values[key]=disabled;this.nodes.fireButton.disabled=disabled;}this._class('weaponHud','spent',!v.ammo);this._attr('ammoPip','aria-label',v.ammo?'One charge ready':'No charges');this._attr('fireButton','aria-label',v.ammo?'Fire cannon, one charge available':'Cannon empty');}
       if(v.locked!==undefined)this._class('weaponHud','locked',v.locked);
       if(v.shootingPhase!==undefined)this._attr('weaponHud','data-phase',v.shootingPhase);
       if(v.monsterAlive!==undefined)this._class('weaponHud','cleared',!v.monsterAlive);
       if(v.monsterAlive!==undefined||v.ammo!==undefined||v.locked!==undefined){const alive=v.monsterAlive!==false;this._text('weaponStatus',!alive?'MONSTER CLEARED':v.ammo===0?'CHARGE SPENT':v.locked?'TARGET LOCKED · FIRE':'SAVE YOUR ONE SHOT');}
-      if(v.monsterDistance!==undefined||v.monsterAlive!==undefined){this._text('monsterDistance',v.monsterAlive===false?'✓':`${Math.ceil(Math.max(0,Number(v.monsterDistance)||0))} m`);this._monsterAlive=v.monsterAlive!==false;this._monsterDistance=Number(v.monsterDistance);}
+      if(v.monsterDistance!==undefined||v.monsterAlive!==undefined){this._text('monsterDistance',v.monsterAlive===false?'✓':`${Math.ceil(Math.max(0,Number(v.monsterDistance)||0))} m`);this._monsterAlive=v.monsterAlive!==false;this._monsterDistance=Number(v.monsterDistance);this._bar('monsterNear',this._monsterAlive?clamp(1-(Number(v.monsterDistance)||0)/150,0,1):0);}
       if(v.monsterDistance!==undefined||v.monsterAlive!==undefined||v.locked!==undefined)this._class('weaponHud','warning',this._monsterAlive!==false&&this._monsterDistance<70&&!this.values['class:weaponHud:locked']);
       if(v.monsterProgress!==undefined)this._marker('hudMonsterMarker',v.monsterAlive===false?null:v.monsterProgress);
       if(v.rivalProgress!==undefined)this._marker('hudRivalMarker',v.rivalProgress);
-      if(v.status!==undefined)this._text('hudStageStatus',v.status);else if(v.racePosition!==undefined)this._text('hudStageStatus',v.rivalProgress==null?'':`⚑ ${v.racePosition} / 2`);
+      if(v.status!==undefined)this._text('hudStageStatus',v.status);else if(v.racePosition!==undefined)this._text('hudStageStatus',v.rivalProgress==null?'':`Position ${v.racePosition} of 2`);
       if(v.combo!==undefined){this._hidden('hudCombo',v.combo<2);this._text('hudComboValue',`×${v.combo||1}`);}
       if(v.comboLeft!==undefined)this._bar('hudComboFill',v.comboLeft/(v.comboMax||3));
       if(v.checkpointProgress){const signature=v.checkpointProgress.join(',');if(this.values.checkpoints!==signature){this.values.checkpoints=signature;this.nodes.hudCheckpointTicks.replaceChildren();for(const progress of v.checkpointProgress){const tick=this.document.createElement('i');tick.className='hud-checkpoint';tick.style.left=`${clamp(progress,0,1)*100}%`;this.nodes.hudCheckpointTicks.appendChild(tick);}}}
@@ -107,7 +125,7 @@
       if(v.boosting!==undefined)this._class('nitroHud','burning',v.boosting);
       if(v.nitroReady!==undefined)this._class('nitroHud','ready',v.nitroReady);
       if(v.nitroHint!==undefined)this._text('nitroHint',v.nitroHint);
-      if(v.gap!==undefined){const active=v.gap!==null&&Number.isFinite(Number(v.gap));this._hidden('hudGap',!active);if(active){const gap=Math.round(Number(v.gap));this._text('hudGap',`${gap>=0?'+':'−'}${Math.abs(gap)} M`);this._class('hudGap','behind',gap<0);}}
+      if(v.gap!==undefined){const active=v.gap!==null&&Number.isFinite(Number(v.gap));this._hidden('hudGap',!active);if(active){const gap=Math.round(Number(v.gap));this._text('hudGapText',`${Math.abs(gap)} metres ${gap>=0?'ahead of':'behind'} Iron Maw`);this._class('hudGap','behind',gap<0);}}
       if(v.paused!==undefined){this._attr('pauseButton','aria-label',v.paused?'Resume game':'Pause game');this._class('pauseButton','active',v.paused);}
       if(v.muted!==undefined){this._attr('soundButton','aria-label',v.muted?'Enable sound':'Mute sound');this._attr('soundButton','aria-pressed',v.muted);}
     }
@@ -125,66 +143,75 @@
     _par(i){return (this.rulesInfo.PAR_TIMES||this.rulesInfo.parTimes||global.IronRules?.PAR_TIMES||[])[i]||0;}
     _challenge(i){return (this.rulesInfo.CHALLENGES||this.rulesInfo.challenges||global.IronRules?.CHALLENGES||[])[i]?.label||'Complete the stage objective';}
     _stars(stars,animated=false){const values=Array.isArray(stars)?stars:[false,false,false];return values.map((v,i)=>`<span${v?' class="earned"':''}${animated?` style="--star-delay:${i*180}ms"`:''}>★</span>`).join('');}
-    _button(label,event,extra=''){return `<button type="button" class="menu-button" data-ui="${esc(event)}" ${extra}>${esc(label)}</button>`;}
+    _button(label,event,iconId,extra=''){return `<button type="button" class="menu-button" data-ui="${esc(event)}" aria-label="${esc(label)}" title="${esc(label)}" ${extra}>${use(iconId||'ic-play')}</button>`;}
     _stageName(i){return this.stages[i]?.name||`Stage ${i+1}`;}
+    _controlKey(action){const pad=this._inputMode==='gamepad',keys=pad?{drive:'RT',balance:'LS',nitro:'RB',fire:'A',recover:'X'}:{drive:'↑',balance:'← →',nitro:'Z',fire:'X',recover:'C'};return this._inputMode==='touch'?use('ic-touch','touch-hint'):cap(keys[action]);}
+    _onboarding(){
+      const mode=this._inputMode,labels=mode==='touch'?['Hold the play pedal to drive','Hold the curved arrow pedals to balance','Hold the lightning pedal for nitro','Wait for the green crosshair, then tap the target button','Tap the recovery arrow for 12 fuel']:mode==='gamepad'?['Hold RT to drive','Move the left stick to balance','Hold RB for nitro','Wait for the green crosshair, then press A to fire','Press X to recover for 12 fuel']:['Drive with Up or W','Balance with Left and Right','Hold Z or N for nitro','Wait for the green crosshair, then fire with X or J','Recover with C for 12 fuel'];
+      return `<div class="onboarding" aria-label="Controls" data-input-mode="${mode}">${[['drive',mode==='touch'?'ic-play':'ic-truck'],['balance','cue-trick'],['nitro','cue-bolt'],['fire','cue-target'],['recover','cue-recover']].map(([action,glyph],n)=>`<span role="img" data-control="${action}" aria-label="${labels[n]}">${this._controlKey(action)}${use(glyph,action==='drive'||action==='nitro'?'fill':'')}</span>`).join('')}</div>`;
+    }
     showScreen(name,data={}){
       this.screen=name;this.data=data||{};
       if(name===null){this.nodes.screenLayer.hidden=true;this.nodes.screenLayer.setAttribute('aria-hidden','true');this.nodes.gameCanvas.focus({preventScroll:true});return;}
       this.hud.setVisible(false);this.setRecoverVisible(false);this.nodes.screenLayer.hidden=false;this.nodes.screenLayer.removeAttribute('aria-hidden');
       const d=this.data,i=clamp(d.stageIndex??this.save.selected??0,0,9),stage=this.stages[i]||{};
       this.nodes.menuPanel.className=`menu-panel screen-${name}`;this.nodes.screenLayer.className=`screen-layer screen-${name}`;
-      this.nodes.menuCrumb.textContent=name==='title'?'BUILT FOR OJAS':`${name.toUpperCase()} / IRONTRAIL`;
-      let html='',primary='Continue',action='back',args=[],secondary='';
+      this.nodes.menuCrumb.textContent='';
+      const challengeId=(this.rulesInfo.CHALLENGES||global.IronRules?.CHALLENGES||[])[i]?.id,goal=GOALS[challengeId]||GOALS['all-zombies'],goalPic=`${use(goal[0])}${goal[1]?`<b>${goal[1]}</b>`:''}`;
+      let html='',primary='Continue',primaryIcon='ic-play',primaryWord='',action='back',args=[],secondary='';
       if(name==='title'){
-        html=`${HERO_WEB}<div class="ojas-title-copy"><p class="menu-eyebrow hero-dedication">Made for Ojas Kulkarni, with love.</p><h1 id="screenHeading" class="attract-title ojas-title">OJAS’S<span>MONSTER<br>RALLY.</span></h1><p class="title-copy">Little hero. Monster wheels.</p><div class="title-tag"><span class="hero-spider-mini">${HERO_SPIDER}</span> RED. BLACK. READY TO ROLL.</div></div><div class="hero-showcase">${heroTruck()}<div class="hero-truck-label"><b>OJAS-01</b><span>YOUR SUPER TRUCK</span></div></div>`;
-        primary=this.save.completed?.length?'Let’s race again, Ojas!':'Let’s race, Ojas!';action='play';secondary=this._button('Tracks','stages')+this._button('Garage','garage')+this._button('Settings','settings');
+        html=`${HERO_WEB}<div class="ojas-title-copy"><p class="menu-eyebrow hero-dedication">Made for Ojas Kulkarni, with love.</p><h1 id="screenHeading" class="attract-title ojas-title">OJAS’S<span>MONSTER<br>RALLY.</span></h1></div><div class="hero-showcase">${heroTruck()}</div>`;
+        primary=this.save.completed?.length?'Let’s race again, Ojas!':'Let’s race, Ojas!';primaryWord='GO';action='play';secondary=this._button('Tracks','stages','ic-grid')+this._button('Garage','garage','ic-wrench')+this._button('Settings','settings','ic-gear');
       }else if(name==='dedication'){
         html=`<div class="dedication-card"><div class="dedication-emblem">${HERO_SPIDER}</div><p class="menu-eyebrow">A GAME MADE JUST FOR YOU</p><h1 id="screenHeading" class="menu-title">For Ojas Kulkarni.</h1><p class="dedication-message">Big dreams. Brave heart.<br>Monster adventures.</p><p class="dedication-love">Keep exploring, little hero.<br>Made for you, with love. <span aria-hidden="true">♥</span></p><div class="dedication-truck">${heroTruck()}</div></div>`;
-        primary='Let’s go, Ojas!';action='back';secondary='';
+        primary='Let’s go, Ojas!';primaryWord='GO';action='back';secondary='';
       }else if(name==='stages'){
-        html=`<p class="menu-eyebrow">THE ROAD OUT</p><h1 id="screenHeading" class="menu-title">Choose your line.</h1><p class="menu-copy">Ten routes. Thirty stars.</p><div class="campaign-summary"><span>${this.save.completed?.length||0} / 10 ROUTES CLEARED</span><span>${Object.values(this.save.stars||{}).reduce((sum,v)=>sum+(Array.isArray(v)?v.filter(Boolean).length:0),0)} / 30 STARS</span><span class="scrap-chip">◆ ${scoreText(this.save.scrap)} SCRAP</span></div><div class="stage-grid">`;
+        const earned=Object.values(this.save.stars||{}).reduce((sum,v)=>sum+(Array.isArray(v)?v.filter(Boolean).length:0),0);
+        html=`<h1 id="screenHeading" class="sr-only">Choose a track. ${this.save.completed?.length||0} of 10 routes cleared.</h1><div class="campaign-summary"><span class="sum-chip" role="img" aria-label="${earned} of 30 stars">${use('cue-star')}<b>${earned}</b></span><span class="sum-chip scrap" role="img" aria-label="${scoreText(this.save.scrap)} scrap">◆ <b>${scoreText(this.save.scrap)}</b></span></div><div class="stage-grid">`;
         for(let n=0;n<10;n++){
           const locked=n>=(this.save.unlocked||1),stars=this.save.stars?.[n]||[false,false,false],biome=this.biomes[n]||{};
-          html+=`<button type="button" class="stage-card${locked?' locked':''}${n===(this.save.selected||0)?' current':''}" style="--card-accent:${esc(biome.accent||'#b9bd75')}" data-ui="selectStage" data-stage="${n}" aria-label="Stage ${n+1}: ${esc(this._stageName(n))}${locked?', locked':''}" ${locked?'disabled':''}><span class="stage-card-top"><b>${String(n+1).padStart(2,'0')}</b><span class="stage-lock">${locked?'LOCKED':n===9?'BOSS RACE':'SURVIVAL'}</span></span><span class="stage-name">${esc(this._stageName(n))}</span><span class="stage-meta">${this.stages[n]?.length||0} M · ${esc(biome.timeOfDay||'DEADLANDS').toUpperCase()}</span><span class="stage-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${this._stars(stars)}</span><span class="stage-best">${this.save.best?.[n]?timeText(this.save.best[n]):locked?'CLEAR THE PREVIOUS ROUTE':'SET THE FIRST TIME'}</span></button>`;
+          html+=`<button type="button" class="stage-card${locked?' locked':''}${n===(this.save.selected||0)?' current':''}" style="--card-accent:${esc(biome.accent||'#ff5a68')}" data-ui="selectStage" data-stage="${n}" aria-label="Stage ${n+1}: ${esc(this._stageName(n))}${locked?', locked':''}${this.save.best?.[n]?', best time '+timeText(this.save.best[n]):''}" ${locked?'disabled':''}>${locked?use('ic-lock','stage-pic'):n===9?use('ic-rival','stage-pic'):''}<b class="stage-num">${n+1}</b><span class="stage-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${this._stars(stars)}</span><span class="stage-name">${esc(this._stageName(n))}</span></button>`;
         }
-        html+='</div>';primary='Continue selected route';action='selectStage';args=[this.save.selected||0];secondary=this._button('Garage','garage')+this._button('Title','title');
+        html+='</div>';primary='Continue selected route';action='selectStage';args=[this.save.selected||0];secondary=this._button('Garage','garage','ic-wrench')+this._button('Title','title','ic-home');
       }else if(name==='garage'){
-        html=`<p class="menu-eyebrow">OJAS-01 WORKSHOP</p><h1 id="screenHeading" class="menu-title">Build your super truck.</h1><p class="menu-copy">Earn scrap. Upgrade your ride.</p><div class="campaign-summary"><span class="scrap-chip">◆ ${scoreText(this.save.scrap)} SCRAP AVAILABLE</span><span>UPGRADES APPLY TO YOUR NEXT RUN</span></div><div class="garage-grid">`;
+        html=`<h1 id="screenHeading" class="sr-only">Build your super truck. Upgrades apply to your next run.</h1><div class="campaign-summary"><span class="sum-chip scrap" role="img" aria-label="${scoreText(this.save.scrap)} scrap available">◆ <b>${scoreText(this.save.scrap)}</b></span></div><div class="garage-grid">`;
         for(const track of ['engine','tyres','suspension','tank']){
           const info=global.IronRules.upgradeInfo(track,this.save.upgrades?.[track]||0,this.rulesInfo.upgrades||this.rulesInfo.UPGRADES);
           const max=info.level>=3,canBuy=!max&&this.save.scrap>=info.cost;
-          html+=`<article class="upgrade-card"><div class="upgrade-icon">${icon(info.icon)}</div><h2 class="upgrade-title">${esc(info.label)}</h2><p class="upgrade-subtitle">${esc(info.subtitle)}</p><div class="upgrade-levels" aria-label="Level ${info.level} of 3">${[0,1,2].map(n=>`<i${n<info.level?' class="filled"':''}></i>`).join('')}</div><p class="upgrade-current">NOW · ${esc(info.current)}</p><p class="upgrade-next">${max?'MAXED OUT':`NEXT · ${esc(info.next)}`}</p><p class="upgrade-description">${esc(info.description)}</p><button class="buy-button" data-ui="buy" data-track="${track}" ${canBuy?'':'disabled'} aria-label="${max?`${esc(info.label)} fully upgraded`:`Upgrade ${esc(info.label)} for ${info.cost} scrap`}">${max?'FULLY UPGRADED':`UPGRADE <small>◆ ${info.cost}</small>`}</button></article>`;
+          html+=`<article class="upgrade-card" title="${esc(info.label)}: ${esc(info.description)}"><div class="upgrade-icon">${icon(info.icon)}</div><h2 class="sr-only">${esc(info.label)}. ${esc(info.description)} Now ${esc(info.current)}.${max?'':` Next ${esc(info.next)}.`}</h2><div class="upgrade-levels" role="img" aria-label="Level ${info.level} of 3">${[0,1,2].map(n=>`<i${n<info.level?' class="filled"':''}></i>`).join('')}</div><button class="buy-button" data-ui="buy" data-track="${track}" ${canBuy?'':'disabled'} aria-label="${max?`${esc(info.label)} fully upgraded`:`Upgrade ${esc(info.label)} for ${info.cost} scrap`}">${max?use('cue-hit'):`${use('cue-upgrade')}<span>◆ ${info.cost}</span>`}</button></article>`;
         }
-        html+='</div>';primary='Back to the rally';action='back';secondary=this._button('Stage select','stages')+this._button('Settings','settings');
+        html+='</div>';primary='Back to the rally';primaryIcon='cue-hit';action='back';secondary=this._button('Stage select','stages','ic-grid')+this._button('Settings','settings','ic-gear');
       }else if(name==='settings'){
         const settings=this.save.settings||{};
-        html='<p class="menu-eyebrow">TUNE YOUR EXPERIENCE</p><h1 id="screenHeading" class="menu-title">Make yourself at home.</h1><p class="menu-copy">Saved automatically.</p><div class="settings-grid">';
+        html='<p class="menu-eyebrow">FOR GROWN-UPS</p><h1 id="screenHeading" class="menu-title">Settings</h1><p class="menu-copy">Saved automatically.</p><div class="settings-grid">';
         const ranges=[['master','Master volume',.9],['music','Music volume',.55],['sfx','Engine & effects',.9]];
         for(const [key,label,def]of ranges){const value=Math.round(clamp(settings[key]??def,0,1)*100);html+=`<div class="setting-item"><label for="setting-${key}">${label}<output id="setting-value-${key}">${value}%</output></label><input id="setting-${key}" type="range" min="0" max="100" step="1" value="${value}" data-setting="${key}" aria-label="${label}"></div>`;}
         html+=`<div class="setting-item"><label for="setting-quality">Graphics quality<select id="setting-quality" data-setting="quality" aria-label="Graphics quality">${[['auto','Auto · adaptive'],['high','High'],['balanced','Balanced'],['performance','Performance']].map(([value,label])=>`<option value="${value}" ${settings.quality===value?'selected':''}>${label}</option>`).join('')}</select></label><small>Auto adjusts resolution and effects to keep motion smooth.</small></div>`;
         for(const [key,label,help]of [['shake','Camera shake','Physical impacts with a little extra punch.'],['showFps','Performance display','Show FPS, CPU time and rendering detail.'],['reducedMotion','Reduced motion','Quiet menu animation and camera effects.'],['haptics','Controller vibration','Rumble on landings, hits and nitro.'],['autoNitro','Auto nitro','Burns a healthy nitro meter for you on the ground.']])html+=`<div class="setting-item"><label for="setting-${key}">${label}<input id="setting-${key}" type="checkbox" data-setting="${key}" ${(settings[key]??(key==='haptics'))?'checked':''}></label><small>${help}</small></div>`;
         html+='<div class="setting-item sound-check"><button type="button" class="secondary-button sound-test" data-ui="testSound" aria-label="Test sound"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM17 8q4 4 0 8M20 5q7 7 0 14"/></svg>Test sound</button><div class="sound-test-feedback"><div id="soundTestMeter" class="sound-meter" role="meter" aria-label="Audio output level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="soundTestLevel"></i></div><output id="soundTestStatus" role="status">Tap to enable sound</output></div></div>';
-        html+='</div>';primary='Save & return';action='back';secondary=this._button('Stage select','stages')+this._button('Title','title');
+        html+='</div>';primary='Save & return';primaryIcon='cue-hit';action='back';secondary=this._button('Stage select','stages','ic-grid')+this._button('Title','title','ic-home');
       }else if(name==='brief'){
-        const par=d.par??this._par(i),challenge=typeof d.challenge==='string'?d.challenge:d.challenge?.label||this._challenge(i),best=d.best??this.save.best?.[i];
-        html=`<div class="brief-layout"><div><p class="brief-kicker">STAGE ${String(i+1).padStart(2,'0')} / 10 ${i===9?'· FINAL BOSS':''}</p><h1 id="screenHeading" class="brief-name">${esc(d.name||stage.name||this._stageName(i))}</h1><p class="brief-description">${esc(d.description||stage.subtitle||'Find your line.')}</p><div class="brief-facts"><span>DISTANCE<strong>${d.length||stage.length||0}<small> M</small></strong></span><span>PAR TIME<strong>${timeText(par)}</strong></span><span>BEST<strong>${best?timeText(best):'—'}</strong></span></div><div class="onboarding"><span aria-label="Throttle with Up or W">↑ W</span><span aria-label="Balance with Left and Right">↶ ↷</span><span class="onboarding-nitro" aria-label="Hold Z or N to burn nitro"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#cue-bolt"/></svg> Z / N</span><span class="onboarding-shot" aria-label="Wait for the crosshair to lock, then fire with X or J"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 1v5m0 12v5M1 12h5m12 0h5"/></svg> X / J</span><span aria-label="Recover with C for 12 fuel">↻ C · −12</span></div></div><div class="brief-objectives"><div class="objective"><span class="star">★</span><div>Finish<small>One shot. One giant.</small></div></div><div class="objective"><span class="star">★</span><div>Beat the clock<small>${timeText(par)} OR FASTER</small></div></div><div class="objective"><span class="star">★</span><div>${esc(challenge)}<small>CHALLENGE</small></div></div></div></div>`;
-        primary=i===9?'Challenge Iron Maw':'Start this run';action='play';secondary=this._button('Stage select','stages')+this._button('Garage','garage');
+        const par=d.par??this._par(i),challenge=typeof d.challenge==='string'?d.challenge:d.challenge?.label||this._challenge(i),best=d.best??this.save.best?.[i],have=this.save.stars?.[i]||[false,false,false],accent=this.biomes[i]?.accent||'#ff5a68';
+        const goals=[[use('ic-flag'),'Finish the stage'],[`${use('ic-clock')}<b>${Math.round(par)}</b>`,`Beat the clock: ${timeText(par)} or faster`],[goalPic,`Challenge: ${challenge}`]];
+        html=`<div class="brief-kid" style="--card-accent:${esc(accent)}"><div class="brief-top"><div class="brief-badge" aria-hidden="true">${i+1}${i===9?use('ic-rival'):''}</div><h1 id="screenHeading" class="brief-name"><span class="sr-only">Stage ${i+1} of 10${i===9?', final boss':''}: </span>${esc(d.name||stage.name||this._stageName(i))}<span class="sr-only">. ${esc(d.description||stage.subtitle||'')} ${d.length||stage.length||0} metres. ${best?'Best time '+timeText(best)+'.':''}</span></h1></div><div class="goal-row">${goals.map((g,k)=>`<div class="goal-card${have[k]?' earned':''}" role="img" aria-label="${esc(g[1])}${have[k]?' (earned)':''}"><span class="big-star" aria-hidden="true">★</span><span class="goal-pic">${g[0]}</span></div>`).join('')}</div>${this._onboarding()}</div>`;
+        primary=i===9?'Challenge Iron Maw':'Start this run';primaryWord='GO';action='play';secondary=this._button('Stage select','stages','ic-grid')+this._button('Garage','garage','ic-wrench');
       }else if(name==='pause'){
-        html=`<div class="pause-layout"><div><p class="menu-eyebrow">${esc(d.stageName||this._stageName(this.save.selected||0))}</p><h1 id="screenHeading" class="pause-heading">PARKED.<br>FOR NOW.</h1><p class="menu-copy">Take a breath.</p></div><div class="pause-data"><span>RUN TIME<strong>${timeText(d.time||0)}</strong></span><span>FUEL<strong>${Math.ceil(d.fuel??100)}%</strong></span></div></div>`;
-        primary='Back to the trail';action='resume';secondary=this._button('Retry stage','retry')+this._button('Settings','settings')+this._button('Stage select','stages');
+        html=`<div class="pause-kid"><h1 id="screenHeading" class="sr-only">Paused. ${esc(d.stageName||this._stageName(this.save.selected||0))}, ${timeText(d.time||0)}, fuel ${Math.ceil(d.fuel??100)}%.</h1><div class="pause-pic">${use('ic-pause')}</div></div>`;
+        primary='Back to the trail';action='resume';secondary=this._button('Retry stage','retry','cue-recover')+this._button('Settings','settings','ic-gear')+this._button('Stage select','stages','ic-grid');
       }else if(name==='results'){
         const stars=d.stars||[true,false,false],par=d.par??this._par(i),challenge=typeof d.challenge==='string'?d.challenge:d.challenge?.label||this._challenge(i);
-        html=`<div class="result-layout"><div><div class="hero-trophy" aria-label="Ojas’s trophy"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M19 8h26v17c0 12-7 18-13 18s-13-6-13-18V8Z" fill="#f5cb65" stroke="#fff0b5" stroke-width="2"/><path d="M19 13H8v9c0 10 10 13 15 12M45 13h11v9c0 10-10 13-15 12M32 43v11M20 57h24" fill="none" stroke="#f5cb65" stroke-width="5" stroke-linecap="round"/><path d="m32 17 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z" fill="#a52a39"/></svg></div><p class="menu-eyebrow">${i===9?'OJAS’S MONSTER RALLY COMPLETE':`STAGE ${String(i+1).padStart(2,'0')} CLEARED`} · ${esc(d.name||this._stageName(i))}</p><h1 id="screenHeading" class="menu-title">${i===9?'Ojas, king of the trail!':'Super driving, Ojas!'}</h1><div class="result-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${this._stars(stars,true)}</div><div class="result-summary">YOUR TIME <b>${timeText(d.time||0)}</b><br>PAR TIME ${timeText(par)}<br>${esc(challenge)} ${stars[2]?'✓':'· —'}</div><div class="result-badges">${d.newBest?'<span class="result-badge">BEST TIME</span>':''}${d.newScoreBest?'<span class="result-badge">BEST SCORE</span>':''}</div><div class="result-big-score"><span data-count="${Math.max(0,Math.floor(Number(d.score)||0))}">${scoreText(d.score)}</span><small>TOTAL SCORE</small></div>${Array.isArray(d.awards)&&d.awards.length?`<div class="result-awards">${d.awards.slice(0,6).map(a=>`<span class="result-award">${esc(a.label)}<b>${esc(a.value)}</b></span>`).join('')}</div>`:''}</div><div><div class="score-breakdown">${(d.breakdown||[]).map(row=>`<div class="breakdown-row"><span>${esc(row.label)}</span><b data-count="${Math.max(0,Math.floor(Number(row.value)||0))}">${scoreText(row.value)}</b></div>`).join('')||'<div class="breakdown-row"><span>Run complete</span><b>0</b></div>'}<div class="scrap-earned"><span>SCRAP EARNED</span><strong>+${scoreText(d.scrap)}</strong></div></div></div></div>`;
-        primary=d.nextAvailable!==false&&i<9?`Continue to stage ${String(i+2).padStart(2,'0')}`:'Back to the stages';action=d.nextAvailable!==false&&i<9?'next':'stages';secondary=this._button('Run it again','retry')+this._button('Garage','garage')+this._button('Stage select','stages');
+        const pics=[use('ic-flag'),`${d.newBest?use('ic-crown','crown'):''}${use('ic-clock')}<b>${Number(d.time||0).toFixed(1)}</b>`,goalPic],says=['Finished',`Your time ${timeText(d.time||0)}, par ${timeText(par)}${d.newBest?', new best time':''}`,challenge];
+        html=`<div class="result-kid"><div class="hero-trophy" aria-label="Ojas’s trophy">${TROPHY}</div><h1 id="screenHeading" class="sr-only">${i===9?'Ojas, king of the trail!':'Super driving, Ojas!'} ${esc(d.name||this._stageName(i))} cleared.</h1><div class="result-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${stars.map((on,k)=>`<span class="rstar${on?' earned':''}" style="--star-delay:${k*180}ms" role="img" aria-label="${esc(says[k])}: ${on?'star earned':'no star'}"><span class="big-star" aria-hidden="true">★</span><span class="rstar-pic">${pics[k]}</span></span>`).join('')}</div><div class="result-line"><div class="result-big-score" aria-label="Total score${d.newScoreBest?', new best score':''}">${d.newScoreBest?use('ic-crown','crown'):''}<span data-count="${Math.max(0,Math.floor(Number(d.score)||0))}">${scoreText(d.score)}</span></div><span class="sum-chip scrap" role="img" aria-label="Scrap earned ${scoreText(d.scrap)}">◆ <b>+${scoreText(d.scrap)}</b></span></div>${Array.isArray(d.awards)&&d.awards.length?`<div class="result-awards">${d.awards.slice(0,6).map(a=>`<span class="result-award" title="${esc(a.label)}">${use(STATS[a.id]||'cue-star')}<span class="sr-only">${esc(a.label)}</span><b>${esc(String(a.value).replace(/\s*(KM\/H|S)$/,''))}</b></span>`).join('')}</div>`:''}<details class="score-breakdown"><summary aria-label="Score details">${use('ic-more')}</summary><div class="breakdown-rows">${(d.breakdown||[]).map(row=>`<span class="breakdown-row" title="${esc(row.label)}">${use(ROWS[row.label]||'cue-star')}<span class="sr-only">${esc(row.label)}</span><b data-count="${Math.max(0,Math.floor(Number(row.value)||0))}">${scoreText(row.value)}</b></span>`).join('')}</div></details></div>`;
+        const next=d.nextAvailable!==false&&i<9;primary=next?`Continue to stage ${String(i+2).padStart(2,'0')}`:'Back to the stages';primaryIcon=next?'ic-next':'ic-grid';action=next?'next':'stages';secondary=this._button('Run it again','retry','cue-recover')+this._button('Garage','garage','ic-wrench')+this._button('Stage select','stages','ic-grid');
       }else if(name==='failed'){
-        const reason=d.reason||'fuel',tips={fuel:'Collect the amber cans.',monster:'Wait for the green crosshair. X / J to fire.',rival:'Keep your speed through the jumps.'};
-        const failureIcon=reason==='fuel'?'fuel':reason==='monster'?'target':'checkpoint';
-        html=`<div class="failure-icon">${icon(failureIcon)}</div><p class="menu-eyebrow">${esc(d.stageName||this._stageName(this.save.selected||0))}</p><h1 id="screenHeading" class="menu-title">${reason==='fuel'?'Out of fuel.':reason==='monster'?'Monster ahead.':'Iron Maw wins.'}</h1><div class="failure-tip">${esc(tips[reason]||tips.fuel)}</div><div class="result-summary">${timeText(d.time||0)} &nbsp; · &nbsp; ${scoreText(d.score)} &nbsp; · &nbsp; ◆ +${scoreText(d.scrap)}</div>`;
-        primary='Try again, Ojas!';action='retry';secondary=this._button('Garage','garage')+this._button('Stage select','stages')+this._button('Title','title');
+        const reason=d.reason||'fuel',fire=this._inputMode==='touch'?'tap the target button':this._inputMode==='gamepad'?'press A':'press X or J',tips={fuel:'Collect the amber cans.',monster:`Wait for the green crosshair, then ${fire} to fire.`,rival:'Keep your speed through the jumps.'};
+        const pict={fuel:['ic-can','ic-can','','<b class="fp-plus" aria-hidden="true">+</b>'],monster:['ic-giant','cue-target','',this._controlKey('fire')],rival:['ic-rival','cue-bolt',' fill',this._controlKey('nitro')]}[reason]||['ic-can','ic-can','',''];
+        html=`<div class="fail-kid"><h1 id="screenHeading" class="sr-only">${reason==='fuel'?'Out of fuel.':reason==='monster'?'Monster ahead.':'Iron Maw wins.'} ${esc(d.stageName||this._stageName(this.save.selected||0))}. ${esc(tips[reason]||tips.fuel)}</h1><div class="fail-pict fail-${esc(reason)}" aria-hidden="true"><span class="fp fp-bad">${use(pict[0])}</span>${use('cue-shot','fp-arrow')}<span class="fp fp-tip${pict[2]}">${use(pict[1])}${pict[3]}</span></div><span class="sum-chip scrap" role="img" aria-label="Scrap earned ${scoreText(d.scrap)}">◆ <b>+${scoreText(d.scrap)}</b></span></div>`;
+        primary='Try again, Ojas!';primaryIcon='cue-recover';action='retry';secondary=this._button('Garage','garage','ic-wrench')+this._button('Stage select','stages','ic-grid')+this._button('Title','title','ic-home');
       }else{this.showScreen('title');return;}
       this.nodes.menuBody.innerHTML=html;this.nodes.secondaryActions.innerHTML=secondary;
-      this.nodes.playButton.innerHTML=`${esc(primary)} <span aria-hidden="true">→</span>`;this._primary={name:action,args};
-      this.nodes.menuHint.textContent=name==='title'?'↑ / WASD · Z / N NITRO · X / J · GAMEPAD':name==='garage'?'◆ SCRAP → UPGRADES':'↑ ↓ · ENTER · ESC';
+      const play=this.nodes.playButton;play.innerHTML=`${use(primaryIcon)}${primaryWord?`<b>${esc(primaryWord)}</b>`:''}`;play.className=`primary-button${primaryIcon.startsWith('cue-')?' line':''}`;play.setAttribute('aria-label',primary);play.title=primary;this._primary={name:action,args};
+      this.nodes.menuHint.textContent='';
       this.nodes.menuPanel.scrollTop=0;this.nodes.playButton.focus({preventScroll:true});
       this._count=null;
       if(name==='results'&&!this.save.settings?.reducedMotion){
@@ -199,11 +226,12 @@
       if(target.type==='range'){const output=this.document.getElementById(`setting-value-${key}`);if(output)output.textContent=`${Math.round(value*100)}%`;}
       this.emit('setting',key,value);
     }
-    _focusable(){return Array.from(this.nodes.screenLayer.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled)')).filter(node=>!node.hidden&&node.getClientRects().length);}
+    _focusable(){return Array.from(this.nodes.screenLayer.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),summary')).filter(node=>!node.hidden&&node.getClientRects().length);}
     _key(event){
       if(this.screen===null)return;
       if(event.key==='Escape'){event.preventDefault();event.stopPropagation();this.back();return;}
       if(event.key==='Tab'){const nodes=this._focusable(),i=nodes.indexOf(this.document.activeElement);if(!nodes.length)return;const next=event.shiftKey?(i<=0?nodes.length-1:i-1):(i+1)%nodes.length;event.preventDefault();event.stopPropagation();nodes[next].focus();return;}
+      if(event.target.tagName==='SUMMARY'&&(event.key==='Enter'||event.key===' ')){event.preventDefault();event.stopPropagation();event.target.click();return;}
       if(event.key==='Enter'){event.stopPropagation();return;}
       if(event.target.tagName==='INPUT'||event.target.tagName==='SELECT')return;
       const directions={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'};
@@ -217,7 +245,7 @@
       const i=nodes.indexOf(active);
       const n=i<0?0:(i+delta+nodes.length)%nodes.length;nodes[n].focus({preventScroll:true});nodes[n].scrollIntoView({block:'nearest',inline:'nearest',behavior:'auto'});return true;
     }
-    activate(){if(this.screen===null)return false;const active=this.document.activeElement;if(active&&this.nodes.screenLayer.contains(active)&&!active.disabled){if(active.tagName==='BUTTON')active.click();else if(active.tagName==='INPUT'){if(active.type==='checkbox'){active.checked=!active.checked;active.dispatchEvent(new global.Event('change',{bubbles:true}));}return true;}else if(active.tagName==='SELECT'){active.selectedIndex=(active.selectedIndex+1)%active.options.length;active.dispatchEvent(new global.Event('change',{bubbles:true}));return true;}}else this.nodes.playButton.click();return true;}
+    activate(){if(this.screen===null)return false;const active=this.document.activeElement;if(active&&this.nodes.screenLayer.contains(active)&&!active.disabled){if(active.tagName==='BUTTON'||active.tagName==='SUMMARY')active.click();else if(active.tagName==='INPUT'){if(active.type==='checkbox'){active.checked=!active.checked;active.dispatchEvent(new global.Event('change',{bubbles:true}));}return true;}else if(active.tagName==='SELECT'){active.selectedIndex=(active.selectedIndex+1)%active.options.length;active.dispatchEvent(new global.Event('change',{bubbles:true}));return true;}}else this.nodes.playButton.click();return true;}
     back(){this.emit('back');return true;}
     award(kind,{label='',value=''}={}){
       const pool=this._awards||(this._awards=Array.from(this.nodes.hudAwards?.children||[]).map(node=>({node,use:node.querySelector('use'),label:node.querySelector('.award-label'),value:node.querySelector('.award-value'),left:0})));
@@ -238,7 +266,7 @@
     }
     clearFeedback(){
       if(this._awards)for(const slot of this._awards){slot.left=0;slot.node.className='award-slab';}
-      if(this._toastTimer)global.clearTimeout(this._toastTimer);if(this._bannerTimer)global.clearTimeout(this._bannerTimer);if(this._cueTimer)global.clearTimeout(this._cueTimer);this._toastTimer=null;this._bannerTimer=null;this._cueTimer=null;this._hidden('hudCue',true);this._text('cueValue','');this._text('cueLabel','');this.nodes.hudCue.className='hud-cue';this._text('hudToast','');this._text('hudBanner','');this.nodes.hudToast.className='hud-toast';this.nodes.hudBanner.className='hud-banner';
+      if(this._toastTimer)global.clearTimeout(this._toastTimer);if(this._bannerTimer)global.clearTimeout(this._bannerTimer);if(this._cueTimer)global.clearTimeout(this._cueTimer);this._toastTimer=null;this._bannerTimer=null;this._cueTimer=null;this._hidden('hudCue',true);this._text('cueValue','');this._text('cueLabel','');this.nodes.hudCue.className='hud-cue';this._text('hudToast','');this._text('bannerText','');this.nodes.hudToast.className='hud-toast';this.nodes.hudBanner.className='hud-banner';
     }
     cue(kind,{value,seconds=1.05}={}){
       const key=CUES[kind]?kind:'error',label=CUES[key];
@@ -251,16 +279,23 @@
       if(this._toastTimer)global.clearTimeout(this._toastTimer);this._text('hudToast',text);this.nodes.hudToast.className=`hud-toast visible${style==='warn'?' warn':''}`;
       this._toastTimer=global.setTimeout(()=>{this.nodes.hudToast.className='hud-toast';this._toastTimer=null;},Math.max(.1,seconds)*1000);
     }
-    banner(text,style='trick',seconds=1.6){
-      if(this._bannerTimer)global.clearTimeout(this._bannerTimer);this._text('hudBanner',text);this.nodes.hudBanner.className=`hud-banner visible${style==='big'?' big':''}`;
+    // banner(text,style,seconds,sign): 'countdown'/'go' show start lights, a sign name shows its pictogram; the words stay for screen readers.
+    banner(text,style='trick',seconds=1.6,sign=''){
+      if(this._bannerTimer)global.clearTimeout(this._bannerTimer);this._text('bannerText',text);
+      const lights=style==='countdown'?` lights lights-${Math.max(1,Math.min(3,Number(text)||1))}`:style==='go'?' lights lights-go':'',glyph=SIGNS[sign];
+      if(glyph)this._attr('bannerGlyph','href','#'+glyph);
+      this.nodes.hudBanner.className=`hud-banner visible${style==='big'?' big':''}${lights}${glyph?` pict pict-${sign}`:''}`;
       this._bannerTimer=global.setTimeout(()=>{this.nodes.hudBanner.className='hud-banner';this._bannerTimer=null;},Math.max(.1,seconds)*1000);
     }
+    // setNudge('gas',on): a wordless reminder that makes the matching control bounce until it is used.
+    setNudge(name,on){const bool=!!on,key='nudge:'+name;if(this.values[key]!==bool){this.values[key]=bool;this.app.classList.toggle('nudge-'+name,bool);}}
     setRecoverVisible(value){this._hidden('recoverButton',!value);}
     setFps(stats){
       this._hidden('fpsPanel',!stats);if(!stats)return;
       this._text('fpsPanel',`${Math.round(stats.fps||0)} FPS · ${Math.round(stats.refreshHz||0)} HZ\nCPU ${Number(stats.cpuMs||0).toFixed(2)} MS · ${stats.drawOps||0} DRAWS\n${stats.quality||''} · ${Number(stats.renderScale||1).toFixed(2)}×`);
     }
-    setTouchMode(value){this._touch=!!value;this.app.classList.toggle('touch-mode',this._touch);this._measure();}
+    setInputMode(mode){const next=mode==='gamepad'||mode==='touch'?mode:'keyboard';if(this._inputMode===next)return;this._inputMode=next;this.app.classList.toggle('input-gamepad',next==='gamepad');this.app.classList.toggle('input-touch',next==='touch');const pad=next==='gamepad';if(this._controlKeys.fire)this._controlKeys.fire.textContent=pad?'A':'X';if(this._controlKeys.recover)this._controlKeys.recover.textContent=pad?'X':'C';this._text('nitroHint',next==='touch'?'':pad?'RB':'Z');if(this.screen==='brief'||this.screen==='failed')this.showScreen(this.screen,this.data);}
+    setTouchMode(value){this._touch=!!value;this.app.classList.toggle('touch-mode',this._touch);if(this._inputMode!=='gamepad')this.setInputMode(this._touch?'touch':'keyboard');this._measure();}
     _measure(){const short=(global.innerHeight||800)<=520;this._metrics={safeTop:this._touch?(short?140:180):148,safeBottom:this._touch?(short?170:275):115};}
     metrics(){return this._metrics;}
   }

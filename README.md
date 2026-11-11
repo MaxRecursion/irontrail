@@ -39,6 +39,14 @@ The game now plays like an arcade racer built around risk and reward. Everything
 - **Sound.** Nitro ignition, jet and blow-off, wood/metal/stone smashes, the slam, wrecks, pass-by whooshes and a finish hit; the score adds a driving sixteenth layer while you burn and tightens when the race is close.
 - **Comfort.** Reduced Motion removes slow motion, letterbox, streaks, afterimages, flashes and camera kicks; Camera Shake off removes shake and kicks; Controller vibration has its own switch.
 
+## Picture controls and live goals
+
+The interface uses large pictograms, a speed gauge, fuel and nitro bars, start lights and picture rewards. The two live stars show whether you are still within par and whether the route challenge currently holds. Challenge badges include their target where needed; final stars are earned only when you finish. Briefings and retry tips show controls for touch, keyboard or a connected gamepad. Settings and the dedication keep their written copy, and controls retain accessible names.
+
+If nobody presses go after the start lights, a picture prompt appears and the gas pedal bounces until the truck moves. Page zoom from a stray pinch, double tap or ctrl-scroll is blocked during the game so the HUD cannot slide off screen.
+
+Reduced Motion keeps reward badges visible without animation and shows final result totals immediately. Score details work with Tab, Enter/Space and gamepad A. Touch pedals and FIRE have at least 44 px hit areas in the checked portrait and landscape layouts.
+
 ## Campaign
 
 | Stage | Route | Distance | Par |
@@ -86,7 +94,7 @@ Browser checks on localhost:
 - `/tests/audio-live-check.html`: click-only activation and actual running output, engine, cannon, mute/pause checks.
 - `/tests/ui-harness.html`: real shell/UI at desktop, phone and landscape dimensions.
 - `/tests/render-harness.html?stage=10`: scripted real physics and instrumented Canvas rendering; `?cycle=1` tours the biomes.
-- `/tests/integration-harness.html`: isolated gameplay, progression and frame timing checks.
+- `/tests/integration-harness.html`: isolated gameplay, progression, Redline and live goal checks (`?phase=goals` runs the objective checks alone).
 
 `tests/make-browser-fixture.py` creates isolated developer previews from the current build. Test pages and fixtures are excluded from the deployed `dist/` directory. Claude's optional `page-check.mjs` and `perf-bench.mjs` remain available for a developer-controlled Chrome session; they were not used for this release's browser checks.
 
