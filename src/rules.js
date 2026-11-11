@@ -23,16 +23,16 @@
     tank: { drain: [1, .93, .86, .79] }
   });
   const CHALLENGES = Object.freeze([
-    { id: 'all-zombies', label: 'Clear every zombie', check: r => r.totalZombies > 0 && r.cleared >= r.totalZombies },
-    { id: 'all-cans', label: 'Collect every fuel can', check: r => r.totalCans > 0 && r.cans >= r.totalCans },
-    { id: 'clean-run', label: 'Finish without recovery', check: r => r.recoveries === 0 },
-    { id: 'fuel-60', label: 'Finish with at least 60% fuel', check: r => r.fuel >= 60 },
-    { id: 'land-a-flip', label: 'Land a complete flip', check: r => (r.stats?.flips || 0) >= 1 },
-    { id: 'two-perfect', label: 'Make two perfect landings', check: r => (r.stats?.perfectLandings || 0) >= 2 },
-    { id: 'big-air', label: 'Land a 1.6 second jump', check: r => (r.stats?.bigAirs || 0) >= 1 },
-    { id: 'no-recovery', label: 'Finish without recovery', check: r => r.recoveries === 0 },
-    { id: 'fuel-35', label: 'Finish with at least 35% fuel', check: r => r.fuel >= 35 },
-    { id: 'boss-gap', label: 'Beat Iron Maw by at least 15 m', check: r => r.rivalGap >= 15 }
+    { id: 'all-zombies', label: 'Clear every zombie', check: r => r.totalZombies > 0 && r.cleared >= r.totalZombies, progress: r => r.totalZombies > 0 ? r.cleared / r.totalZombies : 0 },
+    { id: 'all-cans', label: 'Collect every fuel can', check: r => r.totalCans > 0 && r.cans >= r.totalCans, progress: r => r.totalCans > 0 ? r.cans / r.totalCans : 0 },
+    { id: 'clean-run', label: 'Finish without recovery', check: r => r.recoveries === 0, progress: r => r.recoveries === 0 ? 1 : 0 },
+    { id: 'fuel-60', label: 'Finish with at least 60% fuel', check: r => r.fuel >= 60, progress: r => r.fuel / 60 },
+    { id: 'land-a-flip', label: 'Land a complete flip', check: r => (r.stats?.flips || 0) >= 1, progress: r => r.stats?.flips || 0 },
+    { id: 'two-perfect', label: 'Make two perfect landings', check: r => (r.stats?.perfectLandings || 0) >= 2, progress: r => (r.stats?.perfectLandings || 0) / 2 },
+    { id: 'big-air', label: 'Land a 1.6 second jump', check: r => (r.stats?.bigAirs || 0) >= 1, progress: r => r.stats?.bigAirs || 0 },
+    { id: 'no-recovery', label: 'Finish without recovery', check: r => r.recoveries === 0, progress: r => r.recoveries === 0 ? 1 : 0 },
+    { id: 'fuel-35', label: 'Finish with at least 35% fuel', check: r => r.fuel >= 35, progress: r => r.fuel / 35 },
+    { id: 'boss-gap', label: 'Beat Iron Maw by at least 15 m', check: r => r.rivalGap >= 15, progress: r => r.rivalGap / 15 }
   ].map(Object.freeze));
   function createRun(stageIndex) {
     return { stageIndex: integer(stageIndex, 0, 9), score: 0, combo: 0, comboLeft: 0, comboMax: 3, maxCombo: 0, elapsed: 0,

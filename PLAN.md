@@ -284,3 +284,11 @@ Shooting implementation and functional validation complete. GitHub repo and Verc
 - [x] Repair reduced-motion feedback, score-details navigation, input-specific onboarding, touch targets and fresh-attempt nitro hints.
 - [x] Validate live objective status against real recovery, fuel and par time; expand the UI harness for nitro, award lifecycle, results and pointer hit areas.
 - [x] Rebuild both portable outputs and record exact final validation and continuation guidance at the top of HANDOFF.md. Publication is outside this local handoff.
+
+
+## Picture pass 2 — 11 November 2026
+
+- [x] Released the picture interface (`38ffb10`, Vercel).
+- [x] Challenge progress ring and fuel threshold mark; scene pictures on stage cards and brief; picture goals; result ticks and crosses.
+- [x] Animated control demos; drive, tilt and low-fuel cues; icon-led settings.
+- [x] Reviewed boss balance with nitro: left as is (see HANDOFF).

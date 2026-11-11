@@ -129,7 +129,7 @@
   function refreshCampaign(){ui.setCampaign(save,stages,biomes,Rules);}
   function clearInput(){keys.clear();pointerMap.clear();for(const key of Object.keys(pedal))pedal[key]=0;for(const button of ui.pedals)button.classList.remove('pressed');input.throttle=0;input.brake=false;input.lean=0;input.boost=false;padState.gas=0;padState.reverse=0;padState.brake=false;padState.lean=0;padState.boost=false;autoBoost=false;gasHeld=false;}
   const nitroHint=()=>activePad?'RB':touch?'':'Z';
-  let droveOnce=false,gasTipAt=1.6;const nudge=on=>{if(ui.setNudge)ui.setNudge('gas',on);};
+  let droveOnce=false,gasTipAt=1.6,airFor=0,tiltWant='',tiltCues=0,tiltCueAt=0;const nudgeLean=(side,on)=>{if(ui.setNudge)ui.setNudge(side,on);};const nudge=on=>{if(ui.setNudge)ui.setNudge('gas',on);};
   // Kid-proofing: a stray pinch, ctrl-scroll or two-finger drag must never zoom the page away from the HUD.
   for(const type of ['gesturestart','gesturechange','gestureend'])document.addEventListener(type,event=>event.preventDefault(),{passive:false});
   window.addEventListener('wheel',event=>{if(event.ctrlKey||event.metaKey)event.preventDefault();},{passive:false});
@@ -182,7 +182,7 @@
     shotDirector.reset();impactDirector.reset();outro=null;frame.state=state;frame.pose=pose;physics.getPose(pose);renderer.setStage(physics,index);renderer.snapCamera();
     view.checkpointProgress=physics.track.checkpoints.slice(1).map(p=>(p.x-physics.track.startX)/physics.track.length);
     run=Rules.createRun(index);run.previousStars=save.stars[index]||[false,false,false];runTime=0;recoveries=0;accumulator=0;countdownLeft=0;hitStop=0;slowLeft=0;flippedTime=0;fallenTime=0;stageResult=null;lowFuelWarned=false;monsterWarned=false;lockWarned=false;ghost.reset();
-    nitroTip=false;everBoosted=false;droveOnce=false;gasTipAt=1.6;nudge(false);chainMultiplier=1;boostRumble=0;rocketDone=true;buildWhoosh();
+    nitroTip=false;everBoosted=false;droveOnce=false;gasTipAt=1.6;nudge(false);airFor=0;tiltCues=0;tiltCueAt=0;if(tiltWant){nudgeLean(tiltWant,false);tiltWant='';}chainMultiplier=1;boostRumble=0;rocketDone=true;buildWhoosh();
     try{ghost.load(storage?.getItem(`irontrail-ghost-v1-${index}`));}catch(_){ghost.replay=null;}
     ghost.record(0,pose);clearInput();refreshCampaign();musicClock=1;
     if(brief)showBrief();return true;
@@ -247,7 +247,7 @@
     ui.setAudioStatus(status);
     if(audioReadout)audioReadout.textContent=JSON.stringify({mode, ...status,peakMax:audioPeak},null,2);
   }
-  async function fullscreen(){try{ignoreBlurUntil=performance.now()+800;if(document.fullscreenElement)await document.exitFullscreen();else await app.requestFullscreen();}catch(_){ui.toast('Fullscreen is not available here',2,'warn');}}
+  async function fullscreen(){try{ignoreBlurUntil=performance.now()+800;if(document.fullscreenElement)await document.exitFullscreen();else await app.requestFullscreen();}catch(_){ui.cue('error');}}
   function buy(track){const result=Rules.buyUpgrade(save,track);if(result.ok){persist();refreshCampaign();ui.showScreen('garage');audio.ui('buy');ui.cue('upgrade');}else{audio.ui('error');ui.cue('error',{value:result.reason==='max'?'✓':'◆'});}}
   function setting(key,value){
     if(!(key in save.settings))return;
@@ -419,6 +419,10 @@
     if(state.weapon.canHit&&state.ammo>0&&!lockWarned){lockWarned=true;ui.cue('target',{value:touch||activePad?undefined:'X'});}
     while(whooshIndex<whooshXs.length&&state.x>=whooshXs[whooshIndex]){whooshIndex++;if(audio.whoosh&&Math.abs(state.speed)>15)audio.whoosh(clamp((Math.abs(state.speed)-12)/18,.2,1));}
     if(run.combo===0)chainMultiplier=1;
+    // In the air with the nose well off level (and not mid-flip): bounce the pedal that levels the truck and, a few times per attempt, show the tilt picture.
+    airFor=state.grounded?0:airFor+STEP;
+    const tilt=Math.atan2(Math.sin(state.angle),Math.cos(state.angle)),off=airFor>.25&&Math.abs(tilt)>.4&&Math.abs(tilt)<1.5,side=!off?'':tilt>0?'right':'left',fixing=side==='right'?input.lean>.3:side==='left'?input.lean<-.3:false,want=fixing?'':side;
+    if(want!==tiltWant){if(tiltWant)nudgeLean(tiltWant,false);tiltWant=want;if(want){nudgeLean(want,true);if(tiltCues<5&&runTime>=tiltCueAt){tiltCues++;tiltCueAt=runTime+3;ui.cue('tilt',{value:touch?undefined:activePad?'LS':want==='right'?'→':'←',seconds:.9});}}}
     // A driver who cannot read gets a picture prompt (and a bouncing pedal) until the truck first moves under power.
     if(!droveOnce){if(input.throttle>.5){droveOnce=true;nudge(false);}else if(runTime>=gasTipAt){gasTipAt=runTime+4.5;nudge(true);ui.cue('drive',{value:touch?undefined:activePad?'RT':'↑',seconds:2.6});}}
     if(!nitroTip&&!everBoosted&&state.nitro>=60&&runTime>1.5){nitroTip=true;award('nitro',{label:'Nitro ready',value:nitroHint()});}
@@ -438,7 +442,7 @@
     view.nitro=Number(state.nitro)||0;view.boosting=!!state.boosting;view.nitroReady=!!state.nitroReady;view.nitroHint=nitroHint();view.slipstream=Number(state.slipstream)||0;view.gap=state.rival?state.x-state.rival.x:null;
     // Live star goals: the clock star drains against par and the challenge star lights while its rule holds.
     const challenge=Rules.CHALLENGES&&Rules.CHALLENGES[stageIndex];view.par=(Rules.PAR_TIMES||[])[stageIndex]||0;
-    if(challenge){liveGoal.time=runTime;liveGoal.fuel=state.fuel;liveGoal.recoveries=recoveries;liveGoal.cleared=state.cleared;liveGoal.totalZombies=state.totalZombies;liveGoal.cans=state.stats.cans;liveGoal.totalCans=physics.fuelCans.length;liveGoal.stats=state.stats;liveGoal.rivalGap=state.rival?state.x-state.rival.x:0;view.goal=!!challenge.check(liveGoal);view.goalId=challenge.id;}
+    if(challenge){liveGoal.time=runTime;liveGoal.fuel=state.fuel;liveGoal.recoveries=recoveries;liveGoal.cleared=state.cleared;liveGoal.totalZombies=state.totalZombies;liveGoal.cans=state.stats.cans;liveGoal.totalCans=physics.fuelCans.length;liveGoal.stats=state.stats;liveGoal.rivalGap=state.rival?state.x-state.rival.x:0;view.goal=!!challenge.check(liveGoal);view.goalId=challenge.id;view.goalProgress=challenge.progress?clamp(Number(challenge.progress(liveGoal))||0,0,1):view.goal?1:0;}
     ui.hud.update(view);
   }
   function updateMusic(){

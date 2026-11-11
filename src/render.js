@@ -547,8 +547,10 @@
     }
     _drawEntities(){
       const c=this.ctx,bank=this._bank,physics=this._physics,state=this._state,pose=this._pose;
-      const cans=physics.fuelCans||EMPTY;
-      for(let i=0;i<cans.length;i++){const can=cans[i];if(can.collected||can.x<this._left-1||can.x>this._right+1)continue;this._sprite(bank.fuel,can.x,can.y+Math.sin(this._clock*2.6+i)*.08);}
+      const cans=physics.fuelCans||EMPTY,low=finite(state.fuel,100)<35;
+      for(let i=0;i<cans.length;i++){const can=cans[i];if(can.collected||can.x<this._left-1||can.x>this._right+1)continue;this._sprite(bank.fuel,can.x,can.y+Math.sin(this._clock*2.6+i)*.08);
+        // Running low: a bouncing amber arrow points at every can in view. No words needed.
+        if(low){const tip=can.y+1.55+Math.abs(Math.sin(this._clock*6+i))*.4;c.beginPath();c.moveTo(can.x,tip);c.lineTo(can.x-.42,tip+.6);c.lineTo(can.x+.42,tip+.6);c.closePath();c.fillStyle='#ffc04a';c.fill();this._stats.drawOps++;}}
       const zombies=physics.zombies||EMPTY;
       for(let i=0;i<zombies.length;i++){
         const z=zombies[i],n=(ZOMBIES+i)*3;let x=Number.isFinite(pose[n])?pose[n]:z.x,y=Number.isFinite(pose[n+1])?pose[n+1]:z.y,spin=0;

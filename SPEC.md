@@ -611,3 +611,15 @@ HUD additions are optional and write only changed values: `par` (seconds), `goal
 `IronUI.setInputMode('keyboard'|'touch'|'gamepad')` changes briefing and retry control hints. Runtime synchronizes it with the connected pad and touch layout; hints must not change the underlying input bindings. Touch driving/FIRE targets are at least 44 CSS px in both axes, nitro is at least 56 px, and no pedal overlaps another or the reserved recovery slot in the checked portrait/landscape sizes.
 
 Both in-app Reduced Motion and the OS animation preference show award badges statically instead of hiding them. Score details remain reachable with Tab/menu navigation and open with Enter, Space or gamepad A. Results count-up is bounded, reaches exact totals once and shows final totals immediately under Reduced Motion.
+
+
+## 17. Picture pass 2 (11 November 2026)
+
+Optional additions; every one degrades to the §16 behaviour when absent.
+
+- `Rules.CHALLENGES[n].progress(summary)` returns the fraction of the challenge currently met (unclamped; callers clamp to 0..1). It must agree with `check`: `check` true implies `progress >= 1`.
+- HUD view field `goalProgress` (0..1) drives `#hudGoalRing` (`stroke-dashoffset = 100 − round(progress·100)`, written only on change). `goalId` of `fuel-60`/`fuel-35` shows `#fuelGoalMark` at that percentage of the fuel bar.
+- `IronUI.setNudge(name,on)` toggles `nudge-<name>` on `#app` (`gas`, `left`, `right`); CSS bounces the matching touch pedal. `cue('drive')` and `cue('tilt')` use `#cue-drive` / `#cue-tilt`.
+- Runtime tilt prompt: airborne longer than 0.25 s, |chassis angle| between 0.4 and 1.5 rad, and lean input not already opposing it. At most five tilt badges per attempt, three seconds apart; the pedal nudge follows the condition. It never changes input.
+- Renderer: while `state.fuel < 35`, each visible uncollected can draws one filled arrow (one draw op each).
+- Stage scenes are inline SVG built from biome data in `src/ui.js`; they add no hot-path work and no element IDs outside menu markup.

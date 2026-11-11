@@ -1,3 +1,7 @@
+# Release verification — 12 November 2026
+
+Rebuilt the current working tree including live challenge progress and pictogram driving/air-balance guidance. Bundle is 660,608 bytes (116 IDs, nine inline scripts); both generated copies match. Full physics, rules, shot, pacing, renderer, UI and all-phase browser integration pass. Live-audio signal checks pass. Desktop and phone screenshots were refreshed for maxrecursion.dev. This release is authorized for main/push and existing Vercel production; older local-only statements below describe the previous handoff.
+
 # IRONTRAIL — current handoff (11 November 2026)
 
 ## Start here
@@ -8,6 +12,20 @@ Claude’s Redline gameplay is the base at local HEAD `3cfdb9e3cd0618faba6849121
 - Source: `src/`; build with `python3 build.py`. Deliverable: `index.html` and the identical `dist/index.html`.
 - Changed source: `src/game.js`, `src/render.js`, `src/shell.html`, `src/ui.js`. Tests: `tests/ui-harness.html`, `tests/integration-harness.html`. Documentation: this file, README, PLAN and SPEC §16.
 - Preserve the current working tree. Do not restore the pre-picture UI or rebuild from an older release.
+
+## Picture pass 2 (Claude, after release `38ffb10`)
+
+The picture interface above is released: `38ffb10` on `main`, deployed by Vercel. This later pass is in the working tree and replaces more words and numbers with pictures, motion and cues:
+
+- **Challenge star ring.** `Rules.CHALLENGES[n].progress(summary)` (0..1, optional) feeds `view.goalProgress`; the HUD challenge star fills a ring toward its goal, the mirror of the draining clock ring. The threshold text badge is hidden in the HUD; fuel goals instead put a ★ on the fuel bar at 60 % / 35 %.
+- **Scene pictures.** `scene(biome,id)` in `src/ui.js` draws a small SVG landscape from each biome palette (sky, sun or moon, two ridges, ground). Stage cards and the brief header use it, so routes are recognised by sight; names stay as small captions.
+- **Picture goals.** Brief and results show fuel thresholds as a can with a marked bar, two perfect landings as two stars, and the boss gap as rival → truck. Results stars carry a green tick or red cross.
+- **Animated control demos.** The five brief control chips loop a press-and-react animation in sequence (CSS only).
+- **In-run cues.** `ui.cue('drive')` plus a bouncing gas pedal until the truck is first driven; `ui.cue('tilt')` plus a bouncing lean pedal when the truck is in the air more than 0.4 rad off level and the driver is not already correcting (at most five badges per attempt; the truck self-levels on normal jumps, so this appears mainly after over-leaning); a bouncing amber arrow over every visible fuel can while fuel is under 35.
+- **Settings** rows lead with icons and one-word labels; the long help lines moved to tooltips. Fullscreen failure shows the error cue instead of a text toast.
+- **Not changed:** boss balance. An always-boost or smart-boost bot still wins Iron Maw by 5–54 m across 24 sampled runs at the shipped tuning. The spread comes from run-to-run physics divergence rather than one constant, and a generous boss suits the player this is built for.
+
+Tests added: UI harness covers the ring, fuel mark, nudges, drive/tilt cues, scenes, picture goals, result marks and settings icons; integration `goals` phase checks the idle gas prompt.
 
 ## What was completed and improved
 
@@ -25,7 +43,7 @@ Follow-through fixes made during this task:
 
 ## Verification for this handoff
 
-- Build/bundle and all source syntax checks pass: 9 inline scripts, 106 real IDs, no external assets, embedded Planck license. Both output files are **650,232 bytes**, SHA-256 `228b02f9486c35516196aacd3e8a48ab128ced6b7d6568835ef216499043828c`. Claude re-ran every suite listed here on this final tree (all pass) and added four small things after Codex's pass: a visible start-light/finish/failure sign hides the small cue badge; pinch, ctrl-scroll and double-tap page zoom are blocked so a child cannot zoom the HUD off screen (menus still scroll); a picture prompt and bouncing gas pedal appear until the truck is first driven; the touch lean pedals use tilt icons. SPEC §15.6 records the nitro tuning as shipped.
+- Build/bundle and all source syntax checks pass: 9 inline scripts, 106 real IDs, no external assets, embedded Planck license. After picture pass 2 both output files are **660,608 bytes**, SHA-256 `b1e70e6b876bdf2717e2277cba2f99328fa82ad4941b6ef73c239cdfcc8822ab` (116 real IDs); every suite below was re-run on that build and passes. Claude re-ran every suite listed here on this final tree (all pass) and added four small things after Codex's pass: a visible start-light/finish/failure sign hides the small cue badge; pinch, ctrl-scroll and double-tap page zoom are blocked so a child cannot zoom the HUD off screen (menus still scroll); a picture prompt and bouncing gas pedal appear until the truck is first driven; the touch lean pedals use tilt icons. SPEC §15.6 records the nitro tuning as shipped.
 - Full physics smoke passes all ten routes at 60/120 Hz, base/max upgrades, baseline hashes, fuel/recovery/monster invariants, nitro, escalation, slipstream, slam and terminal coasting. Rules, shot/director and pacing suites pass.
 - Renderer stress passes 1,400 frames across ten biomes: max 162/220 draw operations, Redline worst case 179/220, zero hot font changes, current caches 61.3 MiB, no hot canvas/gradient construction. Both motion gates pass.
 - Expanded UI browser harness passes nine screens and four layouts (1440×900, 1280×720, 390×844, 844×390), input hints including HUD controller keycaps, live-star/par boundary, challenge thresholds/labels, nitro/gap states, award pool/expiry/static reduced-motion visibility, exact results count-up, score-details navigation, unchanged-state zero DOM writes, touch target hit/fit/non-overlap and recovery.

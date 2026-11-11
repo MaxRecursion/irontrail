@@ -90,6 +90,7 @@ async function runGoals(){
   game.physics.fuel=59;await waitFor(()=>!doc.getElementById('hudGoal').classList.contains('on'),1500,'fuel goal lost');
   game.qa.start(0);await waitFor(()=>doc.getElementById('hudGoalGlyph').getAttribute('href')==='#ic-zombie',1500,'next route goal reset');
   assert(!doc.getElementById('hudGoal').classList.contains('on')&&!doc.getElementById('hudClock').classList.contains('lost'),'Fresh attempt clears challenge and restores clock star');
+  await waitFor(()=>doc.getElementById('app').classList.contains('nudge-gas')&&doc.querySelector('#hudCue.cue-drive'),5000,'idle driver gets the gas picture prompt');
   // Stay still through par to check the real simulation clock, with no encounter or timer override.
   await waitFor(()=>doc.getElementById('hudClock').classList.contains('lost'),19000,'par time expires');
   assert(game.telemetry.time>win.IronRules.PAR_TIMES[0]&&game.mode==='playing','Clock goal expires during active driving');

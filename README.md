@@ -43,6 +43,8 @@ The game now plays like an arcade racer built around risk and reward. Everything
 
 The interface uses large pictograms, a speed gauge, fuel and nitro bars, start lights and picture rewards. The two live stars show whether you are still within par and whether the route challenge currently holds. Challenge badges include their target where needed; final stars are earned only when you finish. Briefings and retry tips show controls for touch, keyboard or a connected gamepad. Settings and the dedication keep their written copy, and controls retain accessible names.
 
+The challenge star fills a ring as its goal gets closer, and fuel goals put a star on the fuel bar at the level to keep. Stage cards and the briefing show a small picture of each route; goals appear as pictures (a marked fuel bar, two stars, rival then truck) and the briefing's control chips play a short press-and-react loop. In the air, the pedal or key that levels the truck is prompted when the nose is far off level, and when fuel runs low an arrow bounces over each fuel can in view.
+
 If nobody presses go after the start lights, a picture prompt appears and the gas pedal bounces until the truck moves. Page zoom from a stray pinch, double tap or ctrl-scroll is blocked during the game so the HUD cannot slide off screen.
 
 Reduced Motion keeps reward badges visible without animation and shows final result totals immediately. Score details work with Tab, Enter/Space and gamepad A. Touch pedals and FIRE have at least 44 px hit areas in the checked portrait and landscape layouts.
