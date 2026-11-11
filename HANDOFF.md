@@ -1,5 +1,7 @@
 # Release verification — 12 November 2026
 
+Game release `b23b85f` pushed to main. Vercel production deployment `dpl_FJ9X3L8sD9jqrZ621vnijr8SG4yz` is Ready. Custom-domain response matches the exact tested 660,608-byte bundle (SHA-256 `b1e70e6b876bdf2717e2277cba2f99328fa82ad4941b6ef73c239cdfcc8822ab`). Live browser cleared stage 1 in 10.61 s using nitro and one cannon charge. Portfolio update `b3ed101` pushed to MaxRecursion/maxrecursion.dev with refreshed desktop/phone screenshots and current feature details. Both repository working trees are clean after release commits.
+
 Rebuilt the current working tree including live challenge progress and pictogram driving/air-balance guidance. Bundle is 660,608 bytes (116 IDs, nine inline scripts); both generated copies match. Full physics, rules, shot, pacing, renderer, UI and all-phase browser integration pass. Live-audio signal checks pass. Desktop and phone screenshots were refreshed for maxrecursion.dev. This release is authorized for main/push and existing Vercel production; older local-only statements below describe the previous handoff.
 
 # IRONTRAIL — current handoff (11 November 2026)
