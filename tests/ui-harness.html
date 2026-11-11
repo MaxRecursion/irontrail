@@ -39,8 +39,24 @@ iframe.addEventListener('load',async()=>{
     ui.setNudge('gas',true);ui.setNudge('left',true);assert(doc.getElementById('app').classList.contains('nudge-gas')&&doc.getElementById('app').classList.contains('nudge-left'),'Control nudges toggle');ui.setNudge('gas',false);ui.setNudge('left',false);assert(!doc.getElementById('app').classList.contains('nudge-gas')&&!doc.getElementById('app').classList.contains('nudge-left'),'Control nudges clear');
     ui.cue('tilt',{value:'→',seconds:30});assert(doc.getElementById('cueGlyph').getAttribute('href')==='#cue-tilt'&&doc.getElementById('cueValue').textContent==='→','Tilt cue picture');ui.cue('drive',{seconds:30});assert(doc.getElementById('cueGlyph').getAttribute('href')==='#cue-drive','Drive cue picture');ui.clearFeedback();
     ui.showScreen('stages');assert(doc.querySelectorAll('.stage-card .scene').length===10,'Every stage card carries a scene picture');ui.showScreen('brief',{stageIndex:3});assert(doc.querySelector('.brief-hero .scene')&&doc.querySelector('.goal-pic .mini-bar')&&!doc.querySelector('.goal-row').textContent.includes('%'),'Fuel goal is a picture, not a percentage');ui.showScreen('brief',{stageIndex:9});assert(doc.querySelectorAll('.goal-card:last-child .goal-pic svg').length===3,'Boss goal shows rival, arrow and truck');
-    ui.showScreen('results',fakeResult);assert(doc.querySelectorAll('.rstar .rmark.yes').length===3&&!doc.querySelector('.rmark.no'),'Earned stars carry ticks');ui.showScreen('results',{...fakeResult,stars:[true,false,false]});assert(doc.querySelectorAll('.rmark.no').length===2,'Missed stars carry crosses');
+    ui.showScreen('results',fakeResult);assert(doc.querySelectorAll('.result-goal .rmark.yes').length===3&&!doc.querySelector('.rmark.no'),'Earned stars carry ticks');ui.showScreen('results',{...fakeResult,stars:[true,false,false]});assert(doc.querySelectorAll('.rmark.no').length===2,'Missed stars carry crosses');
     ui.showScreen('settings');assert(doc.querySelectorAll('.setting-item .set-ic').length===9&&doc.getElementById('setting-autoNitro').getAttribute('aria-label')==='Auto nitro','Settings rows lead with icons and keep accessible names');ui.showScreen(null);ui.hud.setVisible(true);
+    async function checkResults(w,h){
+      ui.showScreen('results',fakeResult);await waitFrame(win);
+      const details=doc.querySelector('.score-breakdown'),detailsToggle=details.querySelector('summary'),resultNext=doc.getElementById('playButton');
+      assert(!details.open,`Run details start closed at ${w}×${h}`);
+      assert(!doc.querySelector('.result-award').checkVisibility()&&!doc.querySelector('.breakdown-row').checkVisibility(),`Optional stats stay hidden at ${w}×${h}`);
+      assert(!doc.querySelector('.result-options button').checkVisibility(),`Alternate actions stay hidden at ${w}×${h}`);
+      if(w<=780||h<=520){
+        assert(!doc.querySelector('.menu-header').checkVisibility()&&!doc.querySelector('.hero-trophy').checkVisibility(),`Compact results remove duplicate branding/celebration at ${w}×${h}`);
+        assert(ui._focusable().length===2,`Compact results offer only Next and More at ${w}×${h}`);
+        assert(doc.getElementById('menuPanel').scrollHeight<=doc.getElementById('menuPanel').clientHeight+1,`Closed results need no scrolling at ${w}×${h}`);
+      }
+      for(const control of [detailsToggle,resultNext]){const box=control.getBoundingClientRect();assert(box.height>=44&&box.width>=44&&box.top>=0&&box.bottom<=h,`Result control fits with a touch target at ${w}×${h}`);}
+      detailsToggle.click();await waitFrame(win);assert(details.open&&doc.querySelector('.result-award').checkVisibility()&&doc.querySelector('.breakdown-row').checkVisibility(),`One toggle reveals all run stats at ${w}×${h}`);
+      for(const name of ['retry','garage','stages']){const control=doc.querySelector(`.result-options [data-ui="${name}"]`);control.scrollIntoView({block:'nearest'});await waitFrame(win);const box=control.getBoundingClientRect(),target=doc.elementFromPoint(box.x+box.width/2,box.y+box.height/2);assert(target&&(target===control||control.contains(target)),`Expanded ${name} action reachable at ${w}×${h}`);control.click();assert(events.at(-1)[0]===name,`Expanded ${name} retains its action`);}
+      detailsToggle.click();await waitFrame(win);assert(!details.open&&ui._focusable().includes(resultNext),`Closing details preserves primary navigation at ${w}×${h}`);
+    }
     for(const [w,h,touch]of [[1440,900,false],[1280,720,false],[390,844,true],[844,390,true]]){
       iframe.style.width=w+'px';iframe.style.height=h+'px';ui.setTouchMode(touch);ui.setRecoverVisible(true);await waitFrame(win);
       const b=doc.getElementById('recoverButton'),rect=b.getBoundingClientRect(),hit=doc.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2);assert(hit&&(hit===b||b.contains(hit)),`Recover slot must be clickable at ${w}×${h}`);
@@ -52,10 +68,12 @@ iframe.addEventListener('load',async()=>{
       const heading=doc.getElementById('screenHeading').getBoundingClientRect(),primary=doc.getElementById('playButton').getBoundingClientRect(),secondary=doc.getElementById('secondaryActions').getBoundingClientRect();assert(heading.top>=0&&heading.right<=w+1,`Title heading clipped at ${w}×${h}`);assert(primary.top>=0&&secondary.bottom<=h+1,`Title actions clipped at ${w}×${h}`);
       ui.showScreen('dedication');await waitFrame(win);const dedicationAction=doc.getElementById('playButton').getBoundingClientRect();assert(dedicationAction.top>=0&&dedicationAction.bottom<=h+1,`Dedication action clipped at ${w}×${h}`);
       ui.showScreen('brief',{stageIndex:0});await waitFrame(win);const onboarding=doc.querySelector('.onboarding');assert(onboarding.getBoundingClientRect().height>0,`Control pictograms visible at ${w}×${h}`);assert(onboarding.dataset.inputMode===(touch?'touch':'keyboard'),`Briefing matches input at ${w}×${h}`);
+      await checkResults(w,h);
       ui.showScreen(null);ui.hud.setVisible(true);
     }
+    for(const [w,h]of [[390,664],[320,568]]){iframe.style.width=w+'px';iframe.style.height=h+'px';ui.setTouchMode(true);await waitFrame(win);await checkResults(w,h);}
     iframe.style.width='100%';iframe.style.height='calc(100% - 47px)';ui.setRecoverVisible(false);ui.hud.setVisible(false);ui.showScreen('title');ui.setFps(null);const preview=new URLSearchParams(location.search).get('preview');if(preview==='phone'){iframe.style.width='390px';iframe.style.height='844px';iframe.style.margin='0 auto';document.documentElement.style.overflow='auto';document.body.style.overflow='auto';document.body.style.height='auto';output.style.position='static';}
-    output.textContent='PASS · All 9 screens, 10 stage cards, settings/navigation, live clock/challenge stars, nitro/gap states, bounded award pool, exact results count-up and reduced-motion totals, zero-change HUD writes.\nPASS · Global feedback, title/dedication fit, recover and touch/nitro/FIRE hit-tests at 1440×900, 1280×720, 390×844 and 844×390.';document.title='PASS — IRONTRAIL UI validation';
+    output.textContent='PASS · All 9 screens, 10 stage cards, settings/navigation, live clock/challenge stars, nitro/gap states, bounded award pool, exact results count-up and reduced-motion totals, zero-change HUD writes.\nPASS · Global feedback, title/dedication fit, recover/touch hit-tests and compact two-control results, expandable stats/actions at desktop, small phone and landscape sizes.';document.title='PASS — IRONTRAIL UI validation';
     win.irontrailUIHarness={ui,save,stages,biomes,events};
   }catch(error){output.textContent='FAIL · '+error.stack;document.title='FAIL — IRONTRAIL UI validation';}
 },{once:true});

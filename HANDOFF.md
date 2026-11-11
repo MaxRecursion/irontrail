@@ -1,6 +1,10 @@
-## Results layout refinement — 12 November 2026
+## Mobile results simplification — 12 November 2026
 
-Results use three equal podium cards, a clear score/scrap focal row, aligned stat tiles and a three-column expandable score breakdown. Mobile spacing and landscape sizing preserve icon controls. UI harness passes all four sizes; bundle checks pass. Gameplay and scoring are unchanged.
+The mobile results screen now shows only three stars, score, scrap earned and the primary Next/stages action. It removes the header/dedication, trophy, crown, goal badges and always-visible stat tiles from this view. One closed “•••” disclosure contains star explanations, driving awards, score breakdown and replay/garage/stage buttons. Desktop also keeps optional stats/actions in this disclosure. Nothing is deleted from the run summary or rewards.
+
+`IronUI._focusable()` skips actions inside closed details even when the browser retains their layout rectangles, so keyboard/controller navigation reaches only the two visible controls on compact results. Native summary Enter/Space, gamepad activation, result count-up and reduced-motion final totals remain.
+
+Validation: bundle/syntax/whitespace checks pass (666,258-byte identical outputs). UI harness passes all existing screens at desktop/portrait/landscape sizes plus result-only checks at 390×664 and 320×568. Closed compact results have exactly two visible focusable controls, fit without scrolling and keep ≥44px action targets. Expanding exposes stats and reachable replay/garage/stages; closing restores navigation. Browser integration `phase=flow` passes stage 1 in 11.91s, one charge, reward idempotence, More → garage → results, next-stage tuning, pause, settings and ghost. Sources changed: `src/ui.js`, `src/shell.html`; rebuild outputs, UI/integration harnesses and this note accompany them. Preview: `/tmp/irontrail-results-simple-phone.png`.
 
 # Release verification — 12 November 2026
 

@@ -522,45 +522,66 @@ html,body{touch-action:pan-x pan-y;overscroll-behavior:none}
 .award-slab.show{transform:none;opacity:1}
 }
 
-/* Results: a quiet podium, one score focal point, and aligned supporting statistics. */
+/* Results show the celebration first; one disclosure contains the optional run details. */
 .menu-panel.screen-results{width:min(680px,100%)}
 .screen-results .result-kid{width:100%;gap:22px;padding:4px 0 2px}
 .screen-results .hero-trophy{width:56px;height:56px;opacity:.95}
-.screen-results .result-stars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:100%;max-width:440px;align-items:stretch}
-.screen-results .rstar{min-width:0;gap:10px;padding:8px 2px 12px;border-radius:18px;background:linear-gradient(180deg,#ffd2570b,#ffd25703);border:1px solid #ffd25714}
+.screen-results .result-stars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:100%;max-width:360px;align-items:stretch}
+.screen-results .rstar{min-width:0;padding:8px 2px;border-radius:18px;background:linear-gradient(180deg,#ffd2570b,#ffd25703);border:1px solid #ffd25714}
 .screen-results .rstar .big-star{font-size:76px;line-height:1}
-.screen-results .rstar-pic{height:auto;min-height:36px;max-width:100%;flex-wrap:wrap;justify-content:center;gap:5px;font-size:16px}
+.screen-results .result-line{width:100%;gap:14px;padding:4px 0}
+.screen-results .result-big-score{font-size:clamp(40px,9vw,58px);letter-spacing:-1.5px}
+.screen-results .result-big-score svg{color:#ffd257}
+.screen-results .result-line .scrap{height:38px;font-size:20px;padding:0 12px;border-color:#4fd6ff30;background:#4fd6ff09}
+.screen-results .result-details{display:grid;gap:18px;padding-top:18px;border-top:1px solid #fff0e814}
+.screen-results .result-goals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.screen-results .result-goal{display:grid;justify-items:center;align-content:start;gap:8px;padding:10px 2px;color:#fff0e866}
+.screen-results .goal-earned-star{width:26px;height:26px;fill:currentColor}
+.screen-results .result-goal.earned{color:#ffd257}
+.screen-results .rstar-pic{height:auto;min-height:32px;max-width:100%;flex-wrap:wrap;justify-content:center;gap:5px;font-size:16px}
+.screen-results .result-goal.earned .rstar-pic{color:#fff0e8}
 .screen-results .rstar-pic .rmark{width:17px;height:17px;padding:3px}
 .screen-results .rstar-pic svg{width:22px;height:22px;flex-shrink:0}
 .screen-results .rstar-pic .crown{width:18px;height:18px;color:#ffd257}
-.screen-results .result-line{width:100%;gap:14px;padding:4px 0}
-.screen-results .result-big-score{font-size:clamp(40px,9vw,58px);letter-spacing:-1.5px}
-.screen-results .result-line .scrap{height:38px;font-size:20px;padding:0 12px;border-color:#4fd6ff30;background:#4fd6ff09}
-.screen-results .result-awards{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;width:100%;max-width:440px}
-.screen-results .result-award{grid-column:span 2;justify-content:space-between;min-width:0;height:48px;padding:0 12px;border:1px solid #fff0e81c;border-radius:12px;background:#ffffff04;font-size:18px}
+.screen-results .result-awards{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;width:100%}
+.screen-results .result-award{grid-column:span 2;justify-content:space-between;min-width:0;height:44px;padding:0 12px;border:1px solid #fff0e81c;border-radius:12px;background:#ffffff04;font-size:18px}
 .screen-results .result-awards:has(>:nth-child(5):last-child)>:nth-child(n+4){grid-column:span 3}
 .screen-results .score-breakdown{width:100%;max-width:440px}
-.screen-results .score-breakdown summary{width:64px;height:36px;border-width:1px;background:#ffffff04}
+.screen-results .score-breakdown summary{width:64px;height:44px;border-width:1px;background:#ffffff04}
 .screen-results .score-breakdown[open] summary{margin-bottom:16px}
-.screen-results .breakdown-rows{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding-top:16px;border-top:1px solid #fff0e814}
+.screen-results .breakdown-rows{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .screen-results .breakdown-row{display:flex;justify-content:space-between;min-width:0;height:38px;padding:0 9px;border:0;border-radius:8px;background:#ffffff04;font-size:14px}
 .screen-results .breakdown-row svg{width:18px;height:18px;flex-shrink:0}
-.screen-results .menu-actions{margin-top:24px;padding-top:22px;gap:16px}
-@media(max-width:600px){
-.screen-results.menu-panel{padding:18px 16px 20px}
-.screen-results .menu-header{margin-bottom:20px}
-.screen-results .result-kid{gap:18px}
-.screen-results .result-stars{gap:9px}
-.screen-results .rstar .big-star{font-size:60px}
-.screen-results .rstar-pic{font-size:14px;gap:4px;min-height:40px}
-.screen-results .rstar{padding:10px 3px;border-radius:14px}
+.screen-results .result-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.screen-results .result-options .menu-button{height:48px;min-width:0}
+.screen-results .menu-actions{margin-top:24px;padding-top:22px;justify-content:center}
+.screen-results .primary-button{width:100%;min-height:64px}
+.screen-results .secondary-actions:empty{display:none}
+@media(max-width:780px),(max-height:520px){
+.screen-results.menu-panel{width:min(420px,100%);padding:30px 24px 24px}
+.screen-results .menu-header,.screen-results .hero-trophy{display:none}
+.screen-results .result-kid{gap:24px;padding:4px 0 0}
+.screen-results .result-stars{max-width:280px;gap:14px}
+.screen-results .rstar{padding:0;border:0;border-radius:0;background:none}
+.screen-results .rstar .big-star{font-size:68px}
+.screen-results .result-line{flex-direction:column;gap:8px;padding:0}
+.screen-results .result-big-score{font-size:52px}
+.screen-results .result-big-score svg{display:none}
+.screen-results .result-line .scrap{height:26px;padding:0;border:0;background:none;font-size:19px}
+.screen-results .result-line .scrap b{font-weight:700}
 .screen-results .result-award{font-size:16px;height:44px;padding:0 10px}
 .screen-results .result-award svg{width:22px;height:22px}
-.screen-results .primary-button{min-height:64px}
-.screen-results .menu-button{height:48px}
+.screen-results .rstar-pic{font-size:14px;gap:4px}
+.screen-results .menu-actions{margin-top:22px;padding-top:0;border-top:0}
+.screen-results .score-breakdown summary{color:#fff0e88c}
 }
-@media(max-height:520px) and (min-width:600px){
-.screen-results .result-kid{gap:10px}.screen-results .rstar .big-star{font-size:44px}.screen-results .rstar{padding:4px}.screen-results .rstar-pic{min-height:24px;font-size:13px}.screen-results .result-big-score{font-size:34px}.screen-results .result-award{height:34px;font-size:14px}.screen-results .menu-actions{margin-top:12px;padding-top:12px}
+@media(max-width:360px),(max-height:420px){
+.screen-results.menu-panel{padding:22px 18px 18px}
+.screen-results .result-kid{gap:16px}
+.screen-results .rstar .big-star{font-size:54px}
+.screen-results .result-big-score{font-size:44px}
+.screen-results .menu-actions{margin-top:16px}
+.screen-results .primary-button{min-height:56px}
 }
 </style></head><body><div id="app">
 <canvas id="gameCanvas" tabindex="-1" role="img" aria-label="Ojas’s Monster Rally driving game. Arrow keys or WASD drive and balance, Space brakes, X or J fires your one cannon charge, C recovers for 12 fuel."></canvas>

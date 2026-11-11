@@ -210,8 +210,25 @@
       }else if(name==='results'){
         const stars=d.stars||[true,false,false],par=d.par??this._par(i),challenge=typeof d.challenge==='string'?d.challenge:d.challenge?.label||this._challenge(i);
         const pics=[use('ic-flag'),`${d.newBest?use('ic-crown','crown'):''}${use('ic-clock')}<b>${Number(d.time||0).toFixed(1)}</b>`,goalPic],says=['Finished',`Your time ${timeText(d.time||0)}, par ${timeText(par)}${d.newBest?', new best time':''}`,challenge];
-        html=`<div class="result-kid"><div class="hero-trophy" aria-label="Ojas’s trophy">${TROPHY}</div><h1 id="screenHeading" class="sr-only">${i===9?'Ojas, king of the trail!':'Super driving, Ojas!'} ${esc(d.name||this._stageName(i))} cleared.</h1><div class="result-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${stars.map((on,k)=>`<span class="rstar${on?' earned':''}" style="--star-delay:${k*180}ms" role="img" aria-label="${esc(says[k])}: ${on?'star earned':'no star'}"><span class="big-star" aria-hidden="true">★</span><span class="rstar-pic">${use(on?'cue-hit':'cue-miss',on?'rmark yes':'rmark no')}${pics[k]}</span></span>`).join('')}</div><div class="result-line"><div class="result-big-score" aria-label="Total score${d.newScoreBest?', new best score':''}">${d.newScoreBest?use('ic-crown','crown'):''}<span data-count="${Math.max(0,Math.floor(Number(d.score)||0))}">${scoreText(d.score)}</span></div><span class="sum-chip scrap" role="img" aria-label="Scrap earned ${scoreText(d.scrap)}">◆ <b>+${scoreText(d.scrap)}</b></span></div>${Array.isArray(d.awards)&&d.awards.length?`<div class="result-awards">${d.awards.slice(0,6).map(a=>`<span class="result-award" title="${esc(a.label)}">${use(STATS[a.id]||'cue-star')}<span class="sr-only">${esc(a.label)}</span><b>${esc(String(a.value).replace(/\s*(KM\/H|S)$/,''))}</b></span>`).join('')}</div>`:''}<details class="score-breakdown"><summary aria-label="Score details">${use('ic-more')}</summary><div class="breakdown-rows">${(d.breakdown||[]).map(row=>`<span class="breakdown-row" title="${esc(row.label)}">${use(ROWS[row.label]||'cue-star')}<span class="sr-only">${esc(row.label)}</span><b data-count="${Math.max(0,Math.floor(Number(row.value)||0))}">${scoreText(row.value)}</b></span>`).join('')}</div></details></div>`;
-        const next=d.nextAvailable!==false&&i<9;primary=next?`Continue to stage ${String(i+2).padStart(2,'0')}`:'Back to the stages';primaryIcon=next?'ic-next':'ic-grid';action=next?'next':'stages';secondary=this._button('Run it again','retry','cue-recover')+this._button('Garage','garage','ic-wrench')+this._button('Stage select','stages','ic-grid');
+        const starLabel=k=>`${says[k]}: ${stars[k]?'star earned':'no star'}`;
+        const awards=Array.isArray(d.awards)&&d.awards.length?`<div class="result-awards">${d.awards.slice(0,6).map(a=>`<span class="result-award" title="${esc(a.label)}">${use(STATS[a.id]||'cue-star')}<span class="sr-only">${esc(a.label)}</span><b>${esc(String(a.value).replace(/\s*(KM\/H|S)$/,''))}</b></span>`).join('')}</div>`:'';
+        // Keep the celebration simple. Run stats and alternate destinations share one closed disclosure.
+        html=`<div class="result-kid">
+          <div class="hero-trophy" aria-label="Ojas’s trophy">${TROPHY}</div>
+          <h1 id="screenHeading" class="sr-only">${i===9?'Ojas, king of the trail!':'Super driving, Ojas!'} ${esc(d.name||this._stageName(i))} cleared.</h1>
+          <div class="result-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${stars.map((on,k)=>`<span class="rstar${on?' earned':''}" style="--star-delay:${k*180}ms" role="img" aria-label="${esc(starLabel(k))}"><span class="big-star" aria-hidden="true">★</span></span>`).join('')}</div>
+          <div class="result-line"><div class="result-big-score" aria-label="Total score${d.newScoreBest?', new best score':''}">${d.newScoreBest?use('ic-crown','crown'):''}<span data-count="${Math.max(0,Math.floor(Number(d.score)||0))}">${scoreText(d.score)}</span></div><span class="sum-chip scrap" role="img" aria-label="Scrap earned ${scoreText(d.scrap)}">◆ <b>+${scoreText(d.scrap)}</b></span></div>
+          <details class="score-breakdown">
+            <summary aria-label="Run details and more options">${use('ic-more')}</summary>
+            <div class="result-details">
+              <div class="result-goals" aria-label="Star goals">${stars.map((on,k)=>`<span class="result-goal${on?' earned':''}" role="img" aria-label="${esc(starLabel(k))}">${use('cue-star','goal-earned-star')}<span class="rstar-pic">${use(on?'cue-hit':'cue-miss',on?'rmark yes':'rmark no')}${pics[k]}</span></span>`).join('')}</div>
+              ${awards}
+              <div class="breakdown-rows">${(d.breakdown||[]).map(row=>`<span class="breakdown-row" title="${esc(row.label)}">${use(ROWS[row.label]||'cue-star')}<span class="sr-only">${esc(row.label)}</span><b data-count="${Math.max(0,Math.floor(Number(row.value)||0))}">${scoreText(row.value)}</b></span>`).join('')}</div>
+              <div class="result-options">${this._button('Run it again','retry','cue-recover')}${this._button('Garage','garage','ic-wrench')}${this._button('Stage select','stages','ic-grid')}</div>
+            </div>
+          </details>
+        </div>`;
+        const next=d.nextAvailable!==false&&i<9;primary=next?`Continue to stage ${String(i+2).padStart(2,'0')}`:'Back to the stages';primaryIcon=next?'ic-next':'ic-grid';action=next?'next':'stages';
       }else if(name==='failed'){
         const reason=d.reason||'fuel',fire=this._inputMode==='touch'?'tap the target button':this._inputMode==='gamepad'?'press A':'press X or J',tips={fuel:'Collect the amber cans.',monster:`Wait for the green crosshair, then ${fire} to fire.`,rival:'Keep your speed through the jumps.'};
         const pict={fuel:['ic-can','ic-can','','<b class="fp-plus" aria-hidden="true">+</b>'],monster:['ic-giant','cue-target','',this._controlKey('fire')],rival:['ic-rival','cue-bolt',' fill',this._controlKey('nitro')]}[reason]||['ic-can','ic-can','',''];
@@ -235,7 +252,16 @@
       if(target.type==='range'){const output=this.document.getElementById(`setting-value-${key}`);if(output)output.textContent=`${Math.round(value*100)}%`;}
       this.emit('setting',key,value);
     }
-    _focusable(){return Array.from(this.nodes.screenLayer.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),summary')).filter(node=>!node.hidden&&node.getClientRects().length);}
+    _focusable(){
+      return Array.from(this.nodes.screenLayer.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),summary')).filter(node=>{
+        if(node.hidden||!node.getClientRects().length)return false;
+        // Closed details can retain layout rectangles; their hidden actions must stay out of menu navigation.
+        for(let parent=node.parentElement;parent&&parent!==this.nodes.screenLayer;parent=parent.parentElement){
+          if(parent.tagName==='DETAILS'&&!parent.open&&node!==parent.querySelector('summary'))return false;
+        }
+        return true;
+      });
+    }
     _key(event){
       if(this.screen===null)return;
       if(event.key==='Escape'){event.preventDefault();event.stopPropagation();this.back();return;}

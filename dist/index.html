@@ -522,45 +522,66 @@ html,body{touch-action:pan-x pan-y;overscroll-behavior:none}
 .award-slab.show{transform:none;opacity:1}
 }
 
-/* Results: a quiet podium, one score focal point, and aligned supporting statistics. */
+/* Results show the celebration first; one disclosure contains the optional run details. */
 .menu-panel.screen-results{width:min(680px,100%)}
 .screen-results .result-kid{width:100%;gap:22px;padding:4px 0 2px}
 .screen-results .hero-trophy{width:56px;height:56px;opacity:.95}
-.screen-results .result-stars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:100%;max-width:440px;align-items:stretch}
-.screen-results .rstar{min-width:0;gap:10px;padding:8px 2px 12px;border-radius:18px;background:linear-gradient(180deg,#ffd2570b,#ffd25703);border:1px solid #ffd25714}
+.screen-results .result-stars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:100%;max-width:360px;align-items:stretch}
+.screen-results .rstar{min-width:0;padding:8px 2px;border-radius:18px;background:linear-gradient(180deg,#ffd2570b,#ffd25703);border:1px solid #ffd25714}
 .screen-results .rstar .big-star{font-size:76px;line-height:1}
-.screen-results .rstar-pic{height:auto;min-height:36px;max-width:100%;flex-wrap:wrap;justify-content:center;gap:5px;font-size:16px}
+.screen-results .result-line{width:100%;gap:14px;padding:4px 0}
+.screen-results .result-big-score{font-size:clamp(40px,9vw,58px);letter-spacing:-1.5px}
+.screen-results .result-big-score svg{color:#ffd257}
+.screen-results .result-line .scrap{height:38px;font-size:20px;padding:0 12px;border-color:#4fd6ff30;background:#4fd6ff09}
+.screen-results .result-details{display:grid;gap:18px;padding-top:18px;border-top:1px solid #fff0e814}
+.screen-results .result-goals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.screen-results .result-goal{display:grid;justify-items:center;align-content:start;gap:8px;padding:10px 2px;color:#fff0e866}
+.screen-results .goal-earned-star{width:26px;height:26px;fill:currentColor}
+.screen-results .result-goal.earned{color:#ffd257}
+.screen-results .rstar-pic{height:auto;min-height:32px;max-width:100%;flex-wrap:wrap;justify-content:center;gap:5px;font-size:16px}
+.screen-results .result-goal.earned .rstar-pic{color:#fff0e8}
 .screen-results .rstar-pic .rmark{width:17px;height:17px;padding:3px}
 .screen-results .rstar-pic svg{width:22px;height:22px;flex-shrink:0}
 .screen-results .rstar-pic .crown{width:18px;height:18px;color:#ffd257}
-.screen-results .result-line{width:100%;gap:14px;padding:4px 0}
-.screen-results .result-big-score{font-size:clamp(40px,9vw,58px);letter-spacing:-1.5px}
-.screen-results .result-line .scrap{height:38px;font-size:20px;padding:0 12px;border-color:#4fd6ff30;background:#4fd6ff09}
-.screen-results .result-awards{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;width:100%;max-width:440px}
-.screen-results .result-award{grid-column:span 2;justify-content:space-between;min-width:0;height:48px;padding:0 12px;border:1px solid #fff0e81c;border-radius:12px;background:#ffffff04;font-size:18px}
+.screen-results .result-awards{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;width:100%}
+.screen-results .result-award{grid-column:span 2;justify-content:space-between;min-width:0;height:44px;padding:0 12px;border:1px solid #fff0e81c;border-radius:12px;background:#ffffff04;font-size:18px}
 .screen-results .result-awards:has(>:nth-child(5):last-child)>:nth-child(n+4){grid-column:span 3}
 .screen-results .score-breakdown{width:100%;max-width:440px}
-.screen-results .score-breakdown summary{width:64px;height:36px;border-width:1px;background:#ffffff04}
+.screen-results .score-breakdown summary{width:64px;height:44px;border-width:1px;background:#ffffff04}
 .screen-results .score-breakdown[open] summary{margin-bottom:16px}
-.screen-results .breakdown-rows{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding-top:16px;border-top:1px solid #fff0e814}
+.screen-results .breakdown-rows{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .screen-results .breakdown-row{display:flex;justify-content:space-between;min-width:0;height:38px;padding:0 9px;border:0;border-radius:8px;background:#ffffff04;font-size:14px}
 .screen-results .breakdown-row svg{width:18px;height:18px;flex-shrink:0}
-.screen-results .menu-actions{margin-top:24px;padding-top:22px;gap:16px}
-@media(max-width:600px){
-.screen-results.menu-panel{padding:18px 16px 20px}
-.screen-results .menu-header{margin-bottom:20px}
-.screen-results .result-kid{gap:18px}
-.screen-results .result-stars{gap:9px}
-.screen-results .rstar .big-star{font-size:60px}
-.screen-results .rstar-pic{font-size:14px;gap:4px;min-height:40px}
-.screen-results .rstar{padding:10px 3px;border-radius:14px}
+.screen-results .result-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.screen-results .result-options .menu-button{height:48px;min-width:0}
+.screen-results .menu-actions{margin-top:24px;padding-top:22px;justify-content:center}
+.screen-results .primary-button{width:100%;min-height:64px}
+.screen-results .secondary-actions:empty{display:none}
+@media(max-width:780px),(max-height:520px){
+.screen-results.menu-panel{width:min(420px,100%);padding:30px 24px 24px}
+.screen-results .menu-header,.screen-results .hero-trophy{display:none}
+.screen-results .result-kid{gap:24px;padding:4px 0 0}
+.screen-results .result-stars{max-width:280px;gap:14px}
+.screen-results .rstar{padding:0;border:0;border-radius:0;background:none}
+.screen-results .rstar .big-star{font-size:68px}
+.screen-results .result-line{flex-direction:column;gap:8px;padding:0}
+.screen-results .result-big-score{font-size:52px}
+.screen-results .result-big-score svg{display:none}
+.screen-results .result-line .scrap{height:26px;padding:0;border:0;background:none;font-size:19px}
+.screen-results .result-line .scrap b{font-weight:700}
 .screen-results .result-award{font-size:16px;height:44px;padding:0 10px}
 .screen-results .result-award svg{width:22px;height:22px}
-.screen-results .primary-button{min-height:64px}
-.screen-results .menu-button{height:48px}
+.screen-results .rstar-pic{font-size:14px;gap:4px}
+.screen-results .menu-actions{margin-top:22px;padding-top:0;border-top:0}
+.screen-results .score-breakdown summary{color:#fff0e88c}
 }
-@media(max-height:520px) and (min-width:600px){
-.screen-results .result-kid{gap:10px}.screen-results .rstar .big-star{font-size:44px}.screen-results .rstar{padding:4px}.screen-results .rstar-pic{min-height:24px;font-size:13px}.screen-results .result-big-score{font-size:34px}.screen-results .result-award{height:34px;font-size:14px}.screen-results .menu-actions{margin-top:12px;padding-top:12px}
+@media(max-width:360px),(max-height:420px){
+.screen-results.menu-panel{padding:22px 18px 18px}
+.screen-results .result-kid{gap:16px}
+.screen-results .rstar .big-star{font-size:54px}
+.screen-results .result-big-score{font-size:44px}
+.screen-results .menu-actions{margin-top:16px}
+.screen-results .primary-button{min-height:56px}
 }
 </style><!-- Planck.js 1.5.0 license:
 The MIT License
@@ -2667,8 +2688,25 @@ globalThis.TruckAudio = TruckAudio;
       }else if(name==='results'){
         const stars=d.stars||[true,false,false],par=d.par??this._par(i),challenge=typeof d.challenge==='string'?d.challenge:d.challenge?.label||this._challenge(i);
         const pics=[use('ic-flag'),`${d.newBest?use('ic-crown','crown'):''}${use('ic-clock')}<b>${Number(d.time||0).toFixed(1)}</b>`,goalPic],says=['Finished',`Your time ${timeText(d.time||0)}, par ${timeText(par)}${d.newBest?', new best time':''}`,challenge];
-        html=`<div class="result-kid"><div class="hero-trophy" aria-label="Ojas’s trophy">${TROPHY}</div><h1 id="screenHeading" class="sr-only">${i===9?'Ojas, king of the trail!':'Super driving, Ojas!'} ${esc(d.name||this._stageName(i))} cleared.</h1><div class="result-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${stars.map((on,k)=>`<span class="rstar${on?' earned':''}" style="--star-delay:${k*180}ms" role="img" aria-label="${esc(says[k])}: ${on?'star earned':'no star'}"><span class="big-star" aria-hidden="true">★</span><span class="rstar-pic">${use(on?'cue-hit':'cue-miss',on?'rmark yes':'rmark no')}${pics[k]}</span></span>`).join('')}</div><div class="result-line"><div class="result-big-score" aria-label="Total score${d.newScoreBest?', new best score':''}">${d.newScoreBest?use('ic-crown','crown'):''}<span data-count="${Math.max(0,Math.floor(Number(d.score)||0))}">${scoreText(d.score)}</span></div><span class="sum-chip scrap" role="img" aria-label="Scrap earned ${scoreText(d.scrap)}">◆ <b>+${scoreText(d.scrap)}</b></span></div>${Array.isArray(d.awards)&&d.awards.length?`<div class="result-awards">${d.awards.slice(0,6).map(a=>`<span class="result-award" title="${esc(a.label)}">${use(STATS[a.id]||'cue-star')}<span class="sr-only">${esc(a.label)}</span><b>${esc(String(a.value).replace(/\s*(KM\/H|S)$/,''))}</b></span>`).join('')}</div>`:''}<details class="score-breakdown"><summary aria-label="Score details">${use('ic-more')}</summary><div class="breakdown-rows">${(d.breakdown||[]).map(row=>`<span class="breakdown-row" title="${esc(row.label)}">${use(ROWS[row.label]||'cue-star')}<span class="sr-only">${esc(row.label)}</span><b data-count="${Math.max(0,Math.floor(Number(row.value)||0))}">${scoreText(row.value)}</b></span>`).join('')}</div></details></div>`;
-        const next=d.nextAvailable!==false&&i<9;primary=next?`Continue to stage ${String(i+2).padStart(2,'0')}`:'Back to the stages';primaryIcon=next?'ic-next':'ic-grid';action=next?'next':'stages';secondary=this._button('Run it again','retry','cue-recover')+this._button('Garage','garage','ic-wrench')+this._button('Stage select','stages','ic-grid');
+        const starLabel=k=>`${says[k]}: ${stars[k]?'star earned':'no star'}`;
+        const awards=Array.isArray(d.awards)&&d.awards.length?`<div class="result-awards">${d.awards.slice(0,6).map(a=>`<span class="result-award" title="${esc(a.label)}">${use(STATS[a.id]||'cue-star')}<span class="sr-only">${esc(a.label)}</span><b>${esc(String(a.value).replace(/\s*(KM\/H|S)$/,''))}</b></span>`).join('')}</div>`:'';
+        // Keep the celebration simple. Run stats and alternate destinations share one closed disclosure.
+        html=`<div class="result-kid">
+          <div class="hero-trophy" aria-label="Ojas’s trophy">${TROPHY}</div>
+          <h1 id="screenHeading" class="sr-only">${i===9?'Ojas, king of the trail!':'Super driving, Ojas!'} ${esc(d.name||this._stageName(i))} cleared.</h1>
+          <div class="result-stars" aria-label="${stars.filter(Boolean).length} of 3 stars">${stars.map((on,k)=>`<span class="rstar${on?' earned':''}" style="--star-delay:${k*180}ms" role="img" aria-label="${esc(starLabel(k))}"><span class="big-star" aria-hidden="true">★</span></span>`).join('')}</div>
+          <div class="result-line"><div class="result-big-score" aria-label="Total score${d.newScoreBest?', new best score':''}">${d.newScoreBest?use('ic-crown','crown'):''}<span data-count="${Math.max(0,Math.floor(Number(d.score)||0))}">${scoreText(d.score)}</span></div><span class="sum-chip scrap" role="img" aria-label="Scrap earned ${scoreText(d.scrap)}">◆ <b>+${scoreText(d.scrap)}</b></span></div>
+          <details class="score-breakdown">
+            <summary aria-label="Run details and more options">${use('ic-more')}</summary>
+            <div class="result-details">
+              <div class="result-goals" aria-label="Star goals">${stars.map((on,k)=>`<span class="result-goal${on?' earned':''}" role="img" aria-label="${esc(starLabel(k))}">${use('cue-star','goal-earned-star')}<span class="rstar-pic">${use(on?'cue-hit':'cue-miss',on?'rmark yes':'rmark no')}${pics[k]}</span></span>`).join('')}</div>
+              ${awards}
+              <div class="breakdown-rows">${(d.breakdown||[]).map(row=>`<span class="breakdown-row" title="${esc(row.label)}">${use(ROWS[row.label]||'cue-star')}<span class="sr-only">${esc(row.label)}</span><b data-count="${Math.max(0,Math.floor(Number(row.value)||0))}">${scoreText(row.value)}</b></span>`).join('')}</div>
+              <div class="result-options">${this._button('Run it again','retry','cue-recover')}${this._button('Garage','garage','ic-wrench')}${this._button('Stage select','stages','ic-grid')}</div>
+            </div>
+          </details>
+        </div>`;
+        const next=d.nextAvailable!==false&&i<9;primary=next?`Continue to stage ${String(i+2).padStart(2,'0')}`:'Back to the stages';primaryIcon=next?'ic-next':'ic-grid';action=next?'next':'stages';
       }else if(name==='failed'){
         const reason=d.reason||'fuel',fire=this._inputMode==='touch'?'tap the target button':this._inputMode==='gamepad'?'press A':'press X or J',tips={fuel:'Collect the amber cans.',monster:`Wait for the green crosshair, then ${fire} to fire.`,rival:'Keep your speed through the jumps.'};
         const pict={fuel:['ic-can','ic-can','','<b class="fp-plus" aria-hidden="true">+</b>'],monster:['ic-giant','cue-target','',this._controlKey('fire')],rival:['ic-rival','cue-bolt',' fill',this._controlKey('nitro')]}[reason]||['ic-can','ic-can','',''];
@@ -2692,7 +2730,16 @@ globalThis.TruckAudio = TruckAudio;
       if(target.type==='range'){const output=this.document.getElementById(`setting-value-${key}`);if(output)output.textContent=`${Math.round(value*100)}%`;}
       this.emit('setting',key,value);
     }
-    _focusable(){return Array.from(this.nodes.screenLayer.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),summary')).filter(node=>!node.hidden&&node.getClientRects().length);}
+    _focusable(){
+      return Array.from(this.nodes.screenLayer.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),summary')).filter(node=>{
+        if(node.hidden||!node.getClientRects().length)return false;
+        // Closed details can retain layout rectangles; their hidden actions must stay out of menu navigation.
+        for(let parent=node.parentElement;parent&&parent!==this.nodes.screenLayer;parent=parent.parentElement){
+          if(parent.tagName==='DETAILS'&&!parent.open&&node!==parent.querySelector('summary'))return false;
+        }
+        return true;
+      });
+    }
     _key(event){
       if(this.screen===null)return;
       if(event.key==='Escape'){event.preventDefault();event.stopPropagation();this.back();return;}
