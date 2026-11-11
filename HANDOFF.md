@@ -1,3 +1,7 @@
+## Results layout refinement — 12 November 2026
+
+Results use three equal podium cards, a clear score/scrap focal row, aligned stat tiles and a three-column expandable score breakdown. Mobile spacing and landscape sizing preserve icon controls. UI harness passes all four sizes; bundle checks pass. Gameplay and scoring are unchanged.
+
 # Release verification — 12 November 2026
 
 Game release `b23b85f` pushed to main. Vercel production deployment `dpl_FJ9X3L8sD9jqrZ621vnijr8SG4yz` is Ready. Custom-domain response matches the exact tested 660,608-byte bundle (SHA-256 `b1e70e6b876bdf2717e2277cba2f99328fa82ad4941b6ef73c239cdfcc8822ab`). Live browser cleared stage 1 in 10.61 s using nitro and one cannon charge. Portfolio update `b3ed101` pushed to MaxRecursion/maxrecursion.dev with refreshed desktop/phone screenshots and current feature details. Both repository working trees are clean after release commits.
